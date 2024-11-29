@@ -17,6 +17,7 @@ console.log(`react_app supa url: ${process.env.REACT_APP_DB_AUTH_SUPABASE_URL}`)
 console.log(`react_app supa anon key: ${process.env.REACT_APP_DB_AUTH_SUPABASE_ANON_KEY}`)
 console.log(`vercel supa url: ${process.env.DB_AUTH_SUPABASE_URL}`)
 console.log(`vercel supa anon key: ${process.env.DB_AUTH_SUPABASE_ANON_KEY}`)
+console.log(`what is even here: ${Object.keys(process.env)}`)
 
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
