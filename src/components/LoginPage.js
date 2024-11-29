@@ -6,11 +6,11 @@ import { useNavigate } from 'react-router';
 import { createClient } from '@supabase/supabase-js';
 
 let supabaseUrl = process.env.REACT_APP_DB_AUTH_SUPABASE_URL;
-let supabaseAnonKey = process.env.REACT_APP_DB_AUTH_NEXT_PUBLIC_SUPABASE_ANON_KEY;
+let supabaseAnonKey = process.env.REACT_APP_DB_AUTH_SUPABASE_ANON_KEY;
 
 if (!supabaseUrl) { // annoying check for dev or vercel env
     supabaseUrl = process.env.DB_AUTH_SUPABASE_URL;
-    supabaseAnonKey = process.env.DB_AUTH_NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    supabaseAnonKey = process.env.DB_AUTH_SUPABASE_ANON_KEY;
 }
 
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
