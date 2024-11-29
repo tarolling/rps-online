@@ -14,7 +14,6 @@ function LoginPage() {
     const [res, setRes] = useState(null);
 
     useEffect(() => {
-
         const fetchUser = async () => {
             try {
                 const response = await fetch('/api/initPlayer', {
@@ -22,18 +21,15 @@ function LoginPage() {
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({ userId: '1', email: '2' }),
+                    body: JSON.stringify({ id: '1' }),
                 });
 
-                const data = await response.json()
-                console.log(`WHAT IS DATA: ${data}`)
+                const data = response.status
                 setRes(data);
-                console.log(`did it set it? ${res}`)
             } catch (error) {
                 console.error('Error calling vercel function:', error);
             }
         };
-
         fetchUser();
     }, []);
 
@@ -41,7 +37,7 @@ function LoginPage() {
     return (
         <div>
             <h1>anybody home?</h1>
-            <p>{res ? JSON.stringify(res) : 'Loading...'}</p>
+            <p>{res ? `returned code ${JSON.stringify(res)}` : 'Loading...'}</p>
         </div>
     );
 
