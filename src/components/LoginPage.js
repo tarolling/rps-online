@@ -42,17 +42,16 @@ function LoginPage() {
         return () => subscription.unsubscribe()
     }, [])
 
-    if (!session) {
-        return (<Auth
-            supabaseClient={supabase}
-            appearance={{ theme: ThemeSupa }}
-            theme="dark"
-            providers={['discord']}
-        />)
-    }
-    else {
-        return (<Dashboard onNavigate={navigate} />)
-    }
+    return (
+        <div className="container" style={{ padding: '50px 0 100px 0' }}>
+            {!session ? <Auth
+                supabaseClient={supabase}
+                appearance={{ theme: ThemeSupa }}
+                theme="dark"
+                providers={['discord']}
+            /> : <Dashboard session={session} onNavigate={navigate} />}
+        </div>
+    )
 }
 
 export default LoginPage;
