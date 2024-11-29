@@ -5,7 +5,7 @@ export default async function handler(req, res) {
         return res.status(405).json({ error: 'Method not allowed' });
     }
 
-    const { id } = req.body;
+    const { id, username } = req.body;
 
     let driver, session;
     try {
@@ -23,7 +23,7 @@ export default async function handler(req, res) {
 
     try {
         session = driver.session({ database: 'neo4j' })
-        const username = await session.executeWrite(async tx => {
+        const write = await session.executeWrite(async tx => {
             let result = await tx.run(`
             MERGE (p:Player {id: $id, username: $username})
             ON CREATE
@@ -32,7 +32,7 @@ export default async function handler(req, res) {
             ON MATCH
                 SET p.lastSeen = timestamp()
             RETURN p.username AS username
-            `, { id: id, username: "TEST" }
+            `, { id: id, username: username }
             )
 
             if (!result || result.records.length === 0) {
@@ -41,8 +41,8 @@ export default async function handler(req, res) {
             return result.records[0].get('username')
         });
 
-        console.log(`User ${username} added!`);
-        res.status(200).json({ username });
+        console.log(`User ${write} added!`);
+        res.status(200).json({ username: write });
     } catch (err) {
         console.error('Error executing query:', err);
         res.status(500).json({ error: 'Failed to process player.' });
