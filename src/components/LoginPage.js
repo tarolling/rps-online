@@ -23,11 +23,11 @@ function LoginPage() {
             });
         };
         fetchUser();
+        console.log(`res before: ${res}`)
+        res = res.json()
+        console.log(`res after: ${res}`)
     });
 
-    console.log(`res before: ${res}`)
-    res = res.json()
-    console.log(`res after: ${res}`)
 
     return (
         <div>
