@@ -1,7 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router';
 import LoginPage from './components/LoginPage';
-import RegisterPage from './components/RegisterPage';
 import Dashboard from './components/Dashboard';
 import GamePage from './components/GamePage';
 import LeaderboardPage from './components/LeaderboardPage';
@@ -13,7 +12,6 @@ function App() {
       <Routes>
         <Route path="/" element={<LoginPage />} />
         <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/game" element={<GamePage />} />
         <Route path="/leaderboard" element={<LeaderboardPage />} />

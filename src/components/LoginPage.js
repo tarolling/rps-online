@@ -1,84 +1,60 @@
 import React, { useEffect, useState } from 'react';
 import { Auth } from '@supabase/auth-ui-react';
-import { ThemeSupa } from '@supabase/auth-ui-shared'
+import { ThemeSupa } from '@supabase/auth-ui-shared';
 import Dashboard from './Dashboard';
 import { useNavigate } from 'react-router';
 import { createClient } from '@supabase/supabase-js';
 
-let supabaseUrl = process.env.REACT_APP_DB_AUTH_SUPABASE_URL;
-let supabaseAnonKey = process.env.REACT_APP_DB_AUTH_SUPABASE_ANON_KEY;
-
-if (!supabaseUrl) { // annoying check for dev or vercel env
-    supabaseUrl = process.env.DB_AUTH_SUPABASE_URL;
-    supabaseAnonKey = process.env.DB_AUTH_SUPABASE_ANON_KEY;
-}
-
-console.log(`react_app supa url: ${process.env.REACT_APP_DB_AUTH_SUPABASE_URL}`)
-console.log(`react_app supa anon key: ${process.env.REACT_APP_DB_AUTH_SUPABASE_ANON_KEY}`)
-console.log(`vercel supa url: ${process.env.DB_AUTH_SUPABASE_URL}`)
-console.log(`vercel supa anon key: ${process.env.DB_AUTH_SUPABASE_ANON_KEY}`)
-console.log(`what is even here: ${Object.keys(process.env)}`)
+const supabaseUrl = process.env.REACT_APP_SUPABASE_URL;
+const supabaseAnonKey = process.env.REACT_APP_SUPABASE_ANON_KEY;
 
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 function LoginPage() {
     const navigate = useNavigate();
     const [session, setSession] = useState(null)
-    // const [email, setEmail] = useState('');
-    // const [password, setPassword] = useState('');
-
-
-    // const handleLogin = () => {
-    //     // mock login logic (replace with backend authentication)
-    //     console.log(`user logged in: ${email}`);
-    //     navigate('/dashboard');
-    // };
 
     useEffect(() => {
-        supabase.auth.getSession().then(({ data: { session } }) => {
-            setSession(session)
-        })
+        const fetchUser = async () => {
+            const { data: { user }, error } = await supabase.auth.getUser();
+            if (user) {
+                setSession(user);
+            } else if (error) {
+                console.error(`Error fetching user: ${error}`);
+            }
+        };
+        fetchUser();
 
         const {
             data: { subscription },
-        } = supabase.auth.onAuthStateChange((_event, session) => {
-            setSession(session)
-        })
+        } = supabase.auth.onAuthStateChange(async (_event, _session) => {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                setSession(user);
+                await fetch('/api/initPlayer', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ userId: user.id, email: user.email }),
+                });
+            }
+        });
 
         return () => subscription.unsubscribe()
     }, [])
 
     if (!session) {
-        return (<Auth supabaseClient={supabase} appearance={{ theme: ThemeSupa }} />)
+        return (<Auth
+            supabaseClient={supabase}
+            appearance={{ theme: ThemeSupa }}
+            theme="dark"
+            providers={['discord']}
+        />)
     }
     else {
         return (<Dashboard onNavigate={navigate} />)
     }
-
-    // return (
-    //     <div className="container">
-    //         <div className="card">
-    //             <Logo />
-    //             <h2>Login</h2>
-    //             <input
-    //                 type="email"
-    //                 placeholder="Email"
-    //                 value={email}
-    //                 onChange={(e) => setEmail(e.target.value)}
-    //             />
-    //             <input
-    //                 type="password"
-    //                 placeholder="Password"
-    //                 value={password}
-    //                 onChange={(e) => setPassword(e.target.value)}
-    //             />
-    //             <button onClick={handleLogin}>Login</button>
-    //             <button onClick={() => navigate('/register')} style={{ marginTop: '10px' }}>
-    //                 Register
-    //             </button>
-    //         </div>
-    //     </div>
-    // );
 }
 
 export default LoginPage;
