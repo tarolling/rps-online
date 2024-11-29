@@ -16,11 +16,9 @@ function LoginPage() {
 
     useEffect(() => {
         const fetchUser = async () => {
-            const { data: { user }, error } = await supabase.auth.getUser();
+            const { data: { user } } = await supabase.auth.getUser();
             if (user) {
                 setSession(user);
-            } else if (error) {
-                console.error(`Error fetching user: ${error}`);
             }
         };
         fetchUser();
@@ -32,7 +30,7 @@ function LoginPage() {
             if (user) {
                 setSession(user);
                 await fetch('/api/initPlayer', {
-                    method: 'GET',
+                    method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
