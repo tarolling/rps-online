@@ -9,30 +9,39 @@ const supabaseUrl = process.env.REACT_APP_SUPABASE_URL;
 const supabaseAnonKey = process.env.REACT_APP_SUPABASE_ANON_KEY;
 
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
-let res = null;
 
 function LoginPage() {
+    const [res, setRes] = useState(null);
+
     useEffect(() => {
+
         const fetchUser = async () => {
-            res = await fetch('/api/initPlayer', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ userId: '1', email: '2' }),
-            });
+            try {
+                const response = await fetch('/api/initPlayer', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ userId: '1', email: '2' }),
+                });
+
+                const data = await response.json()
+                console.log(`WHAT IS DATA: ${data}`)
+                setRes(data);
+                console.log(`did it set it? ${res}`)
+            } catch (error) {
+                console.error('Error calling vercel function:', error);
+            }
         };
+
         fetchUser();
-        console.log(`res before: ${res}`)
-        res = res.json()
-        console.log(`res after: ${res}`)
-    });
+    }, []);
 
 
     return (
         <div>
             <h1>anybody home?</h1>
-            <p>{res}</p>
+            <p>{res ? JSON.stringify(res) : 'Loading...'}</p>
         </div>
     );
 
