@@ -1,4 +1,9 @@
 {
+  "name": "ranked-rps",
+  "author": {
+    "name": "tarolling"
+  },
+  "displayName": "Ranked RPS Online",
   "private": true,
   "dependencies": {
     "@supabase/auth-ui-react": "^0.4.7",
