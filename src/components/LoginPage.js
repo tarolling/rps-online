@@ -49,6 +49,7 @@ function LoginPage() {
                 appearance={{ theme: ThemeSupa }}
                 theme="dark"
                 providers={['discord']}
+                redirectTo={process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : 'https://ranked-rps.vercel.app/'}
             /> : <Dashboard session={session} onNavigate={navigate} />}
         </div>
     )
