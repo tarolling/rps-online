@@ -22,8 +22,12 @@ function LoginPage() {
                 body: JSON.stringify({ userId: '1', email: '2' }),
             });
         };
-        fetchUser().then(() => res = res.json());
+        fetchUser();
     });
+
+    console.log(`res before: ${res}`)
+    res = res.json()
+    console.log(`res after: ${res}`)
 
     return (
         <div>
