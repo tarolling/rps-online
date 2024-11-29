@@ -1,3 +1,3 @@
 # Ranked RPS Online
 
-View it here: <https://rps-online-three.vercel.app/>
+View it here: <https://ranked-rps.vercel.app/>
