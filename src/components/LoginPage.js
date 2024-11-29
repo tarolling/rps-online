@@ -1,35 +1,58 @@
-import React, { useState } from 'react';
-import Logo from './Logo';
+import React, { useEffect, useState } from 'react';
+import { Auth } from '@supabase/auth-ui-react';
+import { ThemeSupa } from '@supabase/auth-ui-shared';
+import Dashboard from './Dashboard';
+import { useNavigate } from 'react-router';
+import { createClient } from '@supabase/supabase-js';
 
-function LoginPage({ onLogin }) {
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
+const supabaseUrl = process.env.REACT_APP_SUPABASE_URL;
+const supabaseAnonKey = process.env.REACT_APP_SUPABASE_ANON_KEY;
 
-    const handleLogin = () => {
-        onLogin(email); // Mock login action
-    };
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+function LoginPage() {
+    const navigate = useNavigate();
+    const [session, setSession] = useState(null)
+
+    useEffect(() => {
+        const fetchUser = async () => {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                setSession(user);
+            }
+        };
+        fetchUser();
+
+        const {
+            data: { subscription },
+        } = supabase.auth.onAuthStateChange(async (_event, _session) => {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                setSession(user);
+                await fetch('/api/initPlayer', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ userId: user.id, email: user.email }),
+                });
+            }
+        });
+
+        return () => subscription.unsubscribe()
+    }, [])
 
     return (
-        <div className="container">
-            <div className="card">
-                <Logo />
-                <h2>Login</h2>
-                <input
-                    type="email"
-                    placeholder="Email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                />
-                <input
-                    type="password"
-                    placeholder="Password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                />
-                <button onClick={handleLogin}>Login</button>
-            </div>
+        <div className="container" style={{ padding: '50px 0 100px 0' }}>
+            {!session ? <Auth
+                supabaseClient={supabase}
+                appearance={{ theme: ThemeSupa }}
+                theme="dark"
+                providers={['discord']}
+                redirectTo={process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : 'https://ranked-rps.vercel.app/'}
+            /> : <Dashboard session={session} onNavigate={navigate} />}
         </div>
-    );
+    )
 }
 
 export default LoginPage;

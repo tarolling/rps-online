@@ -1,36 +1,24 @@
-import React, { useState } from 'react';
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router';
 import LoginPage from './components/LoginPage';
 import Dashboard from './components/Dashboard';
 import GamePage from './components/GamePage';
-// import FriendsPage from './components/FriendsPage';
-// import LeaderboardPage from './components/LeaderboardPage';
+import LeaderboardPage from './components/LeaderboardPage';
+import FriendsPage from './components/FriendsPage';
 
 function App() {
-  const [user, setUser] = useState(null);
-  const [page, setPage] = useState('login');
-
-  const handleLogin = (email) => {
-    setUser({ email }); // Mock user
-    setPage('dashboard');
-  };
-
-  const renderPage = () => {
-    if (!user) return <LoginPage onLogin={handleLogin} />;
-    switch (page) {
-      case 'dashboard':
-        return <Dashboard onNavigate={setPage} />;
-      case 'game':
-        return <GamePage />;
-      // case 'leaderboard':
-      //   return <LeaderboardPage />;
-      // case 'friends':
-      //   return <FriendsPage />;
-      default:
-        return <Dashboard onNavigate={setPage} />;
-    }
-  };
-
-  return <div>{renderPage()}</div>;
+  return (
+    <Router>
+      <Routes>
+        <Route path="/" element={<LoginPage />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/game" element={<GamePage />} />
+        <Route path="/leaderboard" element={<LeaderboardPage />} />
+        <Route path="/friends" element={<FriendsPage />} />
+      </Routes>
+    </Router>
+  );
 }
 
 export default App;

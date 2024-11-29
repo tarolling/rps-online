@@ -1,8 +1,7 @@
-// src/components/Dashboard.js
 import React from 'react';
 import Logo from './Logo';
 
-function Dashboard({ onNavigate }) {
+function Dashboard({ session, onNavigate }) {
     return (
         <div className="container">
             <div className="card">

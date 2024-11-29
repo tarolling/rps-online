@@ -1,4 +1,3 @@
-// src/components/GamePage.js
 import React, { useState } from 'react';
 
 function GamePage() {
