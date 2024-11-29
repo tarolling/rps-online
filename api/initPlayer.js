@@ -27,8 +27,8 @@ export default async function handler(req, res) {
             let result = await tx.run(`
             MERGE (p:Player {id: $id, username: $username})
             ON CREATE
-                SET p.created = timestamp()
-                SET p.lastSeen = timestamp()
+                SET p.created = timestamp(),
+                    p.lastSeen = timestamp()
             ON MATCH
                 SET p.lastSeen = timestamp()
             RETURN p.username AS username
