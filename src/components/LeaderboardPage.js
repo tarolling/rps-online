@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 
-async function LeaderboardPage() {
+function LeaderboardPage() {
     const [playerData, setPlayerData] = useState(null);
 
     useEffect(() => {
