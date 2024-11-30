@@ -24,15 +24,19 @@ export default async function handler(req, res) {
         const leaderboard = await session.executeRead(async tx => {
             let result = await tx.run(`
             MATCH (p:Player)
-            RETURN p
-            ORDER BY p.rating
+            RETURN p.username AS username, p.rating AS rating
+            ORDER BY p.rating DESC
             LIMIT 100
             `)
 
             if (!result || result.records.length === 0) {
                 throw new Error('Unable to fetch players.');
             }
-            return result.records.map((val, index) => ({ username: val.get("username"), rating: val.get("rating") ?? 0 }))
+
+            return result.records.map((record) => ({
+                username: record.get("username"),
+                rating: record.get("rating") ?? 0,
+            }));
         });
 
         res.status(200).json(leaderboard);
