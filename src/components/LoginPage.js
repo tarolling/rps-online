@@ -71,6 +71,7 @@ function LoginPage() {
     const handleRegister = async () => {
         const validationErrors = validateRegistration();
         if (Object.keys(validationErrors).length > 0) {
+            console.log(`what be the errors: ${Object.values(validationErrors)}`)
             setErrors(validationErrors);
             return;
         }
