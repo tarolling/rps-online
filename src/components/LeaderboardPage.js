@@ -12,12 +12,14 @@ function LeaderboardPage() {
                         'Content-Type': 'application/json',
                     },
                 });
+                console.log(`RESPONSE: ${response}`);
 
                 if (!response.ok) {
                     throw new Error(`Failed to fetch leaderboard: ${response.statusText}`);
                 }
 
                 const data = await data.json()
+                console.log(`bruh what ${data}`)
                 setPlayerData(data)
             } catch (error) {
                 console.error(error);
