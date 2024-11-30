@@ -40,14 +40,14 @@ async function LeaderboardPage() {
                     <thead>
                         <tr>
                             <th>Username</th>
-                            <th>Score</th>
+                            <th>Rating</th>
                         </tr>
                     </thead>
                     <tbody>
                         {playerData.map((player, index) => (
                             <tr key={index}>
                                 <td>{player.username}</td>
-                                <td>{player.score}</td>
+                                <td>{player.rating}</td>
                             </tr>
                         ))}
                     </tbody>

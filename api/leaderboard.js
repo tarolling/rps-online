@@ -32,7 +32,7 @@ export default async function handler(req, res) {
             if (!result || result.records.length === 0) {
                 throw new Error('Unable to fetch players.');
             }
-            return result.records
+            return result.records.map((val, index) => ({ username: val.get("username"), rating: val.get("rating") ?? 0 }))
         });
 
         res.status(200).json(leaderboard);
