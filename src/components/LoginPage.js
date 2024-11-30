@@ -36,13 +36,13 @@ function LoginPage() {
         if (isRegistering && username.length < 3) {
             newErrors.username = 'Username must be at least 3 characters.';
         } else if (isRegistering) {
-            const usernameData = supabase
-                .from('profiles')
-                .select('username')
-                .eq('username', username)
-                .limit(1);
-
-            if (usernameData) {
+            try {
+                await supabase
+                    .from('profiles')
+                    .select('username')
+                    .eq('username', username)
+                    .limit(1);
+            } catch {
                 newErrors.username = 'Username is already taken.';
             }
         }
@@ -66,6 +66,7 @@ function LoginPage() {
     const handleRegister = async () => {
         const validationErrors = validateRegistration();
         if (Object.keys(validationErrors).length > 0) {
+            console.log(`what be the errors: ${Object.values(validationErrors)}`)
             setErrors(validationErrors);
             return;
         }
