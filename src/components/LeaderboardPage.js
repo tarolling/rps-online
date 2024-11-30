@@ -1,32 +1,29 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 async function LeaderboardPage() {
-    const hello = await fetch('/api/leaderboard', {
-        method: 'GET',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-    });
+    const [playerData, setPlayerData] = useState(null);
 
-    console.log(`hello response: ${hello}`)
+    useEffect(async () => {
+        let data = await fetch('/api/leaderboard', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
 
-    // const [players, setPlayers] = useState('');
+        data = await data.json()
+        let players = [];
+        for (const player of data) {
+            players.push(`<tr><th>${player.username}</th></tr>`);
+        }
 
-    // const refresh = async () => {
-    //     let temp = await fetch('/api/leaderboard', {
-    //         method: 'GET',
-    //         headers: {
-    //             'Content-Type': 'application/json',
-    //         },
-    //     });
-    //     setPlayers(temp);
-    // };
+        setPlayerData(players.join(''))
+    }, []);
 
     return (
         <div>
-            <h1>leaderboard in progress...</h1>
-            {/* <button onClick={refresh()}>click me</button>
-            {players && <p>You chose: {players}</p>} */}
+            <h1>Top 100 Players</h1>
+            <table>{playerData ?? "Loading leaderboard..."}</table>
         </div>
     )
 }

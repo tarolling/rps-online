@@ -70,7 +70,7 @@ function LoginPage() {
             });
             if (error) throw error;
 
-            setSuccess('Registration successful! Please check your email for confirmation.');
+            setSuccess('Registration successful!');
             setIsRegistering(false);
         } catch (err) {
             setErrors({ general: err.message });
@@ -95,11 +95,24 @@ function LoginPage() {
             if (response.status !== 200) {
                 throw new Error("Something went wrong...");
             }
-            navigate('/dashboard');
+            navigate('/home');
         } catch (err) {
             setErrors({ general: 'Invalid email or password.' });
         }
     };
+
+    // const handleDiscordLogin = async () => {
+    //     try {
+    //         const { data, error } = await supabase.auth.signInWithOAuth({
+    //             provider: 'discord',
+    //             options: {
+    //                 redirectTo: "/home"
+    //             }
+    //         })
+    //     } catch (err) {
+    //         console.error(err);
+    //     }
+    // };
 
     return (
         <div style={{ maxWidth: '400px', margin: 'auto', padding: '20px' }}>
@@ -179,6 +192,7 @@ function LoginPage() {
             <button onClick={() => setIsRegistering(!isRegistering)}>
                 {isRegistering ? 'Switch to Login' : 'Switch to Register'}
             </button>
+            {/* <button onClick={handleDiscordLogin}>Login with Discord</button> */}
         </div>
     );
 }

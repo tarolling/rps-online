@@ -1,7 +1,7 @@
 import React from 'react';
 import Logo from './Logo';
 
-function Dashboard({ session, onNavigate }) {
+function HomePage({ session, onNavigate }) {
     return (
         <div className="container">
             <div className="card">
@@ -15,4 +15,4 @@ function Dashboard({ session, onNavigate }) {
     );
 }
 
-export default Dashboard;
+export default HomePage;
