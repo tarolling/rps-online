@@ -3,29 +3,58 @@ import React, { useEffect, useState } from 'react';
 async function LeaderboardPage() {
     const [playerData, setPlayerData] = useState(null);
 
-    useEffect(async () => {
-        let data = await fetch('/api/leaderboard', {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-        });
+    useEffect(() => {
+        const fetchLeaderboard = async () => {
+            try {
+                const response = await fetch('/api/leaderboard', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                });
 
-        data = await data.json()
-        let players = [];
-        for (const player of data) {
-            players.push(`<tr><th>${player.username}</th></tr>`);
-        }
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch leaderboard: ${response.statusText}`);
+                }
 
-        setPlayerData(players.join(''))
+                const data = await data.json()
+                setPlayerData(data)
+            } catch (error) {
+                console.error(error);
+                setPlayerData([]);
+            }
+        };
+
+        fetchLeaderboard();
     }, []);
 
     return (
-        <div>
+        <div style={{ padding: '20px' }}>
             <h1>Top 100 Players</h1>
-            <table>{playerData ?? "Loading leaderboard..."}</table>
+            {playerData === null ? (
+                <p>Loading leaderboard...</p>
+            ) : playerData.length === 0 ? (
+                <p>No data available.</p>
+            ) : (
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Username</th>
+                            <th>Score</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {playerData.map((player, index) => (
+                            <tr key={index}>
+                                <td>{player.username}</td>
+                                <td>{player.score}</td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            )}
         </div>
-    )
+    );
 }
 
 export default LeaderboardPage;
