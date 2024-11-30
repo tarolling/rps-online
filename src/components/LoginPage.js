@@ -29,12 +29,27 @@ function LoginPage() {
         setSuccess(null);
     };
 
-    const validateRegistration = () => {
+    const validateRegistration = async () => {
         const { username, email, password, confirmPassword } = formData;
         const newErrors = {};
 
         if (isRegistering && username.length < 3) {
             newErrors.username = 'Username must be at least 3 characters.';
+        } else if (isRegistering) {
+            // Check if username is already taken
+            const { data: existingUser, error } = await supabase
+                .from('profiles')
+                .select('username')
+                .eq('username', username)
+                .single();
+
+            if (existingUser) {
+                newErrors.username = 'Username is already taken.';
+            }
+            if (error && error.code !== 'PGRST116') {
+                // Ignore "no rows found" error (PGRST116 means no rows match)
+                newErrors.username = 'Error checking username availability.';
+            }
         }
 
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -61,7 +76,7 @@ function LoginPage() {
         }
 
         try {
-            const { error } = await supabase.auth.signUp({
+            const { error, user } = await supabase.auth.signUp({
                 email: formData.email,
                 password: formData.password,
                 options: {
@@ -69,6 +84,11 @@ function LoginPage() {
                 },
             });
             if (error) throw error;
+
+            await supabase.from('profiles').insert({
+                id: user.id,
+                username: formData.username,
+            });
 
             setSuccess('Registration successful!');
             setIsRegistering(false);
