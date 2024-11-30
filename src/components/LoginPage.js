@@ -36,22 +36,14 @@ function LoginPage() {
         if (isRegistering && username.length < 3) {
             newErrors.username = 'Username must be at least 3 characters.';
         } else if (isRegistering) {
-            const data = supabase
+            const usernameData = supabase
                 .from('profiles')
                 .select('username')
                 .eq('username', username)
                 .limit(1);
 
-            if (data) {
-                const { data: existingUser, error } = data[0];
-
-                if (existingUser) {
-                    newErrors.username = 'Username is already taken.';
-                }
-                if (error && error.code !== 'PGRST116') {
-                    // Ignore "no rows found" error (PGRST116 means no rows match)
-                    newErrors.username = 'Error checking username availability.';
-                }
+            if (usernameData) {
+                newErrors.username = 'Username is already taken.';
             }
         }
 
@@ -74,7 +66,6 @@ function LoginPage() {
     const handleRegister = async () => {
         const validationErrors = validateRegistration();
         if (Object.keys(validationErrors).length > 0) {
-            console.log(`what be the errors: ${Object.values(validationErrors)}`)
             setErrors(validationErrors);
             return;
         }
