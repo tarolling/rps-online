@@ -1,18 +1,19 @@
 import React, { useState } from "react";
-import { signInWithEmailAndPassword } from "firebase/auth";
+import { createUserWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../api/firebase";
 
-function LoginPage() {
+function RegisterPage() {
+    const [username, setUsername] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
 
-    const handleLogin = async (e) => {
+    const handleRegister = async (e) => {
         e.preventDefault();
         setError("");
         try {
-            await signInWithEmailAndPassword(auth, email, password);
-            alert("Login successful!");
+            await createUserWithEmailAndPassword(auth, email, password);
+            alert("Registration successful!");
         } catch (err) {
             setError(err.message);
         }
@@ -20,8 +21,15 @@ function LoginPage() {
 
     return (
         <div className="container">
-            <h2>Login</h2>
-            <form onSubmit={handleLogin}>
+            <h2>Register</h2>
+            <form onSubmit={handleRegister}>
+                <input
+                    type="username"
+                    placeholder="Username"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    required
+                />
                 <input
                     type="email"
                     placeholder="Email"
@@ -36,11 +44,11 @@ function LoginPage() {
                     onChange={(e) => setPassword(e.target.value)}
                     required
                 />
-                <button type="submit">Login</button>
+                <button type="submit">Register</button>
             </form>
             {error && <p style={{ color: "red" }}>{error}</p>}
         </div>
     );
 }
 
-export default LoginPage;
+export default RegisterPage;
