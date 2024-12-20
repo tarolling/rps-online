@@ -19,11 +19,14 @@ function RegisterPage() {
                 },
                 body: JSON.stringify({ username: username })
             });
-            if (response.status !== 200) {
+
+            if (!response.ok) {
                 throw new Error("Unable to fetch usernames; try again later.");
             }
-            console.log(`RESPONSE BODY RECEIVED: ${response.body}`);
-            if (response.body["usernameExists"]) {
+
+            const data = await response.json();
+            console.log(`RESPONSE BODY RECEIVED: ${data}`);
+            if (data["usernameExists"]) {
                 throw new Error("Username already exists!");
             }
             await createUserWithEmailAndPassword(auth, email, password);
