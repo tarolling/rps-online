@@ -13,7 +13,7 @@ function RegisterPage() {
         setError("");
         try {
             const response = await fetch('/api/checkUsername', {
-                method: 'GET',
+                method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
