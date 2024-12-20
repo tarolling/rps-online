@@ -1,12 +1,14 @@
 import React, { useState } from "react";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../api/firebase";
+import { useNavigate } from "react-router";
 
 function RegisterPage() {
     const [username, setUsername] = useState("");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
+    const navigate = useNavigate();
 
     const handleRegister = async (e) => {
         e.preventDefault();
@@ -42,7 +44,7 @@ function RegisterPage() {
             if (!response.ok) {
                 throw new Error("Unable to update player in database.");
             }
-            alert("Registration successful!");
+            navigate("/dashboard");
         } catch (err) {
             setError(err.message);
         }

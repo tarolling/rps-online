@@ -6,6 +6,7 @@ import GamePage from './components/GamePage';
 import LeaderboardPage from './components/LeaderboardPage';
 import FriendsPage from './components/FriendsPage';
 import RegisterPage from './components/RegisterPage';
+import ProtectedRoute from './ProtectedRoute';
 
 function App() {
   return (
@@ -17,10 +18,38 @@ function App() {
         <Route path="/" element={<LoginPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
-        <Route path="/home" element={<HomePage />} />
-        <Route path="/game" element={<GamePage />} />
-        <Route path="/leaderboard" element={<LeaderboardPage />} />
-        <Route path="/friends" element={<FriendsPage />} />
+        <Route
+          path="/home"
+          element={
+            <ProtectedRoute>
+              <HomePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/game"
+          element={
+            <ProtectedRoute>
+              <GamePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/leaderboard"
+          element={
+            <ProtectedRoute>
+              <LeaderboardPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/friends"
+          element={
+            <ProtectedRoute>
+              <FriendsPage />
+            </ProtectedRoute>
+          }
+        />
       </Routes>
     </Router>
   );
