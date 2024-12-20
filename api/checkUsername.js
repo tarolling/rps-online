@@ -33,6 +33,8 @@ export default async function handler(req, res) {
             return result;
         });
 
+        console.log(`bro what ${read.records}`);
+
         if (read.records) {
             res.status(200).json({ usernameExists: true });
         } else {
