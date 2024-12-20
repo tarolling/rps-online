@@ -14,7 +14,7 @@ function LoginPage() {
         setError("");
         try {
             await signInWithEmailAndPassword(auth, email, password);
-            navigate('/dashboard');
+            navigate('/home');
         } catch (err) {
             setError(err.message);
         }
