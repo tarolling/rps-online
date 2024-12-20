@@ -1,10 +1,10 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Link } from 'react-router';
-import LoginPage from './components/LoginPage';
-import HomePage from './components/HomePage';
-import GamePage from './components/GamePage';
-import LeaderboardPage from './components/LeaderboardPage';
+import { Link, Route, BrowserRouter as Router, Routes } from 'react-router';
 import FriendsPage from './components/FriendsPage';
+import GamePage from './components/GamePage';
+import HomePage from './components/HomePage';
+import LeaderboardPage from './components/LeaderboardPage';
+import LoginPage from './components/LoginPage';
 import RegisterPage from './components/RegisterPage';
 import ProtectedRoute from './ProtectedRoute';
 

@@ -1,13 +1,13 @@
-import React from "react";
-import { Navigate } from "react-router-dom";
-import { auth } from "./firebase";
 import { useAuthState } from "react-firebase-hooks/auth";
+import { useNavigate } from "react-router";
+import { auth } from "./api/firebase";
 
 function ProtectedRoute({ children }) {
     const [user] = useAuthState(auth);
+    const navigate = useNavigate();
 
     if (!user) {
-        return <Navigate to="/login" />;
+        navigate("/login");
     }
 
     return children;
