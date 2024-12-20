@@ -33,7 +33,7 @@ export default async function handler(req, res) {
             return result;
         });
 
-        console.log(`what is this: ${read}`);
+        console.log(`what is this: ${Object.entries(read)}`);
 
         if (read) {
             res.status(200).json({ usernameExists: true });
