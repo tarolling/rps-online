@@ -22,6 +22,7 @@ function RegisterPage() {
             if (response.status !== 200) {
                 throw new Error("Unable to fetch usernames; try again later.");
             }
+            console.log(`RESPONSE BODY RECEIVED: ${response.body}`);
             if (response.body["usernameExists"]) {
                 throw new Error("Username already exists!");
             }
