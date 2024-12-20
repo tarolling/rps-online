@@ -25,7 +25,6 @@ function RegisterPage() {
             }
 
             const data = await response.json();
-            console.log(`RESPONSE BODY RECEIVED: ${Object.entries(data)}`);
             if (data["usernameExists"]) {
                 throw new Error("Username already exists!");
             }
