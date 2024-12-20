@@ -12,7 +12,7 @@ function RegisterPage() {
         e.preventDefault();
         setError("");
         try {
-            const response = await fetch('/api/checkUsername', {
+            let response = await fetch('/api/checkUsername', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -28,7 +28,20 @@ function RegisterPage() {
             if (data["usernameExists"]) {
                 throw new Error("Username already exists!");
             }
-            await createUserWithEmailAndPassword(auth, email, password);
+
+            const userInfo = await createUserWithEmailAndPassword(auth, email, password);
+
+            response = await fetch('/api/initPlayer', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ id: userInfo.user.uid, username: username })
+            });
+
+            if (!response.ok) {
+                throw new Error("Unable to update player in database.");
+            }
             alert("Registration successful!");
         } catch (err) {
             setError(err.message);
