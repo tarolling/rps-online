@@ -12,6 +12,19 @@ function RegisterPage() {
         e.preventDefault();
         setError("");
         try {
+            const response = await fetch('/api/checkUsername', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ username: username })
+            });
+            if (response.status !== 200) {
+                throw new Error("Unable to fetch usernames; try again later.");
+            }
+            if (response.body["usernameExists"]) {
+                throw new Error("Username already exists!");
+            }
             await createUserWithEmailAndPassword(auth, email, password);
             alert("Registration successful!");
         } catch (err) {
