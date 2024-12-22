@@ -18,7 +18,8 @@ function LeaderboardPage() {
                 }
 
                 const data = await response.json();
-                setPlayerData(data);
+                console.log(Object.entries(JSON.parse(data)));
+                setPlayerData(JSON.parse(data));
             } catch (error) {
                 console.error(error);
                 setPlayerData([]);
