@@ -13,7 +13,18 @@ function LoginPage() {
         e.preventDefault();
         setError("");
         try {
-            await signInWithEmailAndPassword(auth, email, password);
+            const userInfo = await signInWithEmailAndPassword(auth, email, password);
+            const response = await fetch('/api/initPlayer', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ uid: userInfo.user.uid })
+            });
+
+            if (!response.ok) {
+                throw new Error("Unable to update player in database.");
+            }
             navigate('/home');
         } catch (err) {
             setError(err.message);

@@ -17,7 +17,7 @@ function LeaderboardPage() {
                     throw new Error(`Failed to fetch leaderboard: ${response.statusText}`);
                 }
 
-                const data = await response.json()
+                const data = await response.json();
                 setPlayerData(data)
             } catch (error) {
                 console.error(error);
