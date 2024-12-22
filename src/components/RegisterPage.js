@@ -38,7 +38,7 @@ function RegisterPage() {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ id: userInfo.user.uid, username: username })
+                body: JSON.stringify({ uid: userInfo.user.uid, username: username })
             });
 
             if (!response.ok) {
