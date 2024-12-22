@@ -26,7 +26,7 @@ function Header() {
     const handleLogout = async () => {
         try {
             await signOut(auth);
-            navigate("/login");
+            navigate("/login", { replace: true });
         } catch (error) {
             console.error("Error signing out:", error);
         }

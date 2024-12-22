@@ -2,7 +2,7 @@ import React from 'react';
 import { Route, BrowserRouter as Router, Routes } from 'react-router';
 import './App.css';
 import FriendsPage from './components/FriendsPage';
-import GamePage from './components/GamePage';
+import MatchmakingPage from './components/MatchmakingPage';
 import HomePage from './components/HomePage';
 import LeaderboardPage from './components/LeaderboardPage';
 import LoginPage from './components/LoginPage';
@@ -24,10 +24,10 @@ function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route
-          path="/game"
+          path="/play"
           element={
             <ProtectedRoute>
-              <GamePage />
+              <MatchmakingPage />
             </ProtectedRoute>
           }
         />
