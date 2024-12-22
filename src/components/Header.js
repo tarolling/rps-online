@@ -7,8 +7,10 @@ import '../styles/Header.css';
 
 function Header() {
     const navigate = useNavigate();
-    const isLoggedIn = !!auth.currentUser;
-    const profilePicture = "../assets/logo.png";
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const [profilePicture, setProfilePicture] = useState("../assets/logo.png");
+
+    setIsLoggedIn(!!auth.currentUser);
 
     const handleLogout = async () => {
         try {
