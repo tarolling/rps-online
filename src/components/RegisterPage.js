@@ -44,7 +44,7 @@ function RegisterPage() {
             if (!response.ok) {
                 throw new Error("Unable to update player in database.");
             }
-            navigate("/home");
+            navigate("/");
         } catch (err) {
             setError(err.message);
         }
