@@ -1,4 +1,4 @@
-import { signOut } from 'firebase/auth';
+import { onAuthStateChanged, signOut } from 'firebase/auth';
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { auth } from "../api/firebase";
@@ -11,7 +11,16 @@ function Header() {
     const [profilePicture, setProfilePicture] = useState("../assets/logo.png");
 
     useEffect(() => {
-        setIsLoggedIn(!!auth.currentUser);
+        const unsubscribe = onAuthStateChanged(auth, (user) => {
+            if (user) {
+                setIsLoggedIn(true);
+                setProfilePicture("../assets/logo.png");
+            } else {
+                setIsLoggedIn(false);
+                setProfilePicture("../assets/logo.png");
+            }
+        });
+        return () => unsubscribe();
     }, []);
 
     const handleLogout = async () => {
