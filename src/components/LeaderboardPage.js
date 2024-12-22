@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import '../styles/leaderboard.css';
 
 function LeaderboardPage() {
     const [playerData, setPlayerData] = useState(null);

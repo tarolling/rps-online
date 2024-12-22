@@ -1,0 +1,62 @@
+/* Leaderboard table styles */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0;
+    font-size: 18px;
+    text-align: left;
+    background-color: #f9f9f9;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+/* Table header styles */
+table thead tr {
+    background-color: #0077cc;
+    color: #ffffff;
+    text-transform: uppercase;
+    font-weight: bold;
+}
+
+table thead th {
+    padding: 12px 15px;
+}
+
+/* Table body styles */
+table tbody tr {
+    border-bottom: 1px solid #dddddd;
+    transition: background-color 0.2s ease-in-out;
+}
+
+table tbody tr:nth-of-type(even) {
+    background-color: #f3f3f3;
+}
+
+table tbody tr:hover {
+    background-color: #eaeaea;
+}
+
+table tbody td {
+    padding: 12px 15px;
+}
+
+/* Center alignment for numbers */
+table tbody td:nth-child(2) {
+    text-align: center;
+}
+
+/* Responsive design for smaller screens */
+@media (max-width: 600px) {
+    table {
+        font-size: 16px;
+    }
+
+    table thead tr {
+        font-size: 14px;
+    }
+
+    table tbody td {
+        padding: 10px;
+    }
+}
