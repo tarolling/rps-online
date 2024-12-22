@@ -1,5 +1,5 @@
 import { signOut } from 'firebase/auth';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { auth } from "../api/firebase";
 import logo from '../assets/logo.png';
@@ -10,7 +10,9 @@ function Header() {
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [profilePicture, setProfilePicture] = useState("../assets/logo.png");
 
-    setIsLoggedIn(!!auth.currentUser);
+    useEffect(() => {
+        setIsLoggedIn(!!auth.currentUser);
+    }, []);
 
     const handleLogout = async () => {
         try {
