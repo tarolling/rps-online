@@ -15,11 +15,14 @@ function App() {
         <Link to="/register">Register</Link> | <Link to="/login">Login</Link>
       </nav>
       <Routes>
-        <Route path="/" element={
-          <ProtectedRoute>
-            <HomePage />
-          </ProtectedRoute>
-        } />
+        <Route
+          path="/"
+          element={
+            <ProtectedRoute>
+              <HomePage />
+            </ProtectedRoute>
+          }
+        />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route

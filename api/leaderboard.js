@@ -30,7 +30,7 @@ export default async function handler(req, res) {
             `)
 
             if (!result || result.records.length === 0) {
-                throw new Error('Unable to fetch players.');
+                return [];
             }
 
             return result.records.map((record) => ({
