@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import '../styles/leaderboard.css';
+import '../styles/LeaderboardPage.css';
 
 function LeaderboardPage() {
     const [playerData, setPlayerData] = useState(null);
@@ -19,8 +19,6 @@ function LeaderboardPage() {
                 }
 
                 response.json().then((data) => {
-                    console.log(`leaderboard data: ${JSON.stringify(Object.entries(data.leaderboardData))}`);
-                    console.log(`example player: ${JSON.stringify(data.leaderboardData[0])}`);
                     setPlayerData(data.leaderboardData);
                 });
             } catch (error) {

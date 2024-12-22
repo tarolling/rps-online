@@ -1,5 +1,6 @@
 import React from 'react';
-import { Link, Route, BrowserRouter as Router, Routes } from 'react-router';
+import { Route, BrowserRouter as Router, Routes } from 'react-router';
+import './App.css';
 import FriendsPage from './components/FriendsPage';
 import GamePage from './components/GamePage';
 import HomePage from './components/HomePage';
@@ -11,9 +12,6 @@ import ProtectedRoute from './ProtectedRoute';
 function App() {
   return (
     <Router>
-      <nav>
-        <Link to="/register">Register</Link> | <Link to="/login">Login</Link>
-      </nav>
       <Routes>
         <Route
           path="/"
