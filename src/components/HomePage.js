@@ -29,7 +29,7 @@ function HomePage() {
         }
 
         fetchPlayer();
-    }, []);
+    }, [userInfo]);
 
 
     return (

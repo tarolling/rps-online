@@ -5,6 +5,7 @@ export default async function handler(req, res) {
         return res.status(405).json({ error: 'Method not allowed' });
     }
 
+    console.log("we here!!!!!");
     const { uid } = req.body;
 
     let driver, session;
