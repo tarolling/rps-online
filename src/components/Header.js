@@ -20,7 +20,7 @@ function Header() {
     };
 
     return (
-        <header className="header">
+        <div className="header">
             <div className="header-logo">
                 <img src={logo} alt="RPS Logo" className="logo" />
             </div>
@@ -42,11 +42,11 @@ function Header() {
                 ) : (
                     <div className="auth-buttons">
                         <a href="/login" className="button">Login</a>
-                        <a href="/signup" className="button">Sign Up</a>
+                        <a href="/register" className="button">Register</a>
                     </div>
                 )}
             </div>
-        </header>
+        </div>
     );
 }
 

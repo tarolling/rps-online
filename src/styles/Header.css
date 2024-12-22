@@ -30,7 +30,7 @@
 }
 
 .nav-link:hover {
-    color: #0077cc;
+    color: #282c34;
 }
 
 /* User Section */
@@ -43,7 +43,7 @@
 /* Auth Buttons */
 .auth-buttons .button {
     text-decoration: none;
-    background-color: #0077cc;
+    background-color: #282c34;
     color: #ffffff;
     padding: 8px 15px;
     border-radius: 5px;
@@ -65,7 +65,7 @@
     width: 40px;
     border-radius: 50%;
     cursor: pointer;
-    border: 2px solid #0077cc;
+    border: 2px solid #282c34;
 }
 
 .dropdown-content {
