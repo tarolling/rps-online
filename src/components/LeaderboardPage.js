@@ -18,8 +18,8 @@ function LeaderboardPage() {
                 }
 
                 response.json().then((data) => {
-                    console.log(`leaderboard data: ${Object.entries(data.leaderboardData)}`);
-                    console.log(`example player: ${data.leaderboardData[0]}`);
+                    console.log(`leaderboard data: ${JSON.stringify(Object.entries(data.leaderboardData))}`);
+                    console.log(`example player: ${JSON.stringify(data.leaderboardData[0])}`);
                     setPlayerData(data.leaderboardData);
                 });
             } catch (error) {
