@@ -9,7 +9,7 @@ function HomePage() {
     const navigate = useNavigate();
     const [user] = useAuthState(auth);
     const [username, setUsername] = useState("");
-    console.log(`userInfo: ${JSON.stringify(user.toJSON())}`);
+    console.log(`userInfo: ${JSON.stringify(user)}`);
 
     useEffect(() => {
         const fetchPlayer = async () => {
