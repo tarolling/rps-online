@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { auth } from "../api/firebase";
 import logo from '../assets/logo.png';
+import '../index.css';
 import '../styles/Header.css';
 
 function Header() {

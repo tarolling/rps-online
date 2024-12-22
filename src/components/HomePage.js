@@ -1,42 +1,36 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
+import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "../api/firebase";
 import Header from './Header';
 import Logo from './Logo';
 
 function HomePage() {
     const navigate = useNavigate();
+    const [user] = useAuthState(auth);
     const [username, setUsername] = useState("");
-    const userInfo = auth.updateCurrentUser();
-    console.log(`userInfo: ${JSON.stringify(userInfo)}`);
+    console.log(`userInfo: ${JSON.stringify(user.toJSON())}`);
 
     useEffect(() => {
-        const unsubscribe = auth.onAuthStateChanged((user) => {
-            if (user) {
-                setUsername("");
-                const fetchPlayer = async () => {
-                    const response = await fetch('/api/fetchPlayer', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({ uid: userInfo.uid })
-                    });
+        const fetchPlayer = async () => {
+            const response = await fetch('/api/fetchPlayer', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ uid: user.uid })
+            });
 
-                    if (!response.ok) {
-                        throw new Error("Unable to update player in database.");
-                    }
-
-                    const data = await response.json();
-                    console.log(`player data: ${data}`);
-                    setUsername(data.username);
-                }
-
-                fetchPlayer();
+            if (!response.ok) {
+                throw new Error("Unable to update player in database.");
             }
-        });
 
-        return () => unsubscribe();
+            const data = await response.json();
+            console.log(`player data: ${data}`);
+            setUsername(data.username);
+        }
+
+        fetchPlayer();
     }, []);
 
 
