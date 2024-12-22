@@ -16,7 +16,7 @@ function HomePage() {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ uid: userInfo.user.uid })
+                body: JSON.stringify({ uid: userInfo.uid })
             });
 
             if (!response.ok) {
