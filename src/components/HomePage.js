@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router';
-import { Header } from './Header';
+import Header from './Header';
 import Logo from './Logo';
 
 function HomePage() {
