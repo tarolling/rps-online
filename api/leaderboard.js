@@ -35,7 +35,7 @@ export default async function handler(req, res) {
 
             return result.records.map((record) => ({
                 username: record.get("username"),
-                rating: record.get("rating"),
+                rating: neo4j.integer.toNumber(record.get("rating")),
             }));
         });
 
