@@ -1,34 +1,60 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
-async function LeaderboardPage() {
-    const hello = await fetch('/api/leaderboard', {
-        method: 'GET',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-    });
+function LeaderboardPage() {
+    const [playerData, setPlayerData] = useState(null);
 
-    console.log(`hello response: ${hello}`)
+    useEffect(() => {
+        const fetchLeaderboard = async () => {
+            try {
+                const response = await fetch('/api/leaderboard', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                });
 
-    // const [players, setPlayers] = useState('');
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch leaderboard: ${response.statusText}`);
+                }
 
-    // const refresh = async () => {
-    //     let temp = await fetch('/api/leaderboard', {
-    //         method: 'GET',
-    //         headers: {
-    //             'Content-Type': 'application/json',
-    //         },
-    //     });
-    //     setPlayers(temp);
-    // };
+                const data = await response.json()
+                setPlayerData(data)
+            } catch (error) {
+                console.error(error);
+                setPlayerData([]);
+            }
+        };
+
+        fetchLeaderboard();
+    }, []);
 
     return (
-        <div>
-            <h1>leaderboard in progress...</h1>
-            {/* <button onClick={refresh()}>click me</button>
-            {players && <p>You chose: {players}</p>} */}
+        <div style={{ padding: '20px' }}>
+            <h1>Top 100 Players</h1>
+            {playerData === null ? (
+                <p>Loading leaderboard...</p>
+            ) : playerData.length === 0 ? (
+                <p>No data available.</p>
+            ) : (
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Username</th>
+                            <th>Rating</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {playerData.map((player, index) => (
+                            <tr key={index}>
+                                <td>{player.username}</td>
+                                <td>{player.rating}</td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            )}
         </div>
-    )
+    );
 }
 
 export default LeaderboardPage;

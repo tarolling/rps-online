@@ -1,21 +1,55 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router';
-import LoginPage from './components/LoginPage';
-import Dashboard from './components/Dashboard';
-import GamePage from './components/GamePage';
-import LeaderboardPage from './components/LeaderboardPage';
+import { Link, Route, BrowserRouter as Router, Routes } from 'react-router';
 import FriendsPage from './components/FriendsPage';
+import GamePage from './components/GamePage';
+import HomePage from './components/HomePage';
+import LeaderboardPage from './components/LeaderboardPage';
+import LoginPage from './components/LoginPage';
+import RegisterPage from './components/RegisterPage';
+import ProtectedRoute from './ProtectedRoute';
 
 function App() {
   return (
     <Router>
+      <nav>
+        <Link to="/register">Register</Link> | <Link to="/login">Login</Link>
+      </nav>
       <Routes>
         <Route path="/" element={<LoginPage />} />
         <Route path="/login" element={<LoginPage />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/game" element={<GamePage />} />
-        <Route path="/leaderboard" element={<LeaderboardPage />} />
-        <Route path="/friends" element={<FriendsPage />} />
+        <Route path="/register" element={<RegisterPage />} />
+        <Route
+          path="/home"
+          element={
+            <ProtectedRoute>
+              <HomePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/game"
+          element={
+            <ProtectedRoute>
+              <GamePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/leaderboard"
+          element={
+            <ProtectedRoute>
+              <LeaderboardPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/friends"
+          element={
+            <ProtectedRoute>
+              <FriendsPage />
+            </ProtectedRoute>
+          }
+        />
       </Routes>
     </Router>
   );

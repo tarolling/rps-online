@@ -1,58 +1,48 @@
-import React, { useEffect, useState } from 'react';
-import { Auth } from '@supabase/auth-ui-react';
-import { ThemeSupa } from '@supabase/auth-ui-shared';
-import Dashboard from './Dashboard';
-import { useNavigate } from 'react-router';
-import { createClient } from '@supabase/supabase-js';
-
-const supabaseUrl = process.env.REACT_APP_SUPABASE_URL;
-const supabaseAnonKey = process.env.REACT_APP_SUPABASE_ANON_KEY;
-
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
+import React, { useState } from "react";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { auth } from "../api/firebase";
+import { useNavigate } from "react-router";
 
 function LoginPage() {
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const [error, setError] = useState("");
     const navigate = useNavigate();
-    const [session, setSession] = useState(null)
 
-    useEffect(() => {
-        const fetchUser = async () => {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (user) {
-                setSession(user);
-            }
-        };
-        fetchUser();
-
-        const {
-            data: { subscription },
-        } = supabase.auth.onAuthStateChange(async (_event, _session) => {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (user) {
-                setSession(user);
-                await fetch('/api/initPlayer', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ userId: user.id, email: user.email }),
-                });
-            }
-        });
-
-        return () => subscription.unsubscribe()
-    }, [])
+    const handleLogin = async (e) => {
+        e.preventDefault();
+        setError("");
+        try {
+            await signInWithEmailAndPassword(auth, email, password);
+            navigate('/home');
+        } catch (err) {
+            setError(err.message);
+        }
+    };
 
     return (
-        <div className="container" style={{ padding: '50px 0 100px 0' }}>
-            {!session ? <Auth
-                supabaseClient={supabase}
-                appearance={{ theme: ThemeSupa }}
-                theme="dark"
-                providers={['discord']}
-                redirectTo={process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : 'https://ranked-rps.vercel.app/'}
-            /> : <Dashboard session={session} onNavigate={navigate} />}
+        <div className="container">
+            <h2>Login</h2>
+            <form onSubmit={handleLogin}>
+                <input
+                    type="email"
+                    placeholder="Email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                />
+                <input
+                    type="password"
+                    placeholder="Password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                />
+                <button type="submit">Login</button>
+            </form>
+            {error && <p style={{ color: "red" }}>{error}</p>}
         </div>
-    )
+    );
 }
 
 export default LoginPage;
