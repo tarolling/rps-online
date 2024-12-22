@@ -33,6 +33,7 @@ export default async function handler(req, res) {
             if (result?.records.length === 0) {
                 throw new Error("No players with the specified user ID exists.");
             }
+            console.log(`RECORDS: ${JSON.stringify(result.records)}`);
 
             return result.records[0];
         });
