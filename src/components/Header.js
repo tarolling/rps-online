@@ -1,5 +1,5 @@
 import { signOut } from 'firebase/auth';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { auth } from "../api/firebase";
 import logo from '../assets/logo.png';
@@ -11,16 +11,17 @@ function Header() {
     const navigate = useNavigate();
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [profilePicture, setProfilePicture] = useState("../assets/logo.png");
-
     const { user } = useAuth();
 
-    if (user) {
-        setIsLoggedIn(true);
-        setProfilePicture("../assets/logo.png");
-    } else {
-        setIsLoggedIn(false);
-        setProfilePicture("../assets/logo.png");
-    }
+    useEffect(() => {
+        if (user) {
+            setIsLoggedIn(true);
+            setProfilePicture("../assets/logo.png");
+        } else {
+            setIsLoggedIn(false);
+            setProfilePicture("../assets/logo.png");
+        }
+    }, [user]);
 
     const handleLogout = async () => {
         try {

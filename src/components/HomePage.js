@@ -32,7 +32,6 @@ function HomePage() {
                 }
 
                 const data = await response.json();
-                console.log(`player data: ${data}`);
                 setUsername(data.username);
             } catch (err) {
                 console.error('Error fetching player:', err);
@@ -52,7 +51,7 @@ function HomePage() {
                 <div className="container">
                     <div className="card">
                         <Logo />
-                        <p>Loading...</p>
+                        <p>Loading data...</p>
                     </div>
                 </div>
             </div>
