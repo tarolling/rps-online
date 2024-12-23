@@ -1,16 +1,30 @@
+import { getDatabase, onValue, ref, remove } from 'firebase/database';
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { useAuth } from '../Auth';
-import { onValue, ref, getDatabase } from 'firebase/database';
+import '../styles/MatchmakingPage.css';
+import { findMatch } from '../utils/matchmaking';
+import Header from './Header';
 
 function MatchmakingPage() {
     const { user } = useAuth();
     const navigate = useNavigate();
     const [matchStatus, setMatchStatus] = useState('idle');
+    const [queueCount, setQueueCount] = useState(0);
     const db = getDatabase();
 
     useEffect(() => {
-        if (matchStatus === 'queueing') {
+        const queueRef = ref(db, 'matchmaking_queue');
+        const unsubscribeQueueCount = onValue(queueRef, (snapshot) => {
+            const queueData = snapshot.val() || {};
+            setQueueCount(Object.keys(queueData).length);
+        });
+
+        return () => unsubscribeQueueCount();
+    }, [db]);
+
+    useEffect(() => {
+        if (matchStatus === 'searching') {
             const queueRef = ref(db, `matchmaking_queue/${user.uid}`);
             const gamesRef = ref(db, 'games');
 
@@ -31,56 +45,96 @@ function MatchmakingPage() {
 
             return () => unsubscribeQueue();
         }
-    }, [matchStatus, user.uid, navigate]);
+    }, [matchStatus, user.uid, navigate, db]);
 
     const handleFindMatch = async () => {
         setMatchStatus('searching');
         try {
             const result = await findMatch(user.uid, user.rating || 500);
             if (result?.gameId) {
+                setMatchStatus('matched');
                 navigate(`/game/${result.gameId}`);
             } else {
-                setMatchStatus('queueing');
+                setMatchStatus('searching');
             }
-            // const response = await fetch('/api/matchmaking', {
-            //     method: 'POST',
-            //     headers: {
-            //         'Content-Type': 'application/json',
-            //     },
-            //     body: JSON.stringify({
-            //         playerId: userId,
-            //         playerRating: userRating,
-            //     }),
-            // });
-
-            // const data = await response.json();
-
-            // if (data.opponent) {
-            //     setMatchStatus('matched');
-            //     setOpponent(data.opponent);
-            // } else {
-            //     setMatchStatus('queueing');
-            // }
         } catch (err) {
+            await remove(ref(db, `matchmaking_queue/${user.uid}`));
             console.error('Error:', err);
             setMatchStatus('error');
         }
     };
 
+    const handleCancel = async () => {
+        await remove(ref(db, `matchmaking_queue/${user.uid}`));
+        setMatchStatus('idle');
+    };
+
+    const renderLoadingSpinner = () => (
+        <div className="loading-spinner">
+            <div className="spinner"></div>
+        </div>
+    );
+
+    const renderQueueCount = () => (
+        <div className="queue-counter">
+            <p className="queue-text">
+                Players in queue: <span className="queue-number">{queueCount}</span>
+            </p>
+        </div>
+    );
+
     return (
         <div>
-            {matchStatus === 'idle' && (
-                <button onClick={handleFindMatch}>Find Match</button>
-            )}
-            {matchStatus === 'searching' && <p>Searching for a match...</p>}
-            {matchStatus === 'queueing' && <p>Still in queue. Waiting for an opponent...</p>}
-            {matchStatus === 'matched' && opponent && (
-                <div>
-                    <p>Match Found!</p>
-                    <p>Opponent: {opponent.username}</p>
+            <Header />
+            <div className="matchmaking-container">
+                <div className="matchmaking-card">
+                    <h2 className="matchmaking-title">Matchmaking</h2>
+
+                    {renderQueueCount()}
+
+                    {matchStatus === 'idle' && (
+                        <button
+                            className="find-match-button"
+                            onClick={handleFindMatch}
+                        >
+                            Find Match
+                        </button>
+                    )}
+
+                    {matchStatus === 'searching' && (
+                        <div className="status-container">
+                            {renderLoadingSpinner()}
+                            <p className="status-text">Searching for a match...</p>
+                            <button
+                                className="cancel-button"
+                                onClick={handleCancel}
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    )}
+
+                    {matchStatus === 'matched' && (
+                        <div className="matched-container">
+                            <div className="success-icon">✓</div>
+                            <p className="match-found-text">Match Found!</p>
+                            <p className="opponent-text">Joining...</p>
+                        </div>
+                    )}
+
+                    {matchStatus === 'error' && (
+                        <div className="error-container">
+                            <p className="error-text">Error finding match. Please try again.</p>
+                            <button
+                                className="retry-button"
+                                onClick={handleFindMatch}
+                            >
+                                Retry
+                            </button>
+                        </div>
+                    )}
                 </div>
-            )}
-            {matchStatus === 'error' && <p>Error finding match. Please try again.</p>}
+            </div>
         </div>
     );
 }

@@ -54,7 +54,7 @@ export const findMatch = async (userId, userRating) => {
     return null;
 };
 
-const resolveRound = async (gameId) => {
+export const resolveRound = async (gameId) => {
     const gameRef = ref(db, `games/${gameId}`);
     const game = (await get(gameRef)).val();
 

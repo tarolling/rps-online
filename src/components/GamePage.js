@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { getDatabase, ref, update, onValue } from 'firebase/database';
 import { GameStates, Choices } from '../types/gameTypes';
 import '../styles/GamePage.css';
+import { resolveRound } from '../utils/matchmaking';
 
 
 const GamePage = ({ gameId, playerId }) => {
