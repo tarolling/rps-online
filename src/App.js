@@ -4,6 +4,7 @@ import './App.css';
 import { AuthProvider, ProtectedRoute } from './Auth';
 import DashboardPage from './components/DashboardPage';
 import FriendsPage from './components/FriendsPage';
+import GamePage from './components/GamePage';
 import LeaderboardPage from './components/LeaderboardPage';
 import LoginPage from './components/LoginPage';
 import MatchmakingPage from './components/MatchmakingPage';
@@ -48,6 +49,8 @@ function App() {
               </ProtectedRoute>
             }
           />
+          <Route path="/play" element={<ProtectedRoute><MatchmakingPage /></ProtectedRoute>} />
+          <Route path="/game/:gameId" element={<ProtectedRoute><GamePage /></ProtectedRoute>} />
         </Routes>
       </Router>
     </AuthProvider>

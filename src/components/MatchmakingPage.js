@@ -1,33 +1,68 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router';
+import { useAuth } from '../Auth';
+import { onValue, ref, getDatabase } from 'firebase/database';
 
-function MatchmakingPage({ userId, userRating }) {
+function MatchmakingPage() {
+    const { user } = useAuth();
+    const navigate = useNavigate();
     const [matchStatus, setMatchStatus] = useState('idle');
-    const [opponent, setOpponent] = useState(null);
+    const db = getDatabase();
+
+    useEffect(() => {
+        if (matchStatus === 'queueing') {
+            const queueRef = ref(db, `matchmaking_queue/${user.uid}`);
+            const gamesRef = ref(db, 'games');
+
+            const unsubscribeQueue = onValue(queueRef, (snapshot) => {
+                if (!snapshot.exists()) {
+                    onValue(gamesRef, (gameSnapshot) => {
+                        const games = gameSnapshot.val() || {};
+                        for (const [gameId, game] of Object.entries(games)) {
+                            if (game.state === 'in_progress' &&
+                                (game.player1.id === user.uid || game.player2.id === user.uid)) {
+                                navigate(`/game/${gameId}`);
+                                return;
+                            }
+                        }
+                    }, { onlyOnce: true });
+                }
+            });
+
+            return () => unsubscribeQueue();
+        }
+    }, [matchStatus, user.uid, navigate]);
 
     const handleFindMatch = async () => {
         setMatchStatus('searching');
         try {
-            const response = await fetch('/api/matchmaking', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    playerId: userId,
-                    playerRating: userRating,
-                }),
-            });
-
-            const data = await response.json();
-
-            if (data.opponent) {
-                setMatchStatus('matched');
-                setOpponent(data.opponent);
+            const result = await findMatch(user.uid, user.rating || 500);
+            if (result?.gameId) {
+                navigate(`/game/${result.gameId}`);
             } else {
                 setMatchStatus('queueing');
             }
-        } catch (error) {
-            console.error('Error finding match:', error);
+            // const response = await fetch('/api/matchmaking', {
+            //     method: 'POST',
+            //     headers: {
+            //         'Content-Type': 'application/json',
+            //     },
+            //     body: JSON.stringify({
+            //         playerId: userId,
+            //         playerRating: userRating,
+            //     }),
+            // });
+
+            // const data = await response.json();
+
+            // if (data.opponent) {
+            //     setMatchStatus('matched');
+            //     setOpponent(data.opponent);
+            // } else {
+            //     setMatchStatus('queueing');
+            // }
+        } catch (err) {
+            console.error('Error:', err);
             setMatchStatus('error');
         }
     };
