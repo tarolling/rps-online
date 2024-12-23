@@ -1,13 +1,13 @@
 import React from 'react';
 import { Route, BrowserRouter as Router, Routes } from 'react-router';
 import './App.css';
+import { AuthProvider, ProtectedRoute } from './Auth';
+import DashboardPage from './components/DashboardPage';
 import FriendsPage from './components/FriendsPage';
-import MatchmakingPage from './components/MatchmakingPage';
-import HomePage from './components/HomePage';
 import LeaderboardPage from './components/LeaderboardPage';
 import LoginPage from './components/LoginPage';
+import MatchmakingPage from './components/MatchmakingPage';
 import RegisterPage from './components/RegisterPage';
-import { AuthProvider, ProtectedRoute } from './Auth';
 
 function App() {
   return (
@@ -18,7 +18,7 @@ function App() {
             path="/"
             element={
               <ProtectedRoute>
-                <HomePage />
+                <DashboardPage />
               </ProtectedRoute>
             }
           />

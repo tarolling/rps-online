@@ -11,18 +11,6 @@ function Header() {
     const navigate = useNavigate();
     const { user } = useAuth();
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-    // const [isLoggedIn, setIsLoggedIn] = useState(false);
-    // const [profilePicture, setProfilePicture] = useState("../assets/logo.png");
-
-    // useEffect(() => {
-    //     if (user) {
-    //         setIsLoggedIn(true);
-    //         setProfilePicture("../assets/logo.png");
-    //     } else {
-    //         setIsLoggedIn(false);
-    //         setProfilePicture("../assets/logo.png");
-    //     }
-    // }, [user]);
 
     const handleLogout = async () => {
         try {
