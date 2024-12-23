@@ -1,4 +1,3 @@
-/* General Header Styles */
 .header {
     display: flex;
     justify-content: space-between;
@@ -9,76 +8,107 @@
     border-bottom: 3px solid #0077cc;
 }
 
-/* Logo Section */
 .header-logo .logo {
     height: 60px;
     cursor: pointer;
 }
 
-/* Navigation Section */
 .header-nav {
     display: flex;
     gap: 20px;
 }
 
 .nav-link {
-    text-decoration: none;
+    background: none;
+    border: none;
     color: #000000;
     font-weight: bold;
     padding: 5px 10px;
+    cursor: pointer;
     transition: color 0.3s;
+    font-size: 1rem;
 }
 
 .nav-link:hover {
-    color: #282c34;
+    color: #0077cc;
 }
 
-/* User Section */
 .header-user {
     display: flex;
     align-items: center;
     gap: 15px;
 }
 
-/* Profile Dropdown */
 .profile-dropdown {
     position: relative;
     display: inline-block;
 }
 
 .profile-pic {
-    height: 60px;
-    width: 60px;
+    height: 40px;
+    width: 40px;
     border-radius: 50%;
     cursor: pointer;
     border: 2px solid #282c34;
+    transition: border-color 0.3s;
+}
+
+.profile-pic:hover {
+    border-color: #0077cc;
 }
 
 .dropdown-content {
     display: none;
     position: absolute;
-    top: 50px;
+    top: 100%;
     right: 0;
     background-color: #ffffff;
     border: 1px solid #dddddd;
     border-radius: 5px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    padding: 10px;
-    z-index: 10;
+    min-width: 150px;
+    margin-top: 8px;
+    z-index: 1000;
 }
 
-.dropdown-content a {
-    text-decoration: none;
-    color: #000000;
-    padding: 5px 10px;
+.dropdown-content.show {
     display: block;
+}
+
+.dropdown-item {
+    background: none;
+    border: none;
+    width: 100%;
+    text-align: left;
+    padding: 10px 15px;
+    cursor: pointer;
     transition: background-color 0.3s;
+    color: #000000;
+    font-size: 0.9rem;
 }
 
-.dropdown-content a:hover {
+.dropdown-item:hover {
     background-color: #f1f1f1;
+    color: #0077cc;
 }
 
-.profile-dropdown:hover .dropdown-content {
-    display: block;
+.auth-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+.button {
+    background: none;
+    border: 2px solid #0077cc;
+    color: #0077cc;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-weight: bold;
+}
+
+.button:hover {
+    background-color: #0077cc;
+    color: white;
 }

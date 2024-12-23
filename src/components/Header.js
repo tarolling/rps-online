@@ -9,19 +9,20 @@ import '../styles/Header.css';
 
 function Header() {
     const navigate = useNavigate();
-    const [isLoggedIn, setIsLoggedIn] = useState(false);
-    const [profilePicture, setProfilePicture] = useState("../assets/logo.png");
     const { user } = useAuth();
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    // const [isLoggedIn, setIsLoggedIn] = useState(false);
+    // const [profilePicture, setProfilePicture] = useState("../assets/logo.png");
 
-    useEffect(() => {
-        if (user) {
-            setIsLoggedIn(true);
-            setProfilePicture("../assets/logo.png");
-        } else {
-            setIsLoggedIn(false);
-            setProfilePicture("../assets/logo.png");
-        }
-    }, [user]);
+    // useEffect(() => {
+    //     if (user) {
+    //         setIsLoggedIn(true);
+    //         setProfilePicture("../assets/logo.png");
+    //     } else {
+    //         setIsLoggedIn(false);
+    //         setProfilePicture("../assets/logo.png");
+    //     }
+    // }, [user]);
 
     const handleLogout = async () => {
         try {
@@ -32,30 +33,75 @@ function Header() {
         }
     };
 
+    const handleNavigation = (path) => {
+        navigate(path);
+    };
+
     return (
         <div className="header">
             <div className="header-logo">
-                <img src={logo} alt="RPS Logo" className="logo" />
+                <img
+                    src={logo}
+                    alt="RPS Logo"
+                    className="logo"
+                    onClick={() => handleNavigation('/')}
+                />
             </div>
             <nav className="header-nav">
-                <a href="/" className="nav-link">Home</a>
-                <a href="/leaderboard" className="nav-link">Leaderboard</a>
-                <a href="/play" className="nav-link">Play</a>
-                <a href="/rules" className="nav-link">Rules</a>
+                <button onClick={() => handleNavigation('/')} className='nav-link'>
+                    Home
+                </button>
+                <button onClick={() => handleNavigation('/leaderboard')} className="nav-link">
+                    Leaderboard
+                </button>
+                <button onClick={() => handleNavigation('/play')} className="nav-link">
+                    Play
+                </button>
+                <button onClick={() => handleNavigation('/rules')} className="nav-link">
+                    Rules
+                </button>
             </nav>
             <div className="header-user">
-                {isLoggedIn ? (
-                    <div className="profile-dropdown">
-                        <img src={profilePicture} alt="Profile" className="profile-pic" />
-                        <div className="dropdown-content">
-                            <a href="/profile">Profile</a>
-                            <a href="#" onClick={handleLogout}>Logout</a>
+                {user ? (
+                    <div
+                        className="profile-dropdown"
+                        onMouseEnter={() => setIsDropdownOpen(true)}
+                        onMouseLeave={() => setIsDropdownOpen(false)}
+                    >
+                        <img
+                            src={user?.photoURL ?? logo}
+                            alt="Profile"
+                            className="profile-pic"
+                        />
+                        <div className={`dropdown-content ${isDropdownOpen ? 'show' : ''}`}>
+                            <button
+                                onClick={() => handleNavigation('/profile')}
+                                className='dropdown-item'
+                            >
+                                Profile
+                            </button>
+                            <button
+                                onClick={handleLogout}
+                                className='dropdown-item'
+                            >
+                                Logout
+                            </button>
                         </div>
                     </div>
                 ) : (
                     <div className="auth-buttons">
-                        <a href="/login" className="button">Login</a>
-                        <a href="/register" className="button">Register</a>
+                        <button
+                            onClick={() => handleNavigation('/login')}
+                            className='button'
+                        >
+                            Login
+                        </button>
+                        <button
+                            onClick={() => handleNavigation('/register')}
+                            className="button"
+                        >
+                            Register
+                        </button>
                     </div>
                 )}
             </div>
