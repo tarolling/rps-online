@@ -7,8 +7,7 @@ import HomePage from './components/HomePage';
 import LeaderboardPage from './components/LeaderboardPage';
 import LoginPage from './components/LoginPage';
 import RegisterPage from './components/RegisterPage';
-import ProtectedRoute from './ProtectedRoute';
-import { AuthProvider } from './Auth';
+import { AuthProvider, ProtectedRoute } from './Auth';
 
 function App() {
   return (
