@@ -1,8 +1,9 @@
-import { onAuthStateChanged, signOut } from 'firebase/auth';
-import React, { useEffect, useState } from 'react';
+import { signOut } from 'firebase/auth';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { auth } from "../api/firebase";
 import logo from '../assets/logo.png';
+import { useAuth } from '../Auth';
 import '../index.css';
 import '../styles/Header.css';
 
@@ -11,18 +12,15 @@ function Header() {
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [profilePicture, setProfilePicture] = useState("../assets/logo.png");
 
-    useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, (user) => {
-            if (user) {
-                setIsLoggedIn(true);
-                setProfilePicture("../assets/logo.png");
-            } else {
-                setIsLoggedIn(false);
-                setProfilePicture("../assets/logo.png");
-            }
-        });
-        return () => unsubscribe();
-    }, []);
+    const { user } = useAuth();
+
+    if (user) {
+        setIsLoggedIn(true);
+        setProfilePicture("../assets/logo.png");
+    } else {
+        setIsLoggedIn(false);
+        setProfilePicture("../assets/logo.png");
+    }
 
     const handleLogout = async () => {
         try {

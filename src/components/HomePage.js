@@ -1,13 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
-import { useAuthState } from "react-firebase-hooks/auth";
-import { auth } from "../api/firebase";
 import Header from './Header';
 import Logo from './Logo';
+import { useAuth } from '../Auth';
 
 function HomePage() {
     const navigate = useNavigate();
-    const [user] = useAuthState(auth);
+    const { user } = useAuth();
     const [username, setUsername] = useState("");
     console.log(`userInfo: ${JSON.stringify(user)}`);
 
