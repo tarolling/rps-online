@@ -8,30 +8,71 @@ function HomePage() {
     const navigate = useNavigate();
     const { user } = useAuth();
     const [username, setUsername] = useState("");
-    console.log(`userInfo: ${JSON.stringify(user)}`);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
     useEffect(() => {
+        if (!user) return;
+
         const fetchPlayer = async () => {
-            const response = await fetch('/api/fetchPlayer', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ uid: user.uid })
-            });
+            try {
+                setLoading(true);
+                setError(null);
 
-            if (!response.ok) {
-                throw new Error("Unable to update player in database.");
+                const response = await fetch('/api/fetchPlayer', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ uid: user.uid })
+                });
+
+                if (!response.ok) {
+                    throw new Error("Unable to update player in database.");
+                }
+
+                const data = await response.json();
+                console.log(`player data: ${data}`);
+                setUsername(data.username);
+            } catch (err) {
+                console.error('Error fetching player:', err);
+                setError(err.message);
+            } finally {
+                setLoading(false);
             }
-
-            const data = await response.json();
-            console.log(`player data: ${data}`);
-            setUsername(data.username);
         }
 
         fetchPlayer();
-    }, []);
+    }, [user]);
 
+    if (loading) {
+        return (
+            <div>
+                <Header />
+                <div className="container">
+                    <div className="card">
+                        <Logo />
+                        <p>Loading...</p>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div>
+                <Header />
+                <div className="container">
+                    <div className="card">
+                        <Logo />
+                        <p>Error: {error}</p>
+                        <button onClick={() => window.location.reload()}>Retry</button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div>
