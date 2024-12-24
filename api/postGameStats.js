@@ -37,7 +37,7 @@ export default async function handler(req, res) {
             return await tx.run(`
                 MATCH (p1:Player {uid: $player1Id})
                 MATCH (p2:Player {uid: $player2Id})
-                CREATE (p1)-[g:PLAYED]->(p2)
+                CREATE (p1)-[g:PLAYED]-(p2)
                 SET g.timestamp = datetime(),
                     g.player1Score = $player1Score,
                     g.player2Score = $player2Score,
@@ -56,8 +56,12 @@ export default async function handler(req, res) {
                 winner,
                 player1Rating,
                 player2Rating,
-                player1Choices: gameStats.player1Choices,
-                player2Choices: gameStats.player2Choices,
+                player1Rocks: gameStats.player1Choices.ROCK,
+                player1Papers: gameStats.player1Choices.PAPER,
+                player1Scissors: gameStats.player1Choices.SCISSORS,
+                player2Rocks: gameStats.player2Choices.ROCK,
+                player2Papers: gameStats.player2Choices.PAPER,
+                player2Scissors: gameStats.player2Choices.SCISSORS,
                 totalRounds: gameStats.totalRounds
             });
         });
