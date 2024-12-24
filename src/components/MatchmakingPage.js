@@ -20,8 +20,13 @@ function MatchmakingPage() {
             setQueueCount(Object.keys(queueData).length);
         });
 
-        return () => unsubscribeQueueCount();
-    }, [db]);
+        return () => {
+            unsubscribeQueueCount();
+            if (matchStatus === 'searching') {
+                remove(ref(db, `matchmaking_queue/${user.uid}`));
+            }
+        };
+    }, [db, user.uid, matchStatus]);
 
     useEffect(() => {
         if (matchStatus === 'searching') {

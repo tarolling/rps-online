@@ -1,18 +1,25 @@
 import { getDatabase, onValue, ref, update } from 'firebase/database';
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import '../styles/GamePage.css';
 import { Choices, GameStates } from '../types/gameTypes';
 import { resolveRound } from '../utils/matchmaking';
 import Header from './Header';
+import { useParams } from 'react-router';
+import { useAuth } from '../Auth';
 
 
 const ROUND_TIME = 30;
 
 
-const GamePage = ({ gameId, playerId }) => {
+const GamePage = () => {
+    const { gameId } = useParams();
+    const { user } = useAuth();
+    const playerId = user?.uid;
+
     const [game, setGame] = useState(null);
+    const [loading, setLoading] = useState(true);
     const [choice, setChoice] = useState(null);
-    const [timeLeft, setTimeLeft] = useState(30);
+    const [timeLeft, setTimeLeft] = useState(ROUND_TIME);
     const db = getDatabase();
 
     const isPlayer1 = game?.player1.id === playerId;
@@ -20,10 +27,15 @@ const GamePage = ({ gameId, playerId }) => {
     const opponentData = isPlayer1 ? game?.player2 : game?.player1;
 
     useEffect(() => {
+        if (!gameId || !playerId) return;
+
         const gameRef = ref(db, `games/${gameId}`);
         const unsubscribe = onValue(gameRef, (snapshot) => {
             const gameData = snapshot.val();
-            setGame(gameData);
+            if (gameData) {
+                setGame(gameData);
+                setLoading(false);
+            }
 
             if (gameData?.currentRound !== game?.currentRound) {
                 setChoice(null);
@@ -32,7 +44,7 @@ const GamePage = ({ gameId, playerId }) => {
         });
 
         return () => unsubscribe();
-    }, [gameId, game?.currentRound]);
+    }, [gameId, playerId, game?.currentRound]);
 
     useEffect(() => {
         let timer;
@@ -41,8 +53,7 @@ const GamePage = ({ gameId, playerId }) => {
             timer = setInterval(() => {
                 setTimeLeft(prev => {
                     if (prev <= 1) {
-                        // Auto-select rock if time runs out
-                        makeChoice(Choices.ROCK);
+                        makeChoice(Choices.NONE);
                         return 0;
                     }
                     return prev - 1;
@@ -74,10 +85,6 @@ const GamePage = ({ gameId, playerId }) => {
         }
     }, [choice, game, gameId, isPlayer1, db]);
 
-    if (!game) {
-        return <div className="loading">Loading game...</div>;
-    }
-
     const getChoiceEmoji = (choiceType) => {
         switch (choiceType) {
             case Choices.ROCK: return '✊';
@@ -86,6 +93,33 @@ const GamePage = ({ gameId, playerId }) => {
             default: return '';
         }
     };
+
+    if (loading) {
+        return (
+            <div>
+                <Header />
+                <div className="game-container">
+                    <div className="loading">Loading game...</div>
+                </div>
+            </div>
+        );
+    }
+
+    if (!game) {
+        return (
+            <div>
+                <Header />
+                <div className="game-container">
+                    <div className="error-container">
+                        <p className="error-text">Game not found</p>
+                        <button className="retry-button" onClick={() => window.location.href = '/'}>
+                            Return to Home
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div>
