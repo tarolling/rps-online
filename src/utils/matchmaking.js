@@ -70,12 +70,10 @@ const createGame = async (player1Id, player1Rating, player2Id, player2Rating) =>
             rating: player2Rating
         },
         currentRound: 1,
-        maxRounds: 7,
         timestamp: Date.now()
     };
 
     try {
-        // Execute these operations in parallel
         await Promise.all([
             set(gameRef, game),
             remove(ref(db, `matchmaking_queue/${player1Id}`)),
@@ -130,14 +128,14 @@ export const resolveRound = async (gameId) => {
 };
 
 const determineRoundWinner = (choice1, choice2) => {
-    if (!choice1 || !choice2 || choice1 === choice2) return null;
-
-    if (choice1 === Choices.NONE && Choices.NONE) {
+    if (choice1 === '' && choice2 === '') {
         return 'player1'; // TODO: implement double afk
     }
 
-    if (choice1 === Choices.NONE) return 'player2';
-    if (choice2 === Choices.NONE) return 'player1';
+    if (!choice1 || !choice2 || choice1 === choice2) return null;
+
+    if (choice1 === '') return 'player2';
+    if (choice2 === '') return 'player1';
 
     const wins = {
         [Choices.ROCK]: Choices.SCISSORS,

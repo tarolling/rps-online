@@ -26,6 +26,31 @@ const GamePage = () => {
     const playerData = isPlayer1 ? game?.player1 : game?.player2;
     const opponentData = isPlayer1 ? game?.player2 : game?.player1;
 
+    const makeChoice = useCallback(async (selectedChoice) => {
+        if (!choice && game?.state === GameStates.IN_PROGRESS) {
+            setChoice(selectedChoice);
+            const playerKey = isPlayer1 ? 'player1' : 'player2';
+
+            try {
+                await update(ref(db, `games/${gameId}`), {
+                    [`${playerKey}Choice`]: selectedChoice
+                });
+            } catch (error) {
+                console.error('Error making choice:', error);
+                setChoice(null);
+            }
+        }
+    }, [choice, game, gameId, isPlayer1, db]);
+
+    const getChoiceEmoji = (choiceType) => {
+        switch (choiceType) {
+            case Choices.ROCK: return '✊';
+            case Choices.PAPER: return '✋';
+            case Choices.SCISSORS: return '✌️';
+            default: return '';
+        }
+    };
+
     useEffect(() => {
         if (!gameId || !playerId) return;
 
@@ -35,6 +60,16 @@ const GamePage = () => {
             if (gameData) {
                 setGame(gameData);
                 setLoading(false);
+
+                const playerKey = isPlayer1 ? 'player1Choice' : 'player2Choice';
+                if (gameData[playerKey]) {
+                    setChoice(gameData[playerKey]);
+                }
+
+                if (gameData.player1Choice && gameData.player2Choice &&
+                    gameData.state === GameStates.IN_PROGRESS) {
+                    resolveRound(gameId);
+                }
             }
 
             if (gameData?.currentRound !== game?.currentRound) {
@@ -44,7 +79,7 @@ const GamePage = () => {
         });
 
         return () => unsubscribe();
-    }, [gameId, playerId, game?.currentRound]);
+    }, [gameId, playerId, isPlayer1]);
 
     useEffect(() => {
         let timer;
@@ -62,37 +97,7 @@ const GamePage = () => {
         }
 
         return () => clearInterval(timer);
-    }, [game?.state, choice, timeLeft]);
-
-    const makeChoice = useCallback(async (selectedChoice) => {
-        if (!choice && game?.state === GameStates.IN_PROGRESS) {
-            setChoice(selectedChoice);
-            const playerKey = isPlayer1 ? 'player1' : 'player2';
-
-            try {
-                await update(ref(db, `games/${gameId}`), {
-                    [`${playerKey}Choice`]: selectedChoice
-                });
-
-                const otherPlayerKey = isPlayer1 ? 'player2' : 'player1';
-                if (game[`${otherPlayerKey}Choice`]) {
-                    await resolveRound(gameId);
-                }
-            } catch (error) {
-                console.error('Error making choice:', error);
-                setChoice(null);
-            }
-        }
-    }, [choice, game, gameId, isPlayer1, db]);
-
-    const getChoiceEmoji = (choiceType) => {
-        switch (choiceType) {
-            case Choices.ROCK: return '✊';
-            case Choices.PAPER: return '✋';
-            case Choices.SCISSORS: return '✌️';
-            default: return '';
-        }
-    };
+    }, [game?.state, choice, timeLeft, makeChoice]);
 
     if (loading) {
         return (
