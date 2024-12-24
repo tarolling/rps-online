@@ -7,7 +7,7 @@ function RulesPage() {
             <Header />
             <h1>Rules</h1>
             <ol>
-                <li>Don&quot;t be stupid.</li>
+                <li>Don&#39;t be stupid.</li>
                 <li>Games are first to 4 wins.</li>
             </ol>
         </div>

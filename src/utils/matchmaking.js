@@ -214,7 +214,7 @@ export const endGame = async (gameId) => {
         const gameStats = calculateGameStats(game);
 
         try {
-            await fetch('/api/game-stats', {
+            await fetch('/api/postGameStats', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
