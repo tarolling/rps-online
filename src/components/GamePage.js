@@ -1,11 +1,11 @@
 import { getDatabase, onValue, ref, update } from 'firebase/database';
 import React, { useCallback, useEffect, useState } from 'react';
+import { useParams } from 'react-router';
+import { useAuth } from '../Auth';
 import '../styles/GamePage.css';
 import { Choices, GameStates } from '../types/gameTypes';
 import { resolveRound } from '../utils/matchmaking';
 import Header from './Header';
-import { useParams } from 'react-router';
-import { useAuth } from '../Auth';
 
 
 const ROUND_TIME = 30;
