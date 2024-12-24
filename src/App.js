@@ -9,6 +9,7 @@ import LeaderboardPage from './components/LeaderboardPage';
 import LoginPage from './components/LoginPage';
 import MatchmakingPage from './components/MatchmakingPage';
 import RegisterPage from './components/RegisterPage';
+import RulesPage from './components/RulesPage';
 
 function App() {
   return (
@@ -51,6 +52,7 @@ function App() {
           />
           <Route path="/play" element={<ProtectedRoute><MatchmakingPage /></ProtectedRoute>} />
           <Route path="/game/:gameId" element={<ProtectedRoute><GamePage /></ProtectedRoute>} />
+          <Route path="/rules" element={<RulesPage />} />
         </Routes>
       </Router>
     </AuthProvider>
