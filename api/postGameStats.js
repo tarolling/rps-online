@@ -44,8 +44,12 @@ export default async function handler(req, res) {
                     g.winner = $winner,
                     g.player1Rating = $player1Rating,
                     g.player2Rating = $player2Rating,
-                    g.player1Choices = $player1Choices,
-                    g.player2Choices = $player2Choices,
+                    g.player1Rocks: $player1Rocks,
+                    g.player1Papers: $player1Papers,
+                    g.player1Scissors: $player1Scissors,
+                    g.player2Rocks: $player2Rocks,
+                    g.player2Papers: $player2Papers,
+                    g.player2Scissors: $player2Scissors,
                     g.totalRounds = $totalRounds
                 RETURN g
             `, {
