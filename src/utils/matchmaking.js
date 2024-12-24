@@ -80,6 +80,7 @@ const createGame = async (player1Id, player1Rating, player2Id, player2Rating) =>
             rating: player2Rating,
             choice: null
         },
+        rounds: [],
         currentRound: 1,
         timestamp: Date.now()
     };
@@ -118,6 +119,13 @@ export const resolveRound = async (gameId) => {
             'player2/score': game.player2.score
         };
 
+        const roundData = {
+            player1Choice: game.player1.choice,
+            player2Choice: game.player2.choice,
+            winner
+        };
+        updates.rounds = [...(game.rounds || []), roundData];
+
         if (winner) {
             const winningPlayer = winner === 'player1' ? game.player1 : game.player2;
             const newScore = winningPlayer.score + 1;
@@ -132,7 +140,12 @@ export const resolveRound = async (gameId) => {
         }
 
         await update(gameRef, updates);
-        return updates.state === GameStates.FINISHED ? { winner: updates.winner } : null;
+
+        if (updates.state === GameStates.FINISHED) {
+            await endGame(gameId);
+            return { winner: updates.winner };
+        }
+        return null;
     } catch (error) {
         console.error('Error resolving round:', error);
         throw error;
@@ -156,4 +169,74 @@ const determineRoundWinner = (choice1, choice2) => {
     };
 
     return wins[choice1] === choice2 ? 'player1' : 'player2';
+};
+
+export const calculateGameStats = (game) => {
+    const player1Choices = {
+        ROCK: 0,
+        PAPER: 0,
+        SCISSORS: 0
+    };
+
+    const player2Choices = {
+        ROCK: 0,
+        PAPER: 0,
+        SCISSORS: 0
+    };
+
+    game.rounds?.forEach(round => {
+        if (round.player1Choice) {
+            player1Choices[round.player1Choice]++;
+        }
+        if (round.player2Choice) {
+            player2Choices[round.player2Choice]++;
+        }
+    });
+
+    return {
+        player1Choices,
+        player2Choices,
+        totalRounds: game.currentRound
+    };
+};
+
+export const endGame = async (gameId) => {
+    const gameRef = ref(db, `games/${gamesId}`);
+
+    try {
+        const snapshot = await get(gameRef);
+        const game = snapshot.val();
+
+        if (!game) {
+            throw new Error("Game not found");
+        }
+
+        const gameStats = calculateGameStats(game);
+
+        try {
+            await fetch('/api/game-stats', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    player1Id: game.player1.id,
+                    player2Id: game.player2.id,
+                    player1Rating: game.player1.rating,
+                    player2Rating: game.player2.rating,
+                    player1Score: game.player1.score,
+                    player2Score: game.player2.score,
+                    winner: game.winner,
+                    gameStats
+                }),
+            });
+        } catch (error) {
+            console.error('Error sending game stats', error);
+        }
+
+        await remove(gameRef);
+    } catch (error) {
+        console.error('Error ending game:', error);
+        throw error;
+    }
 };
