@@ -37,7 +37,7 @@ export default async function handler(req, res) {
             return await tx.run(`
                 MATCH (p1:Player {uid: $player1Id})
                 MATCH (p2:Player {uid: $player2Id})
-                CREATE (p1)-[g:PLAYED]-(p2)
+                CREATE (p1)-[g:PLAYED]->(p2)
                 SET g.timestamp = datetime(),
                     g.player1Score = $player1Score,
                     g.player2Score = $player2Score,
