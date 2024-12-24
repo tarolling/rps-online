@@ -1,8 +1,9 @@
+import { getDatabase, onValue, ref, update } from 'firebase/database';
 import React, { useEffect, useState } from 'react';
-import { getDatabase, ref, update, onValue } from 'firebase/database';
-import { GameStates, Choices } from '../types/gameTypes';
 import '../styles/GamePage.css';
+import { Choices, GameStates } from '../types/gameTypes';
 import { resolveRound } from '../utils/matchmaking';
+import Header from './Header';
 
 
 const GamePage = ({ gameId, playerId }) => {
@@ -47,43 +48,46 @@ const GamePage = ({ gameId, playerId }) => {
     };
 
     return (
-        <div className="game-container">
-            <div className="game-header">
-                <div className="player-info">
-                    <h3>You</h3>
-                    <div className="score">{game?.player1.id === playerId ? game?.player1.score : game?.player2.score}</div>
+        <div>
+            <Header />
+            <div className="game-container">
+                <div className="game-header">
+                    <div className="player-info">
+                        <h3>You</h3>
+                        <div className="score">{game?.player1.id === playerId ? game?.player1.score : game?.player2.score}</div>
+                    </div>
+                    <div className="vs">VS</div>
+                    <div className="player-info">
+                        <h3>Opponent</h3>
+                        <div className="score">{game?.player1.id === playerId ? game?.player2.score : game?.player1.score}</div>
+                    </div>
                 </div>
-                <div className="vs">VS</div>
-                <div className="player-info">
-                    <h3>Opponent</h3>
-                    <div className="score">{game?.player1.id === playerId ? game?.player2.score : game?.player1.score}</div>
+
+                <div className="game-status">
+                    <div className="round">Round {game?.currentRound}</div>
+                    <div className="timer">Time Left: {timeLeft}s</div>
                 </div>
-            </div>
 
-            <div className="game-status">
-                <div className="round">Round {game?.currentRound}</div>
-                <div className="timer">Time Left: {timeLeft}s</div>
-            </div>
-
-            <div className="choices">
-                {Object.values(Choices).map((choiceOption) => (
-                    <button
-                        key={choiceOption}
-                        onClick={() => makeChoice(choiceOption)}
-                        disabled={!!choice}
-                        className={`choice-button ${choice === choiceOption ? 'selected' : ''}`}
-                    >
-                        {choiceOption}
-                    </button>
-                ))}
-            </div>
-
-            {game?.state === GameStates.FINISHED && (
-                <div className="game-result">
-                    <h2>Game Over!</h2>
-                    <p>{game.winner === playerId ? 'You Won!' : 'You Lost!'}</p>
+                <div className="choices">
+                    {Object.values(Choices).map((choiceOption) => (
+                        <button
+                            key={choiceOption}
+                            onClick={() => makeChoice(choiceOption)}
+                            disabled={!!choice}
+                            className={`choice-button ${choice === choiceOption ? 'selected' : ''}`}
+                        >
+                            {choiceOption}
+                        </button>
+                    ))}
                 </div>
-            )}
+
+                {game?.state === GameStates.FINISHED && (
+                    <div className="game-result">
+                        <h2>Game Over!</h2>
+                        <p>{game.winner === playerId ? 'You Won!' : 'You Lost!'}</p>
+                    </div>
+                )}
+            </div>
         </div>
     );
 };
