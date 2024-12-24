@@ -111,8 +111,8 @@ export const resolveRound = async (gameId) => {
         const winner = determineRoundWinner(game.player1.choice, game.player2.choice);
 
         const updates = {
-            player1Choice: null,
-            player2Choice: null,
+            'player1/choice': null,
+            'player2/choice': null,
             currentRound: game.currentRound + 1,
             'player1/score': game.player1.score,
             'player2/score': game.player2.score
