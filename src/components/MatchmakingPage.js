@@ -54,8 +54,6 @@ function MatchmakingPage() {
             if (result?.gameId) {
                 setMatchStatus('matched');
                 navigate(`/game/${result.gameId}`);
-            } else {
-                setMatchStatus('searching');
             }
         } catch (err) {
             await remove(ref(db, `matchmaking_queue/${user.uid}`));
