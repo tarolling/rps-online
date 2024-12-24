@@ -44,7 +44,16 @@ export const findMatch = async (userId, userRating) => {
                 }
             });
 
-            return () => off(userQueueRef);
+            setTimeout(() => {
+                off(userQueueRef);
+                remove(ref(db, `matchmaking_queue/${userId}`));
+                resolve({ error: 'Match timeout' });
+            }, 60000);
+
+            return () => {
+                unsubscribeQueue();
+                off(userQueueRef);
+            }
         });
     } catch (error) {
         console.error('Error in findMatch:', error);
@@ -62,12 +71,14 @@ const createGame = async (player1Id, player1Rating, player2Id, player2Rating) =>
         player1: {
             id: player1Id,
             score: 0,
-            rating: player1Rating
+            rating: player1Rating,
+            choice: null
         },
         player2: {
             id: player2Id,
             score: 0,
-            rating: player2Rating
+            rating: player2Rating,
+            choice: null
         },
         currentRound: 1,
         timestamp: Date.now()
@@ -97,29 +108,30 @@ export const resolveRound = async (gameId) => {
         }
 
         const game = snapshot.val();
-        const winner = determineRoundWinner(game.player1Choice, game.player2Choice);
+        const winner = determineRoundWinner(game.player1.choice, game.player2.choice);
 
-        const updates = {};
+        const updates = {
+            player1Choice: null,
+            player2Choice: null,
+            currentRound: game.currentRound + 1,
+            'player1/score': game.player1.score,
+            'player2/score': game.player2.score
+        };
 
         if (winner) {
-            const newScore = game[winner].score + 1;
-            updates[`${winner}.score`] = newScore;
+            const winningPlayer = winner === 'player1' ? game.player1 : game.player2;
+            const newScore = winningPlayer.score + 1;
+            updates[`${winner}/score`] = newScore;
 
             if (newScore >= FIRST_TO) {
                 updates.state = GameStates.FINISHED;
                 updates.winner = game[winner].id;
                 updates.endTimestamp = Date.now();
+                updates.currentRound = game.currentRound;
             }
         }
 
-        if (!updates.state) {
-            updates.currentRound = game.currentRound + 1;
-            updates.player1Choice = null;
-            updates.player2Choice = null;
-        }
-
         await update(gameRef, updates);
-
         return updates.state === GameStates.FINISHED ? { winner: updates.winner } : null;
     } catch (error) {
         console.error('Error resolving round:', error);
@@ -129,13 +141,14 @@ export const resolveRound = async (gameId) => {
 
 const determineRoundWinner = (choice1, choice2) => {
     if (choice1 === '' && choice2 === '') {
-        return 'player1'; // TODO: implement double afk
+        return null; // TODO: implement double afk
     }
 
-    if (!choice1 || !choice2 || choice1 === choice2) return null;
+    if (!choice1) return 'player2';
+    if (!choice2) return 'player1';
 
-    if (choice1 === '') return 'player2';
-    if (choice2 === '') return 'player1';
+    if (choice1 === choice2) return null;
+
 
     const wins = {
         [Choices.ROCK]: Choices.SCISSORS,
