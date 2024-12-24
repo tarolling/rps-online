@@ -10,53 +10,58 @@ import LoginPage from './components/LoginPage';
 import MatchmakingPage from './components/MatchmakingPage';
 import RegisterPage from './components/RegisterPage';
 import RulesPage from './components/RulesPage';
+import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/react";
 
-function App() {
+export default function App() {
   return (
-    <AuthProvider>
-      <Router>
-        <Routes>
-          <Route
-            path="/"
-            element={
-              <ProtectedRoute>
-                <DashboardPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
-          <Route
-            path="/play"
-            element={
-              <ProtectedRoute>
-                <MatchmakingPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/leaderboard"
-            element={
-              <ProtectedRoute>
-                <LeaderboardPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/friends"
-            element={
-              <ProtectedRoute>
-                <FriendsPage />
-              </ProtectedRoute>
-            }
-          />
-          <Route path="/play" element={<ProtectedRoute><MatchmakingPage /></ProtectedRoute>} />
-          <Route path="/game/:gameId" element={<ProtectedRoute><GamePage /></ProtectedRoute>} />
-          <Route path="/rules" element={<RulesPage />} />
-        </Routes>
-      </Router>
-    </AuthProvider>
+    <div>
+
+      <AuthProvider>
+        <Router>
+          <Routes>
+            <Route
+              path="/"
+              element={
+                <ProtectedRoute>
+                  <DashboardPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
+            <Route
+              path="/play"
+              element={
+                <ProtectedRoute>
+                  <MatchmakingPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/leaderboard"
+              element={
+                <ProtectedRoute>
+                  <LeaderboardPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/friends"
+              element={
+                <ProtectedRoute>
+                  <FriendsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route path="/play" element={<ProtectedRoute><MatchmakingPage /></ProtectedRoute>} />
+            <Route path="/game/:gameId" element={<ProtectedRoute><GamePage /></ProtectedRoute>} />
+            <Route path="/rules" element={<RulesPage />} />
+          </Routes>
+        </Router>
+      </AuthProvider>
+      <Analytics />
+      <SpeedInsights />
+    </div>
   );
 }
-
-export default App;
