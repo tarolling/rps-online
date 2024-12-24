@@ -201,7 +201,7 @@ export const calculateGameStats = (game) => {
 };
 
 export const endGame = async (gameId) => {
-    const gameRef = ref(db, `games/${gamesId}`);
+    const gameRef = ref(db, `games/${gameId}`);
 
     try {
         const snapshot = await get(gameRef);
