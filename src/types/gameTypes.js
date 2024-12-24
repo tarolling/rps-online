@@ -7,5 +7,6 @@ export const GameStates = {
 export const Choices = {
     ROCK: 'rock',
     PAPER: 'paper',
-    SCISSORS: 'scissors'
+    SCISSORS: 'scissors',
+    NONE: 'none'
 };

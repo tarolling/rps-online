@@ -1,13 +1,14 @@
 import { getDatabase, ref, set, get, update, remove, onValue, off } from 'firebase/database';
 import { GameStates, Choices } from '../types/gameTypes';
 
+
+const FIRST_TO = 4;
 const db = getDatabase();
 
 export const findMatch = async (userId, userRating) => {
     const queueRef = ref(db, 'matchmaking_queue');
 
     try {
-        // First check for existing suitable match
         const snapshot = await get(queueRef);
         const queue = snapshot.val() || {};
 
@@ -18,19 +19,16 @@ export const findMatch = async (userId, userRating) => {
             }
         }
 
-        // If no match found, add to queue and wait for match
         await set(ref(db, `matchmaking_queue/${userId}`), {
             rating: userRating,
             timestamp: Date.now()
         });
 
-        // Set up listener for when someone matches with this player
         return new Promise((resolve) => {
             const userQueueRef = ref(db, `matchmaking_queue/${userId}`);
             const gamesRef = ref(db, 'games');
 
             const unsubscribeQueue = onValue(userQueueRef, async (snapshot) => {
-                // If player is removed from queue, check if they're in a game
                 if (!snapshot.exists()) {
                     const gamesSnapshot = await get(gamesRef);
                     const games = gamesSnapshot.val() || {};
@@ -38,7 +36,6 @@ export const findMatch = async (userId, userRating) => {
                     for (const [gameId, game] of Object.entries(games)) {
                         if (game.state === GameStates.IN_PROGRESS &&
                             (game.player1.id === userId || game.player2.id === userId)) {
-                            // Cleanup listeners
                             off(userQueueRef);
                             resolve({ gameId });
                             return;
@@ -47,7 +44,6 @@ export const findMatch = async (userId, userRating) => {
                 }
             });
 
-            // Cleanup listener if component unmounts
             return () => off(userQueueRef);
         });
     } catch (error) {
@@ -111,15 +107,13 @@ export const resolveRound = async (gameId) => {
             const newScore = game[winner].score + 1;
             updates[`${winner}.score`] = newScore;
 
-            // Check if game is over
-            if (newScore >= 4) {
+            if (newScore >= FIRST_TO) {
                 updates.state = GameStates.FINISHED;
                 updates.winner = game[winner].id;
                 updates.endTimestamp = Date.now();
             }
         }
 
-        // Always update round if game isn't finished
         if (!updates.state) {
             updates.currentRound = game.currentRound + 1;
             updates.player1Choice = null;
@@ -137,6 +131,13 @@ export const resolveRound = async (gameId) => {
 
 const determineRoundWinner = (choice1, choice2) => {
     if (!choice1 || !choice2 || choice1 === choice2) return null;
+
+    if (choice1 === Choices.NONE && Choices.NONE) {
+        return 'player1'; // TODO: implement double afk
+    }
+
+    if (choice1 === Choices.NONE) return 'player2';
+    if (choice2 === Choices.NONE) return 'player1';
 
     const wins = {
         [Choices.ROCK]: Choices.SCISSORS,
