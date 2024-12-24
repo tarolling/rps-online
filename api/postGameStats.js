@@ -55,18 +55,18 @@ export default async function handler(req, res) {
             `, {
                 player1Id,
                 player2Id,
-                player1Score,
-                player2Score,
+                player1Score: neo4j.int(player1Score),
+                player2Score: neo4j.int(player2Score),
                 winner,
                 player1Rating,
                 player2Rating,
-                player1Rocks: gameStats.player1Choices.ROCK,
-                player1Papers: gameStats.player1Choices.PAPER,
-                player1Scissors: gameStats.player1Choices.SCISSORS,
-                player2Rocks: gameStats.player2Choices.ROCK,
-                player2Papers: gameStats.player2Choices.PAPER,
-                player2Scissors: gameStats.player2Choices.SCISSORS,
-                totalRounds: gameStats.totalRounds
+                player1Rocks: neo4j.int(gameStats.player1Choices.ROCK),
+                player1Papers: neo4j.int(gameStats.player1Choices.PAPER),
+                player1Scissors: neo4j.int(gameStats.player1Choices.SCISSORS),
+                player2Rocks: neo4j.int(gameStats.player2Choices.ROCK),
+                player2Papers: neo4j.int(gameStats.player2Choices.PAPER),
+                player2Scissors: neo4j.int(gameStats.player2Choices.SCISSORS),
+                totalRounds: neo4j.int(gameStats.totalRounds)
             });
         });
 
