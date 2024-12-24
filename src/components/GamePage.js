@@ -33,7 +33,7 @@ const GamePage = () => {
 
             try {
                 await update(ref(db, `games/${gameId}`), {
-                    [`${playerKey}Choice`]: selectedChoice
+                    [`${playerKey}/choice`]: selectedChoice
                 });
             } catch (error) {
                 console.error('Error making choice:', error);
@@ -63,10 +63,10 @@ const GamePage = () => {
 
                 const playerKey = isPlayer1 ? 'player1Choice' : 'player2Choice';
                 if (gameData[playerKey]) {
-                    setChoice(gameData[playerKey]);
+                    setChoice(gameData[playerKey].choice);
                 }
 
-                if (gameData.player1Choice && gameData.player2Choice &&
+                if (gameData.player1.choice && gameData.player2.choice &&
                     gameData.state === GameStates.IN_PROGRESS) {
                     resolveRound(gameId);
                 }
@@ -153,10 +153,10 @@ const GamePage = () => {
                         <h3>Opponent</h3>
                         <div className="username">{opponentData?.username || 'Opponent'}</div>
                         <div className="score">{opponentData?.score || 0}</div>
-                        {game[`${isPlayer1 ? 'player2' : 'player1'}Choice`] && (
+                        {game[isPlayer1 ? 'player2' : 'player1'].choice && (
                             <div className="choice-display">
                                 {game.state === GameStates.FINISHED ?
-                                    getChoiceEmoji(game[`${isPlayer1 ? 'player2' : 'player1'}Choice`]) :
+                                    getChoiceEmoji(game[isPlayer1 ? 'player2' : 'player1'].choice) :
                                     '🤔'}
                             </div>
                         )}
