@@ -1,5 +1,5 @@
 import { getDatabase, onValue, ref, update } from 'firebase/database';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import '../styles/GamePage.css';
 import { Choices, GameStates } from '../types/gameTypes';
 import { resolveRound } from '../utils/matchmaking';
