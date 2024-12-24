@@ -1,4 +1,4 @@
-import { getDatabase, ref, set, get, update, remove, onValue, off } from 'firebase/database';
+import { getDatabase, ref, set, get, update, remove, onValue, off, serverTimestamp } from 'firebase/database';
 import { GameStates, Choices } from '../types/gameTypes';
 
 
@@ -202,8 +202,22 @@ export const calculateGameStats = (game) => {
 
 export const endGame = async (gameId) => {
     const gameRef = ref(db, `games/${gameId}`);
+    const processedRef = ref(db, `processed_games/${gameId}`);
 
     try {
+        const processedResult = await get(processedRef);
+
+        if (processedResult.exists()) return;
+
+        try {
+            await set(processedRef, {
+                timestamp: serverTimestamp()
+            });
+        } catch {
+            // If we couldn't set the flag, another instance is probably processing it
+            return;
+        }
+
         const snapshot = await get(gameRef);
         const game = snapshot.val();
 
@@ -232,11 +246,32 @@ export const endGame = async (gameId) => {
             });
         } catch (error) {
             console.error('Error sending game stats', error);
+            await remove(processedRef);
+            throw error;
         }
 
-        await remove(gameRef);
+        await Promise.all([
+            remove(gameRef),
+            remove(processedRef)
+        ]);
     } catch (error) {
         console.error('Error ending game:', error);
+        await remove(processedRef);
         throw error;
     }
+};
+
+// TODO: add to vercel cron jobs 
+export const cleanupProcessedGames = async () => {
+    const processedRef = ref(db, 'processed_games');
+    const snapshot = await get(processedRef);
+    const processed = snapshot.val() || {};
+
+    const oneDayAgo = Date.now() - (24 * 60 * 60 * 1000);
+
+    const cleanupPromises = Object.entries(processed)
+        .filter(([_, data]) => data.timestamp < oneDayAgo)
+        .map(([gameId]) => remove(ref(db, `processed_games/${gameId}`)));
+
+    await Promise.all(cleanupPromises);
 };
