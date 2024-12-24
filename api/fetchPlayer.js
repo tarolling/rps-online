@@ -6,9 +6,9 @@ export default async function handler(req, res) {
     }
 
     const { uid } = req.body;
-    const username = req.body.username ?? "random";
 
     let driver, session;
+
     try {
         if (!process.env.NEO4J_URI || !process.env.NEO4J_USERNAME || !process.env.NEO4J_PASSWORD) {
             throw new Error('Missing required environment variables.');
@@ -19,36 +19,28 @@ export default async function handler(req, res) {
     } catch (err) {
         console.error(`Connection error\n${err}\nCause: ${err.cause}`)
         if (driver) await driver.close();
-        return res.status(503).json({ error: 'Unable to connect to Neo4j' });
+        return res.status(503).json({ error: 'Unable to connect to Neo4j' })
     }
 
     try {
-        session = driver.session({ database: 'neo4j' })
-        const write = await session.executeWrite(async tx => {
+        session = driver.session({ database: 'neo4j' });
+        const read = await session.executeRead(async tx => {
             let result = await tx.run(`
-            MERGE (p:Player {uid: $uid})
-            ON CREATE
-                SET p.username = $username,
-                    p.rating = 500,
-                    p.created = timestamp(),
-                    p.lastSeen = timestamp()
-            ON MATCH
-                SET p.lastSeen = timestamp()
-            RETURN p.username AS username
-            `, { uid: uid, username: username }
-            );
+            MATCH (p:Player {uid: $uid})
+            RETURN p.username AS username, p.rating AS rating
+            `, { uid: uid });
 
-            if (!result || result.records.length === 0) {
-                throw new Error('Unable to modify player.');
+            if (result?.records.length === 0) {
+                throw new Error("No players with the specified user ID exists.");
             }
-            return result.records[0].get('username');
+
+            return result.records[0];
         });
 
-        console.log(`User ${write} added/updated!`);
-        res.status(200).json({ username: write });
+        res.status(200).json({ username: read.get("username"), rating: read.get("rating") });
     } catch (err) {
         console.error('Error executing query:', err);
-        res.status(500).json({ error: 'Failed to process player.' });
+        res.status(500).json({ error: 'Failed to fetch player info.' });
     } finally {
         if (session) await session.close();
         if (driver) await driver.close();

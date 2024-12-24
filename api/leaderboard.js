@@ -30,16 +30,16 @@ export default async function handler(req, res) {
             `)
 
             if (!result || result.records.length === 0) {
-                throw new Error('Unable to fetch players.');
+                return [];
             }
 
             return result.records.map((record) => ({
                 username: record.get("username"),
-                rating: record.get("rating") ?? 0,
+                rating: neo4j.integer.toNumber(record.get("rating")),
             }));
         });
 
-        res.status(200).json(leaderboard);
+        res.status(200).json({ leaderboardData: leaderboard });
     } catch (err) {
         console.error('Error executing query:', err);
         res.status(500).json({ error: 'Failed to fetch players.' });
