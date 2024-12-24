@@ -141,14 +141,13 @@ export const resolveRound = async (gameId) => {
 
 const determineRoundWinner = (choice1, choice2) => {
     if (choice1 === '' && choice2 === '') {
-        return null; // TODO: implement double afk
+        return null;
     }
 
     if (!choice1) return 'player2';
     if (!choice2) return 'player1';
 
     if (choice1 === choice2) return null;
-
 
     const wins = {
         [Choices.ROCK]: Choices.SCISSORS,
