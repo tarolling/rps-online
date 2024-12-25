@@ -8,10 +8,10 @@ function DashboardPage() {
     const navigate = useNavigate();
     const { user } = useAuth();
     const [gameStats, setGameStats] = useState({
-        totalGames: "",
-        winRate: "",
-        currentStreak: "",
-        bestStreak: ""
+        totalGames: 0,
+        winRate: "N/A",
+        currentStreak: 0,
+        bestStreak: 0
     });
     const [playerData, setPlayerData] = useState(null);
     const [loading, setLoading] = useState(true);
