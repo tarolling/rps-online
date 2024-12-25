@@ -24,6 +24,7 @@ function DashboardPage() {
                 }),
             });
 
+            console.log('stats:', stats);
             setGameStats(stats);
         };
 
