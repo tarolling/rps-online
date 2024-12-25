@@ -62,17 +62,14 @@ export default async function handler(req, res) {
                                 }
                         END
                     ) AS streakStats
-                RETURN {
-                    totalGames: totalGames,
-                    winRate: winPercentage,
-                    currentStreak: streakStats.current,
-                    bestStreak: streakStats.best
-                } AS result
+                RETURN totalGames,
+                    winPercentage AS winRate,
+                    streakStats.current AS currentStreak,
+                    streakStats.best AS bestStreak
             `, {
                 playerID
             });
 
-            console.log('data:', JSON.stringify(data));
             return data?.records[0];
         });
 
