@@ -30,9 +30,13 @@ function DashboardPage() {
             });
 
             const data = await stats.json();
+            console.log('erm data:', JSON.stringify(data));
             setGameStats((prevState) => ({
                 ...prevState,
-                data
+                totalGames: data.totalGames,
+                winRate: data.winRate,
+                currentStreak: data.currentStreak,
+                bestStreak: data.bestStreak
             }));
         };
 
