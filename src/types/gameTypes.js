@@ -9,3 +9,11 @@ export const Choices = {
     PAPER: 'paper',
     SCISSORS: 'scissors'
 };
+
+export const GameResults = {
+    WIN: 'W',
+    LOSS: 'L',
+    WIN_AFK: 'W_AFK',
+    LOSS_AFK: 'L_AFK',
+    DRAW_AFK: 'D_AFK'
+};

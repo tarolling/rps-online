@@ -6,13 +6,13 @@ export default async function handler(req, res) {
     }
 
     const {
-        player1Id,
-        player2Id,
-        player1Rating,
-        player2Rating,
-        player1Score,
-        player2Score,
-        winner,
+        playerID,
+        opponentID,
+        playerRating,
+        opponentRating,
+        playerScore,
+        opponentScore,
+        result,
         gameStats
     } = req.body;
 
@@ -35,37 +35,37 @@ export default async function handler(req, res) {
         session = driver.session({ database: 'neo4j' });
         await session.executeWrite(async tx => {
             return await tx.run(`
-                MATCH (p1:Player {uid: $player1Id})
-                MATCH (p2:Player {uid: $player2Id})
+                MATCH (p1:Player {uid: $playerID})
+                MATCH (p2:Player {uid: $opponentID})
                 CREATE (p1)-[g:PLAYED]->(p2)
                 SET g.timestamp = datetime(),
-                    g.player1Score = $player1Score,
-                    g.player2Score = $player2Score,
-                    g.winner = $winner,
-                    g.player1Rating = $player1Rating,
-                    g.player2Rating = $player2Rating,
-                    g.player1Rocks = $player1Rocks,
-                    g.player1Papers = $player1Papers,
-                    g.player1Scissors = $player1Scissors,
-                    g.player2Rocks = $player2Rocks,
-                    g.player2Papers = $player2Papers,
-                    g.player2Scissors = $player2Scissors,
+                    g.playerScore = $playerScore,
+                    g.opponentScore = $opponentScore,
+                    g.result = $result,
+                    g.playerRating = $playerRating,
+                    g.opponentRating = $opponentRating,
+                    g.playerRocks = $playerRocks,
+                    g.playerPapers = $playerPapers,
+                    g.playerScissors = $playerScissors,
+                    g.opponentRocks = $opponentRocks,
+                    g.opponentPapers = $opponentPapers,
+                    g.opponentScissors = $opponentScissors,
                     g.totalRounds = $totalRounds
                 RETURN g
             `, {
-                player1Id,
-                player2Id,
-                player1Score: neo4j.int(player1Score),
-                player2Score: neo4j.int(player2Score),
-                winner,
-                player1Rating,
-                player2Rating,
-                player1Rocks: neo4j.int(gameStats.player1Choices.ROCK),
-                player1Papers: neo4j.int(gameStats.player1Choices.PAPER),
-                player1Scissors: neo4j.int(gameStats.player1Choices.SCISSORS),
-                player2Rocks: neo4j.int(gameStats.player2Choices.ROCK),
-                player2Papers: neo4j.int(gameStats.player2Choices.PAPER),
-                player2Scissors: neo4j.int(gameStats.player2Choices.SCISSORS),
+                playerID,
+                opponentID,
+                playerScore: neo4j.int(playerScore),
+                opponentScore: neo4j.int(opponentScore),
+                result,
+                playerRating,
+                opponentRating,
+                playerRocks: neo4j.int(gameStats.playerChoices.ROCK),
+                playerPapers: neo4j.int(gameStats.playerChoices.PAPER),
+                playerScissors: neo4j.int(gameStats.playerChoices.SCISSORS),
+                opponentRocks: neo4j.int(gameStats.opponentChoices.ROCK),
+                opponentPapers: neo4j.int(gameStats.opponentChoices.PAPER),
+                opponentScissors: neo4j.int(gameStats.opponentChoices.SCISSORS),
                 totalRounds: neo4j.int(gameStats.totalRounds)
             });
         });

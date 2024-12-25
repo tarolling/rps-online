@@ -1,5 +1,5 @@
-import { getDatabase, ref, set, get, update, remove, onValue, off, serverTimestamp } from 'firebase/database';
-import { GameStates, Choices } from '../types/gameTypes';
+import { getDatabase, ref, set, get, update, remove, onValue, off } from 'firebase/database';
+import { GameStates, Choices, GameResults } from '../types/gameTypes';
 
 
 const FIRST_TO = 4;
@@ -99,7 +99,7 @@ const createGame = async (player1Id, player1Rating, player2Id, player2Rating) =>
     }
 };
 
-export const resolveRound = async (gameId) => {
+export const resolveRound = async (gameId, playerId) => {
     const gameRef = ref(db, `games/${gameId}`);
 
     try {
@@ -142,7 +142,7 @@ export const resolveRound = async (gameId) => {
         await update(gameRef, updates);
 
         if (updates.state === GameStates.FINISHED) {
-            await endGame(gameId);
+            await endGame(gameId, playerId);
             return { winner: updates.winner };
         }
         return null;
@@ -171,7 +171,7 @@ const determineRoundWinner = (choice1, choice2) => {
     return wins[choice1] === choice2 ? 'player1' : 'player2';
 };
 
-export const calculateGameStats = (game) => {
+export const calculateGameStats = (game, mainPlayer) => {
     const player1Choices = {
         ROCK: 0,
         PAPER: 0,
@@ -193,31 +193,25 @@ export const calculateGameStats = (game) => {
         }
     });
 
+    if (mainPlayer === 'p1') {
+        return {
+            playerChoices: player1Choices,
+            opponentChoices: player2Choices,
+            totalRounds: game.currentRound
+        };
+    }
+
     return {
-        player1Choices,
-        player2Choices,
+        playerChoices: player2Choices,
+        opponentChoices: player1Choices,
         totalRounds: game.currentRound
     };
 };
 
-export const endGame = async (gameId) => {
-    const gameRef = ref(db, `games/${gameId}`);
-    const processedRef = ref(db, `processed_games/${gameId}`);
+export const endGame = async (gameID, playerID) => {
+    const gameRef = ref(db, `games/${gameID}`);
 
     try {
-        const processedResult = await get(processedRef);
-
-        if (processedResult.exists()) return;
-
-        try {
-            await set(processedRef, {
-                timestamp: serverTimestamp()
-            });
-        } catch {
-            // If we couldn't set the flag, another instance is probably processing it
-            return;
-        }
-
         const snapshot = await get(gameRef);
         const game = snapshot.val();
 
@@ -225,53 +219,53 @@ export const endGame = async (gameId) => {
             throw new Error("Game not found");
         }
 
-        const gameStats = calculateGameStats(game);
+        const mainPlayer = playerID === game.player1.id ? 'p1' : 'p2';
+        const result = playerID === game.winner.id ? GameResults.WIN : GameResults.LOSS;
+        const gameStats = calculateGameStats(game, mainPlayer);
 
         try {
-            await fetch('/api/postGameStats', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    player1Id: game.player1.id,
-                    player2Id: game.player2.id,
-                    player1Rating: game.player1.rating,
-                    player2Rating: game.player2.rating,
-                    player1Score: game.player1.score,
-                    player2Score: game.player2.score,
-                    winner: game.winner,
-                    gameStats
-                }),
-            });
+            if (mainPlayer === 'p1') {
+                await fetch('/api/postGameStats', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        playerID: game.player1.id,
+                        opponentID: game.player2.id,
+                        playerRating: game.player1.rating,
+                        opponentRating: game.player2.rating,
+                        playerScore: game.player1.score,
+                        opponentScore: game.player2.score,
+                        result,
+                        gameStats
+                    }),
+                });
+            } else {
+                await fetch('/api/postGameStats', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        playerID: game.player2.id,
+                        opponentId: game.player1.id,
+                        playerRating: game.player2.rating,
+                        opponentRating: game.player1.rating,
+                        playerScore: game.player2.score,
+                        opponentScore: game.player1.score,
+                        result,
+                        gameStats
+                    }),
+                });
+            }
         } catch (error) {
             console.error('Error sending game stats', error);
-            await remove(processedRef);
-            throw error;
         }
 
-        await Promise.all([
-            remove(gameRef),
-            remove(processedRef)
-        ]);
+        remove(gameRef);
     } catch (error) {
         console.error('Error ending game:', error);
-        await remove(processedRef);
         throw error;
     }
-};
-
-// TODO: add to vercel cron jobs 
-export const cleanupProcessedGames = async () => {
-    const processedRef = ref(db, 'processed_games');
-    const snapshot = await get(processedRef);
-    const processed = snapshot.val() || {};
-
-    const oneDayAgo = Date.now() - (24 * 60 * 60 * 1000);
-
-    const cleanupPromises = Object.entries(processed)
-        .filter(([_, data]) => data.timestamp < oneDayAgo)
-        .map(([gameId]) => remove(ref(db, `processed_games/${gameId}`)));
-
-    await Promise.all(cleanupPromises);
 };

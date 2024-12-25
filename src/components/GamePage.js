@@ -12,9 +12,9 @@ const ROUND_TIME = 30;
 
 
 const GamePage = () => {
-    const { gameId } = useParams();
+    const { gameID } = useParams();
     const { user } = useAuth();
-    const playerId = user?.uid;
+    const playerID = user?.uid;
 
     const [game, setGame] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -22,7 +22,7 @@ const GamePage = () => {
     const [timeLeft, setTimeLeft] = useState(ROUND_TIME);
     const db = getDatabase();
 
-    const isPlayer1 = game?.player1.id === playerId;
+    const isPlayer1 = game?.player1.id === playerID;
     const playerData = isPlayer1 ? game?.player1 : game?.player2;
     const opponentData = isPlayer1 ? game?.player2 : game?.player1;
 
@@ -32,7 +32,7 @@ const GamePage = () => {
             const playerKey = isPlayer1 ? 'player1' : 'player2';
 
             try {
-                await update(ref(db, `games/${gameId}`), {
+                await update(ref(db, `games/${gameID}`), {
                     [`${playerKey}/choice`]: selectedChoice
                 });
             } catch (error) {
@@ -40,7 +40,7 @@ const GamePage = () => {
                 setChoice(null);
             }
         }
-    }, [choice, game, gameId, isPlayer1, db]);
+    }, [choice, game, gameID, isPlayer1, db]);
 
     const getChoiceEmoji = (choiceType) => {
         switch (choiceType) {
@@ -52,9 +52,9 @@ const GamePage = () => {
     };
 
     useEffect(() => {
-        if (!gameId || !playerId) return;
+        if (!gameID || !playerID) return;
 
-        const gameRef = ref(db, `games/${gameId}`);
+        const gameRef = ref(db, `games/${gameID}`);
         const unsubscribe = onValue(gameRef, (snapshot) => {
             const gameData = snapshot.val();
             if (gameData) {
@@ -68,7 +68,7 @@ const GamePage = () => {
 
                 if (gameData.player1.choice && gameData.player2.choice &&
                     gameData.state === GameStates.IN_PROGRESS) {
-                    resolveRound(gameId);
+                    resolveRound(gameID, user.uid);
                 }
             }
 
@@ -79,7 +79,7 @@ const GamePage = () => {
         });
 
         return () => unsubscribe();
-    }, [gameId, playerId, isPlayer1]);
+    }, [gameID, playerID, isPlayer1]);
 
     useEffect(() => {
         let timer;
@@ -183,7 +183,7 @@ const GamePage = () => {
 
                 {game.state === GameStates.FINISHED && (
                     <div className="game-result">
-                        <h2>{game.winner === playerId ? 'Victory!' : 'Defeat'}</h2>
+                        <h2>{game.winner === playerID ? 'Victory!' : 'Defeat'}</h2>
                         <p className="final-score">Final Score: {playerData.score} - {opponentData.score}</p>
                         <button className="play-again-button" onClick={() => window.location.href = '/'}>
                             Play Again
