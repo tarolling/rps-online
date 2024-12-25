@@ -1,26 +1,34 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { useAuth } from '../Auth';
-import Header from './Header';
 import '../styles/DashboardPage.css';
+import Header from './Header';
 
 function DashboardPage() {
     const navigate = useNavigate();
     const { user } = useAuth();
+    const [gameStats, setGameStats] = useState(null);
     const [playerData, setPlayerData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    // TODO: fetch real stats
-    const gameStats = {
-        totalGames: 156,
-        wins: 89,
-        losses: 62,
-        draws: 5,
-        winRate: "58.2%",
-        currentStreak: 4,
-        bestStreak: 12
-    };
+    useEffect(() => {
+        const fetchStats = async () => {
+            const stats = await fetch('/api/fetchDashboardStats', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    playerID: user.uid
+                }),
+            });
+
+            setGameStats(stats);
+        };
+
+        fetchStats();
+    }, []);
 
     // TODO: populate with real data
     const recentMatches = [
@@ -84,19 +92,19 @@ function DashboardPage() {
                         <h2>Your Statistics</h2>
                         <div className="stats-grid">
                             <div className="stat-item">
-                                <span className="stat-value">{gameStats.totalGames}</span>
+                                <span className="stat-value">{gameStats?.totalGames}</span>
                                 <span className="stat-label">Games Played</span>
                             </div>
                             <div className="stat-item">
-                                <span className="stat-value">{gameStats.winRate}</span>
+                                <span className="stat-value">{gameStats?.winRate}</span>
                                 <span className="stat-label">Win Rate</span>
                             </div>
                             <div className="stat-item">
-                                <span className="stat-value">{gameStats.currentStreak}</span>
+                                <span className="stat-value">{gameStats?.currentStreak}</span>
                                 <span className="stat-label">Current Streak</span>
                             </div>
                             <div className="stat-item">
-                                <span className="stat-value">{gameStats.bestStreak}</span>
+                                <span className="stat-value">{gameStats?.bestStreak}</span>
                                 <span className="stat-label">Best Streak</span>
                             </div>
                         </div>
