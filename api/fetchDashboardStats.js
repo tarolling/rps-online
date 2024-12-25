@@ -35,7 +35,7 @@ export default async function handler(req, res) {
                 WITH 
                     p, 
                     totalGames, 
-                    totalWins, 
+                    totalWins,
                     toFloat(totalWins) / totalGames * 100 AS winPercentage,
                     [r IN games | {result: r.result, timestamp: r.timestamp}] AS gameData
                 WITH 

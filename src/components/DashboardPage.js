@@ -30,7 +30,8 @@ function DashboardPage() {
             });
 
             const data = await stats.json();
-            console.log('huh??', JSON.stringify(Object.entries(data)));
+            if (data["error"]) return;
+
             setGameStats((prevState) => ({
                 ...prevState,
                 totalGames: data.totalGames,
