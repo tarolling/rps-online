@@ -64,9 +64,9 @@ export default async function handler(req, res) {
                     ) AS streakStats
                 RETURN {
                     totalGames: totalGames,
-                    winPercentage: winPercentage,
-                    currentWinStreak: streakStats.current,
-                    bestWinStreak: streakStats.best
+                    winRate: winPercentage,
+                    currentStreak: streakStats.current,
+                    bestStreak: streakStats.best
                 } AS result
             `, {
                 playerID
