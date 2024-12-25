@@ -249,7 +249,7 @@ export const endGame = async (gameID, playerID) => {
                     },
                     body: JSON.stringify({
                         playerID: game.player2.id,
-                        opponentId: game.player1.id,
+                        opponentID: game.player1.id,
                         playerRating: game.player2.rating,
                         opponentRating: game.player1.rating,
                         playerScore: game.player2.score,
