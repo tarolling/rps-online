@@ -1,7 +1,6 @@
 import React, { useState } from "react";
-import { createUserWithEmailAndPassword } from "firebase/auth";
+import { createUserWithEmailAndPassword, sendEmailVerification } from "firebase/auth";
 import { auth } from "../api/firebase";
-import { useNavigate } from "react-router";
 import Header from "./Header";
 
 function RegisterPage() {
@@ -9,11 +8,12 @@ function RegisterPage() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
-    const navigate = useNavigate();
+    const [message, setMessage] = useState("");
 
     const handleRegister = async (e) => {
         e.preventDefault();
         setError("");
+        setMessage("");
         try {
             let response = await fetch('/api/checkUsername', {
                 method: 'POST',
@@ -34,6 +34,8 @@ function RegisterPage() {
 
             const userInfo = await createUserWithEmailAndPassword(auth, email, password);
 
+            await sendEmailVerification(userInfo.user);
+
             response = await fetch('/api/initPlayer', {
                 method: 'POST',
                 headers: {
@@ -45,7 +47,8 @@ function RegisterPage() {
             if (!response.ok) {
                 throw new Error("Unable to update player in database.");
             }
-            navigate("/");
+
+            setMessage("Registration successful! Please check your email to verify your account before logging in.");
         } catch (err) {
             setError(err.message);
         }
@@ -81,6 +84,7 @@ function RegisterPage() {
                     <button type="submit">Register</button>
                 </form>
                 {error && <p style={{ color: "red" }}>{error}</p>}
+                {message && <p style={{ color: "green" }}>{message}</p>}
             </div>
         </div>
     );
