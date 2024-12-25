@@ -30,7 +30,7 @@ function DashboardPage() {
             });
 
             const data = await stats.json();
-            console.log('erm data:', JSON.stringify(data));
+            console.log('erm data:', JSON.stringify(Object.entries(data)));
             setGameStats((prevState) => ({
                 ...prevState,
                 totalGames: data.totalGames,

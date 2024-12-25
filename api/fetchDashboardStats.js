@@ -70,7 +70,12 @@ export default async function handler(req, res) {
                 playerID
             });
 
-            return data?.records[0];
+            return {
+                totalGames: neo4j.integer.toNumber(data.records[0].get("totalGames")),
+                winRate: data.records[0].get("winRate"),
+                currentStreak: neo4j.integer.toNumber(data.records[0].get("currentStreak")),
+                bestStreak: neo4j.integer.toNumber(data.records[0].get("bestStreak"))
+            };
         });
 
         res.status(200).json(response);
