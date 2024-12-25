@@ -24,8 +24,9 @@ function DashboardPage() {
                 }),
             });
 
-            console.log('stats:', stats);
-            setGameStats(stats);
+            const data = await stats.json();
+            console.log('stats:', data);
+            setGameStats(data);
         };
 
         fetchStats();
