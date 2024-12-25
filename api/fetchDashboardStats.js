@@ -26,7 +26,7 @@ export default async function handler(req, res) {
         session = driver.session({ database: 'neo4j' });
         const response = await session.executeRead(async tx => {
             const data = await tx.run(`
-                MATCH (p:Player {uid: $playerID})
+                MATCH (p:Player {uid: $playerID})-[r:PLAYED]->(:Player)
                 WITH 
                     p, 
                     collect(r) AS games,
