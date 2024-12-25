@@ -26,48 +26,53 @@ export default async function handler(req, res) {
         session = driver.session({ database: 'neo4j' });
         const response = await session.executeRead(async tx => {
             const data = await tx.run(`
-                MATCH (p:Player {uid: $playerId})
-                MATCH (p)-[games:PLAYED]-()
-                WITH p,
-                    COUNT(games) as totalGames,
-                    toFloat(COUNT(CASE WHEN games.result = 'W' THEN 1 END)) as wins,
-                    COLLECT(CASE WHEN games.timestamp IS NOT NULL 
-                            THEN {result: games.result, timestamp: games.timestamp} 
-                            END) as gameResults
-
-                WITH p, totalGames, wins,
-                    [x IN gameResults WHERE x IS NOT NULL | x.result] as results,
-                    REDUCE(streak = 0, result in REVERSE(results) |
-                        CASE result
-                            WHEN 'W' THEN streak + 1
-                            ELSE 0
+                MATCH (p:Player {uid: $playerID})
+                WITH 
+                    p, 
+                    collect(r) AS games,
+                    size([r IN collect(r) WHERE r.result = "W"]) AS totalWins,
+                    size(collect(r)) AS totalGames
+                WITH 
+                    p, 
+                    totalGames, 
+                    totalWins, 
+                    toFloat(totalWins) / totalGames * 100 AS winPercentage,
+                    [r IN games | {result: r.result, timestamp: r.timestamp}] AS gameData
+                WITH 
+                    p, 
+                    totalGames, 
+                    winPercentage,
+                    apoc.coll.sortMaps(gameData, "timestamp") AS sortedAscending,
+                    reverse(apoc.coll.sortMaps(gameData, "timestamp")) AS sortedByTimeDesc
+                WITH 
+                    p, 
+                    totalGames, 
+                    winPercentage, 
+                    reduce(streaks = {current: 0, best: 0}, g IN sortedByTimeDesc | 
+                        CASE 
+                            WHEN g.result = "W" THEN 
+                                {
+                                    current: streaks.current + 1, 
+                                    best: CASE WHEN streaks.current + 1 > streaks.best THEN streaks.current + 1 ELSE streaks.best END
+                                }
+                            ELSE 
+                                {
+                                    current: 0, 
+                                    best: streaks.best
+                                }
                         END
-                    ) as currentStreak,
-                    REDUCE(
-                        acc = {streak: 0, best: 0}, result in results |
-                        CASE result
-                            WHEN 'W' THEN {
-                                streak: acc.streak + 1,
-                                best: CASE 
-                                    WHEN acc.streak + 1 > acc.best 
-                                    THEN acc.streak + 1 
-                                    ELSE acc.best 
-                                    END
-                            }
-                            ELSE {streak: 0, best: acc.best}
-                        END
-                    ).best as bestStreak
-
-                RETURN 
-                    p.uid as playerID,
-                    totalGames,
-                    ROUND(100.0 * wins / totalGames, 2) as winRate,
-                    currentStreak,
-                    bestStreak;
+                    ) AS streakStats
+                RETURN {
+                    totalGames: totalGames,
+                    winPercentage: winPercentage,
+                    currentWinStreak: streakStats.current,
+                    bestWinStreak: streakStats.best
+                } AS result
             `, {
                 playerID
             });
 
+            console.log('data:', JSON.stringify(data));
             return data?.records[0];
         });
 
