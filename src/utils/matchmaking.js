@@ -1,31 +1,33 @@
 import { getDatabase, ref, set, get, update, remove, onValue, off } from 'firebase/database';
 import { GameStates, Choices, GameResults } from '../types/gameTypes';
+import calculateRating from '../utils/calculateRating';
 
 
 const FIRST_TO = 4;
 const db = getDatabase();
 
-export const findMatch = async (userId, userRating) => {
+export const findMatch = async (uid, username, userRating) => {
     const queueRef = ref(db, 'matchmaking_queue');
 
     try {
         const snapshot = await get(queueRef);
         const queue = snapshot.val() || {};
 
-        for (const [playerId, playerData] of Object.entries(queue)) {
-            if (playerId !== userId && Math.abs(playerData.rating - userRating) <= 100) {
-                const gameId = await createGame(playerId, playerData.rating, userId, userRating);
-                return { gameId, opponent: playerData };
+        for (const [playerID, playerData] of Object.entries(queue)) {
+            if (playerID !== uid && Math.abs(playerData.rating - userRating) <= 100) {
+                const gameID = await createGame(playerID, playerData.username, playerData.rating, uid, username, userRating);
+                return { gameID, opponent: playerData };
             }
         }
 
-        await set(ref(db, `matchmaking_queue/${userId}`), {
+        await set(ref(db, `matchmaking_queue/${uid}`), {
+            username: username,
             rating: userRating,
             timestamp: Date.now()
         });
 
         return new Promise((resolve) => {
-            const userQueueRef = ref(db, `matchmaking_queue/${userId}`);
+            const userQueueRef = ref(db, `matchmaking_queue/${uid}`);
             const gamesRef = ref(db, 'games');
 
             const unsubscribeQueue = onValue(userQueueRef, async (snapshot) => {
@@ -33,11 +35,11 @@ export const findMatch = async (userId, userRating) => {
                     const gamesSnapshot = await get(gamesRef);
                     const games = gamesSnapshot.val() || {};
 
-                    for (const [gameId, game] of Object.entries(games)) {
+                    for (const [gameID, game] of Object.entries(games)) {
                         if (game.state === GameStates.IN_PROGRESS &&
-                            (game.player1.id === userId || game.player2.id === userId)) {
+                            (game.player1.id === uid || game.player2.id === uid)) {
                             off(userQueueRef);
-                            resolve({ gameId });
+                            resolve({ gameID });
                             return;
                         }
                     }
@@ -46,7 +48,7 @@ export const findMatch = async (userId, userRating) => {
 
             setTimeout(() => {
                 off(userQueueRef);
-                remove(ref(db, `matchmaking_queue/${userId}`));
+                remove(ref(db, `matchmaking_queue/${uid}`));
                 resolve({ error: 'Match timeout' });
             }, 60000);
 
@@ -61,21 +63,33 @@ export const findMatch = async (userId, userRating) => {
     }
 };
 
-const createGame = async (player1Id, player1Rating, player2Id, player2Rating) => {
-    const gameId = crypto.randomUUID();
-    const gameRef = ref(db, `games/${gameId}`);
+/**
+ * 
+ * @param {string} player1ID Player 1's user ID
+ * @param {string} player1Username Player 1's username
+ * @param {number} player1Rating Player 1's current rating
+ * @param {string} player2ID Player 2's user ID
+ * @param {string} player2Username Player 2's username
+ * @param {number} player2Rating Player 2's current rating
+ * @returns The ID of the created game
+ */
+const createGame = async (player1ID, player1Username, player1Rating, player2ID, player2Username, player2Rating) => {
+    const gameID = crypto.randomUUID();
+    const gameRef = ref(db, `games/${gameID}`);
 
     const game = {
-        id: gameId,
+        id: gameID,
         state: GameStates.IN_PROGRESS,
         player1: {
-            id: player1Id,
+            id: player1ID,
+            username: player1Username,
             score: 0,
             rating: player1Rating,
             choice: null
         },
         player2: {
-            id: player2Id,
+            id: player2ID,
+            username: player2Username,
             score: 0,
             rating: player2Rating,
             choice: null
@@ -88,11 +102,11 @@ const createGame = async (player1Id, player1Rating, player2Id, player2Rating) =>
     try {
         await Promise.all([
             set(gameRef, game),
-            remove(ref(db, `matchmaking_queue/${player1Id}`)),
-            remove(ref(db, `matchmaking_queue/${player2Id}`))
+            remove(ref(db, `matchmaking_queue/${player1ID}`)),
+            remove(ref(db, `matchmaking_queue/${player2ID}`))
         ]);
 
-        return gameId;
+        return gameID;
     } catch (error) {
         console.error('Error creating game:', error);
         throw error;
@@ -241,6 +255,21 @@ export const endGame = async (gameID, playerID) => {
                         gameStats
                     }),
                 });
+
+                await fetch('/api/adjustRating', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        uid: playerID,
+                        newRating: calculateRating(
+                            game.player1.rating,
+                            game.player2.rating,
+                            playerID === game.winner.id
+                        ),
+                    }),
+                });
             } else {
                 await fetch('/api/postGameStats', {
                     method: 'POST',
@@ -256,6 +285,21 @@ export const endGame = async (gameID, playerID) => {
                         opponentScore: game.player1.score,
                         result,
                         gameStats
+                    }),
+                });
+
+                await fetch('/api/adjustRating', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        uid: playerID,
+                        newRating: calculateRating(
+                            game.player2.rating,
+                            game.player1.rating,
+                            playerID === game.winner.id
+                        ),
                     }),
                 });
             }

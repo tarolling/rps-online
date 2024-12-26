@@ -151,8 +151,8 @@ const GamePage = () => {
 
                     <div className="player-info">
                         <h3>Opponent</h3>
-                        <div className="username">{opponentData?.username || 'Opponent'}</div>
-                        <div className="score">{opponentData?.score || 0}</div>
+                        <div className="username">{opponentData.username || 'Opponent'}</div>
+                        <div className="score">{opponentData.score || 0}</div>
                         {game[isPlayer1 ? 'player2' : 'player1'].choice && (
                             <div className="choice-display">
                                 {game.state === GameStates.FINISHED ?
