@@ -7,7 +7,7 @@ function LeaderboardPage() {
 
     useEffect(() => {
         const fetchLeaderboard = async () => {
-            const response = await fetch('/api/leaderboard', {
+            const response = await fetch('/api/fetchLeaderboard', {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
