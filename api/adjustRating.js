@@ -28,10 +28,10 @@ export default async function handler(req, res) {
             return await tx.run(`
             MATCH (p:Player {uid: $uid})
             SET p.rating = $newRating
-            `,
+            `, {
                 uid,
                 newRating
-            );
+            });
         });
 
         res.status(200);
