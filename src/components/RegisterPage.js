@@ -28,7 +28,7 @@ function RegisterPage() {
             }
 
             const data = await response.json();
-            if (data["usernameExists"]) {
+            if (data.usernameExists) {
                 throw new Error("Username already exists!");
             }
 

@@ -138,7 +138,10 @@ function DashboardPage() {
                         <div className="matches-list">
                             {recentMatches.map((match, index) => (
                                 <div key={index} className={`match-item ${match.result.toLowerCase()}`}>
-                                    <span className="match-opponent">{match.opponent}</span>
+                                    <span
+                                        onClick={() => handleNavigation(`/profile/${match.opponentID}`)}
+                                        className="match-opponent">{match.opponentUsername}
+                                    </span>
                                     <span className="match-result">{match.result}</span>
                                     <div className="match-details">
                                         <span>{match.playerScore} - {match.opponentScore}</span>

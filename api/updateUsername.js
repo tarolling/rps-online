@@ -15,7 +15,7 @@ export default async function handler(req, res) {
         return res.status(405).json({ error: 'Method not allowed' });
     }
 
-    const { uid } = req.body;
+    const { uid, newUsername } = req.body;
 
     let session;
 
@@ -25,26 +25,17 @@ export default async function handler(req, res) {
         }
 
         session = driver.session({ database: 'neo4j' });
-        const read = await session.executeRead(async tx => {
-            let result = await tx.run(`
+        await session.executeWrite(async tx => {
+            await tx.run(`
             MATCH (p:Player {uid: $uid})
-            RETURN p.username AS username, p.rating AS rating
-            `, { uid: uid });
-
-            if (result?.records.length === 0) {
-                throw new Error("No players with the specified user ID exists.");
-            }
-
-            return result.records[0];
+            SET p.username = $newUsername
+            `, { uid, newUsername });
         });
 
-        res.status(200).json({
-            username: read.get("username"),
-            rating: neo4j.integer.toNumber(read.get("rating"))
-        });
+        res.status(200).json({ success: true });
     } catch (err) {
         console.error('Error executing query:', err);
-        res.status(500).json({ error: 'Failed to fetch player info.' });
+        res.status(500).json({ error: 'Failed to update username.' });
     } finally {
         if (session) await session.close();
     }

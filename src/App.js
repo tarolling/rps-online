@@ -1,3 +1,5 @@
+import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/react";
 import React from 'react';
 import { Route, BrowserRouter as Router, Routes } from 'react-router';
 import './App.css';
@@ -8,15 +10,13 @@ import GamePage from './components/GamePage';
 import LeaderboardPage from './components/LeaderboardPage';
 import LoginPage from './components/LoginPage';
 import MatchmakingPage from './components/MatchmakingPage';
+import ProfilePage from './components/ProfilePage';
 import RegisterPage from './components/RegisterPage';
 import RulesPage from './components/RulesPage';
-import { Analytics } from "@vercel/analytics/react";
-import { SpeedInsights } from "@vercel/speed-insights/react";
 
 export default function App() {
   return (
     <div>
-
       <AuthProvider>
         <Router>
           <Routes>
@@ -38,14 +38,7 @@ export default function App() {
                 </ProtectedRoute>
               }
             />
-            <Route
-              path="/leaderboard"
-              element={
-                <ProtectedRoute>
-                  <LeaderboardPage />
-                </ProtectedRoute>
-              }
-            />
+            <Route path="/leaderboard" element={<LeaderboardPage />} />
             <Route
               path="/friends"
               element={
@@ -54,8 +47,8 @@ export default function App() {
                 </ProtectedRoute>
               }
             />
-            <Route path="/play" element={<ProtectedRoute><MatchmakingPage /></ProtectedRoute>} />
             <Route path="/game/:gameID" element={<ProtectedRoute><GamePage /></ProtectedRoute>} />
+            <Route path="/profile/:userId" element={<ProfilePage />} />
             <Route path="/rules" element={<RulesPage />} />
           </Routes>
         </Router>
