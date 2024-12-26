@@ -26,7 +26,8 @@ export default async function handler(req, res) {
         session = driver.session({ database: 'neo4j' });
         const read = await session.executeRead(async tx => {
             let result = await tx.run(`
-            MATCH (p:Player {username: $username})
+            MATCH (p:Player)
+            WHERE toLower(p.username) = toLower($username)
             RETURN p
             `, { username: username });
 

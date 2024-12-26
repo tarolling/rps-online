@@ -95,7 +95,24 @@ function ProfilePage() {
 
     const handleUpdateUsername = async () => {
         try {
-            const response = await fetch('/api/updateUsername', {
+            let response = await fetch('/api/checkUsername', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ username: newUsername })
+            });
+
+            if (!response.ok) {
+                throw new Error("Unable to fetch usernames; try again later.");
+            }
+
+            const data = await response.json();
+            if (data.usernameExists) {
+                throw new Error("Username already exists!");
+            }
+
+            response = await fetch('/api/updateUsername', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
