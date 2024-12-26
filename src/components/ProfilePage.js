@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { useNavigate, useParams } from 'react-router';
 import { useAuth } from '../Auth';
-import Header from './Header';
 import '../styles/ProfilePage.css';
+import Header from './Header';
 
 function ProfilePage() {
     const { userId } = useParams();
