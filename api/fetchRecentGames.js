@@ -28,6 +28,7 @@ export default async function handler(req, res) {
             const data = await tx.run(`
                 MATCH (p:Player {uid: $playerID})-[r:PLAYED]->(p2:Player)
                 ORDER BY r.timestamp
+                LIMIT 3
                 RETURN p2.username AS username,
                     r.result AS result,
                     r.playerScore AS playerScore,
