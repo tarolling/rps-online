@@ -33,11 +33,7 @@ export default async function handler(req, res) {
             return result;
         });
 
-        if (read.records.length !== 0) {
-            res.status(200).json({ usernameExists: true });
-        } else {
-            res.status(200).json({ usernameExists: false })
-        }
+        res.status(200).json({ usernameExists: read.records.length !== 0 });
     } catch (err) {
         console.error('Error executing query:', err);
         res.status(500).json({ error: 'Failed to validate username.' });

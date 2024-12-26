@@ -15,7 +15,7 @@ export default async function handler(req, res) {
         }
 
         driver = neo4j.driver(process.env.NEO4J_URI, neo4j.auth.basic(process.env.NEO4J_USERNAME, process.env.NEO4J_PASSWORD))
-        await driver.getServerInfo()
+        await driver.getServerInfo();
     } catch (err) {
         console.error(`Connection error\n${err}\nCause: ${err.cause}`)
         if (driver) await driver.close();
@@ -25,16 +25,13 @@ export default async function handler(req, res) {
     try {
         session = driver.session({ database: 'neo4j' });
         await session.executeWrite(async tx => {
-            let result = await tx.run(`
+            await tx.run(`
             MATCH (p:Player {uid: $uid})
             SET p.username = $newUsername
             `, { uid, newUsername });
-
-            return result;
         });
 
-        console.log('we done');
-        return res.status(200);
+        res.status(200).json({ success: true });
     } catch (err) {
         console.error('Error executing query:', err);
         res.status(500).json({ error: 'Failed to update username.' });

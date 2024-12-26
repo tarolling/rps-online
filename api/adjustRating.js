@@ -25,16 +25,13 @@ export default async function handler(req, res) {
     try {
         session = driver.session({ database: 'neo4j' });
         await session.executeWrite(async tx => {
-            return await tx.run(`
+            await tx.run(`
             MATCH (p:Player {uid: $uid})
             SET p.rating = $newRating
-            `, {
-                uid,
-                newRating
-            });
+            `, { uid, newRating });
         });
 
-        res.status(200);
+        res.status(200).json({ success: true });
     } catch (err) {
         console.error('Error executing query:', err);
         res.status(500).json({ error: 'Failed to validate username.' });
