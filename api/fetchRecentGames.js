@@ -42,7 +42,7 @@ export default async function handler(req, res) {
                 result: record.get("result") === 'W' ? 'Win' : 'Loss',
                 playerScore: neo4j.integer.toNumber(record.get("playerScore")),
                 opponentScore: neo4j.integer.toNumber(record.get("opponentScore")),
-                date: `${record.get("timestamp").year}-${record.get("timestamp").month}-${record.get("timestamp").day}`
+                date: `${record.get("date").year}-${record.get("date").month}-${record.get("date").day}`
             }));
         });
 
