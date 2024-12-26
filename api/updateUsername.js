@@ -33,7 +33,8 @@ export default async function handler(req, res) {
             return result;
         });
 
-        res.status(200);
+        console.log('we done');
+        return res.status(200);
     } catch (err) {
         console.error('Error executing query:', err);
         res.status(500).json({ error: 'Failed to update username.' });
