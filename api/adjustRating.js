@@ -14,17 +14,17 @@ export default async function handler(req, res) {
             throw new Error('Missing required environment variables.');
         }
 
-        driver = neo4j.driver(process.env.NEO4J_URI, neo4j.auth.basic(process.env.NEO4J_USERNAME, process.env.NEO4J_PASSWORD))
-        await driver.getServerInfo()
+        driver = neo4j.driver(process.env.NEO4J_URI, neo4j.auth.basic(process.env.NEO4J_USERNAME, process.env.NEO4J_PASSWORD));
+        await driver.getServerInfo();
     } catch (err) {
-        console.error(`Connection error\n${err}\nCause: ${err.cause}`)
+        console.error(`Connection error\n${err}\nCause: ${err.cause}`);
         if (driver) await driver.close();
-        return res.status(503).json({ error: 'Unable to connect to Neo4j' })
+        return res.status(503).json({ error: 'Unable to connect to Neo4j' });
     }
 
     try {
         session = driver.session({ database: 'neo4j' });
-        await session.executeRead(async tx => {
+        await session.executeWrite(async tx => {
             return await tx.run(`
             MATCH (p:Player {uid: $uid})
             SET p.rating = $newRating

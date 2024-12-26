@@ -35,7 +35,7 @@ function DashboardPage() {
             setGameStats((prevState) => ({
                 ...prevState,
                 totalGames: data.totalGames,
-                winRate: data.winRate,
+                winRate: `${data.winRate}%`,
                 currentStreak: data.currentStreak,
                 bestStreak: data.bestStreak
             }));
