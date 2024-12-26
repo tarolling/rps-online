@@ -28,6 +28,10 @@ function ProfilePage() {
         fetchStats();
     }, [userId]);
 
+    const handleNavigation = (path) => {
+        navigate(path);
+    };
+
     const fetchProfileData = async () => {
         try {
             setLoading(true);
@@ -229,7 +233,10 @@ function ProfilePage() {
                         <div className="profile-matches-list">
                             {recentMatches.map((match, index) => (
                                 <div key={index} className={`profile-match-item ${match.result.toLowerCase()}`}>
-                                    <span className="profile-match-opponent">{match.opponent}</span>
+                                    <span
+                                        onClick={() => handleNavigation(`/profile/${match.opponentID}`)}
+                                        className="profile-match-opponent">{match.opponentUsername}
+                                    </span>
                                     <span className="profile-match-result">{match.result}</span>
                                     <div className="profile-match-details">
                                         <span>{match.playerScore} - {match.opponentScore}</span>

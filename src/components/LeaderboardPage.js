@@ -1,9 +1,15 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router';
 import '../styles/LeaderboardPage.css';
 import Header from './Header';
 
 function LeaderboardPage() {
     const [playerData, setPlayerData] = useState(null);
+    const navigate = useNavigate();
+
+    const handleNavigation = (path) => {
+        navigate(path);
+    };
 
     useEffect(() => {
         const fetchLeaderboard = async () => {
@@ -48,7 +54,7 @@ function LeaderboardPage() {
                         </thead>
                         <tbody>
                             {playerData.map((player, index) => (
-                                <tr key={index}>
+                                <tr key={index} onClick={() => handleNavigation(`/profile/${player.uid}`)}>
                                     <td>{player.username}</td>
                                     <td>{player.rating}</td>
                                 </tr>

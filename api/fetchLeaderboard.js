@@ -26,7 +26,9 @@ export default async function handler(req, res) {
         const leaderboard = await session.executeRead(async tx => {
             let result = await tx.run(`
             MATCH (p:Player)
-            RETURN p.username AS username, p.rating AS rating
+            RETURN p.uid AS uid,
+                p.username AS username,
+                p.rating AS rating
             ORDER BY p.rating DESC
             LIMIT 100
             `)
@@ -36,6 +38,7 @@ export default async function handler(req, res) {
             }
 
             return result.records.map((record) => ({
+                uid: record.get("uid"),
                 username: record.get("username"),
                 rating: neo4j.integer.toNumber(record.get("rating")),
             }));
