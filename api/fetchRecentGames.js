@@ -30,7 +30,8 @@ export default async function handler(req, res) {
                 MATCH (p:Player {uid: $playerID})-[r:PLAYED]->(p2:Player)
                 ORDER BY r.timestamp DESC
                 LIMIT 3
-                RETURN p2.username AS username,
+                RETURN p2.uid AS uid,
+                    p2.username AS username,
                     r.result AS result,
                     r.playerScore AS playerScore,
                     r.opponentScore AS opponentScore,
@@ -40,7 +41,8 @@ export default async function handler(req, res) {
             });
 
             return data.records.map((record) => ({
-                opponent: record.get("username"),
+                opponentID: record.get("uid"),
+                opponentUsername: record.get("username"),
                 result: record.get("result") === 'W' ? 'Win' : 'Loss',
                 playerScore: neo4j.integer.toNumber(record.get("playerScore")),
                 opponentScore: neo4j.integer.toNumber(record.get("opponentScore")),
