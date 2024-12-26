@@ -1,4 +1,4 @@
-import { K, minInc, maxInc, distributionFactor } from '../config/settings.json';
+import config from '../config/settings.json';
 
 /**
  * 
@@ -13,24 +13,24 @@ export default function calculateRating(playerRating, oppRating, won) {
 
     let larger, smaller, expectedWin, expectedLoss;
     if (winnerRating >= loserRating) {
-        larger = Math.pow(10, (winnerRating) / distributionFactor);
-        smaller = Math.pow(10, (loserRating) / distributionFactor);
+        larger = Math.pow(10, (winnerRating) / config.distributionFactor);
+        smaller = Math.pow(10, (loserRating) / config.distributionFactor);
 
         expectedWin = larger / (larger + smaller);
         expectedLoss = smaller / (larger + smaller);
     } else {
-        larger = Math.pow(10, (loserRating) / distributionFactor);
-        smaller = Math.pow(10, (winnerRating) / distributionFactor);
+        larger = Math.pow(10, (loserRating) / config.distributionFactor);
+        smaller = Math.pow(10, (winnerRating) / config.distributionFactor);
 
         expectedWin = smaller / (larger + smaller);
         expectedLoss = larger / (larger + smaller);
     }
 
-    let winInc = Math.round(K * (1 - expectedWin));
-    let loseInc = Math.round(K * (0 - expectedLoss));
+    let winInc = Math.round(config.K * (1 - expectedWin));
+    let loseInc = Math.round(config.K * (0 - expectedLoss));
 
-    winInc = Math.max(minInc, Math.min(maxInc, winInc));
-    loseInc = Math.max(-maxInc, Math.min(-minInc, loseInc));
+    winInc = Math.max(config.minInc, Math.min(config.maxInc, winInc));
+    loseInc = Math.max(-config.maxInc, Math.min(-config.minInc, loseInc));
 
     return won ? playerRating + winInc : playerRating + loseInc;
 }
