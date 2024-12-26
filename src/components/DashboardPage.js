@@ -13,6 +13,7 @@ function DashboardPage() {
         currentStreak: 0,
         bestStreak: 0
     });
+    const [recentMatches, setRecentMatches] = useState([]);
     const [playerData, setPlayerData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -30,7 +31,7 @@ function DashboardPage() {
             });
 
             const data = await stats.json();
-            if (data["error"]) return;
+            if (data?.error) return;
 
             setGameStats((prevState) => ({
                 ...prevState,
@@ -39,17 +40,25 @@ function DashboardPage() {
                 currentStreak: data.currentStreak,
                 bestStreak: data.bestStreak
             }));
+
+            const recentGames = await fetch('/api/fetchRecentGames', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    playerID: user.uid
+                }),
+            });
+
+            const games = await recentGames.json();
+            if (games?.error) return;
+
+            setRecentMatches(games);
         };
 
         fetchStats();
     }, []);
-
-    // TODO: populate with real data
-    const recentMatches = [
-        { opponent: "Player123", result: "Win", choice: "Rock", opponentChoice: "Scissors", date: "2024-03-21" },
-        { opponent: "GameMaster", result: "Loss", choice: "Paper", opponentChoice: "Scissors", date: "2024-03-20" },
-        { opponent: "RPSKing", result: "Win", choice: "Scissors", opponentChoice: "Paper", date: "2024-03-19" },
-    ];
 
     const handleNavigation = (path) => {
         navigate(path);
@@ -132,7 +141,7 @@ function DashboardPage() {
                                     <span className="match-opponent">{match.opponent}</span>
                                     <span className="match-result">{match.result}</span>
                                     <div className="match-details">
-                                        <span>{match.choice} vs {match.opponentChoice}</span>
+                                        <span>{match.playerScore} - {match.opponentScore}</span>
                                         <span className="match-date">{match.date}</span>
                                     </div>
                                 </div>

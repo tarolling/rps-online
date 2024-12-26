@@ -32,8 +32,5 @@ export default function calculateRating(playerRating, oppRating, won) {
     winInc = Math.max(config.minInc, Math.min(config.maxInc, winInc));
     loseInc = Math.max(-config.maxInc, Math.min(-config.minInc, loseInc));
 
-    console.log('old rating:', playerRating);
-    console.log('new rating:', won ? playerRating + winInc : playerRating + loseInc);
-
     return won ? playerRating + winInc : playerRating + loseInc;
 }
