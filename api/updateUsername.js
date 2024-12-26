@@ -24,18 +24,16 @@ export default async function handler(req, res) {
 
     try {
         session = driver.session({ database: 'neo4j' });
-        const read = await session.executeWrite(async tx => {
+        await session.executeWrite(async tx => {
             let result = await tx.run(`
             MATCH (p:Player {uid: $uid})
             SET p.username = $newUsername
-            RETURN p
             `, { uid, newUsername });
 
             return result;
         });
 
-        if (read.records.length !== 0) res.status(200);
-        else throw new Error("Unable to locate user with that ID");
+        res.status(200);
     } catch (err) {
         console.error('Error executing query:', err);
         res.status(500).json({ error: 'Failed to update username.' });
