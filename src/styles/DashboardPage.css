@@ -41,7 +41,8 @@
     margin-top: 2rem;
 }
 
-.stats-card, .recent-matches-card {
+.stats-card,
+.recent-matches-card {
     background: white;
     border-radius: 12px;
     padding: 1.5rem;
@@ -142,11 +143,11 @@
     .dashboard-container {
         padding: 1rem;
     }
-    
+
     .stats-grid {
         grid-template-columns: 1fr;
     }
-    
+
     .welcome-section h1 {
         font-size: 2rem;
     }

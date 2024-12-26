@@ -152,17 +152,17 @@ function ProfilePage() {
                 <section className="profile-header">
                     <div className="profile-info">
                         {isEditing ? (
-                            <div className="username-edit">
+                            <div className="profile-username-edit">
                                 <input
                                     type="text"
                                     value={newUsername}
                                     onChange={(e) => setNewUsername(e.target.value)}
-                                    className="username-input"
+                                    className="profile-username-input"
                                 />
-                                <button onClick={handleUpdateUsername} className="save-button">
+                                <button onClick={handleUpdateUsername} className="profile-save-button">
                                     Save
                                 </button>
-                                <button onClick={() => setIsEditing(false)} className="cancel-button">
+                                <button onClick={() => setIsEditing(false)} className="profile-cancel-button">
                                     Cancel
                                 </button>
                             </div>
@@ -172,11 +172,11 @@ function ProfilePage() {
                         {isOwnProfile && (
                             <div className="profile-actions">
                                 {!isEditing && (
-                                    <button onClick={() => setIsEditing(true)} className="edit-button">
+                                    <button onClick={() => setIsEditing(true)} className="profile-edit-button">
                                         Edit Username
                                     </button>
                                 )}
-                                <button onClick={handleDeleteAccount} className="delete-button">
+                                <button onClick={handleDeleteAccount} className="profile-delete-button">
                                     Delete Account
                                 </button>
                             </div>
@@ -185,38 +185,38 @@ function ProfilePage() {
                 </section>
 
                 <div className="profile-grid">
-                    <section className="stats-card">
+                    <section className="profile-stats-card">
                         <h2>Statistics</h2>
-                        <div className="stats-grid">
-                            <div className="stat-item">
-                                <span className="stat-value">{gameStats.totalGames}</span>
-                                <span className="stat-label">Games Played</span>
+                        <div className="profile-stats-grid">
+                            <div className="profile-stat-item">
+                                <span className="profile-stat-value">{gameStats.totalGames}</span>
+                                <span className="profile-stat-label">Games Played</span>
                             </div>
-                            <div className="stat-item">
-                                <span className="stat-value">{gameStats.winRate}</span>
-                                <span className="stat-label">Win Rate</span>
+                            <div className="profile-stat-item">
+                                <span className="profile-stat-value">{gameStats.winRate}</span>
+                                <span className="profile-stat-label">Win Rate</span>
                             </div>
-                            <div className="stat-item">
-                                <span className="stat-value">{gameStats.currentStreak}</span>
-                                <span className="stat-label">Current Streak</span>
+                            <div className="profile-stat-item">
+                                <span className="profile-stat-value">{gameStats.currentStreak}</span>
+                                <span className="profile-stat-label">Current Streak</span>
                             </div>
-                            <div className="stat-item">
-                                <span className="stat-value">{gameStats.bestStreak}</span>
-                                <span className="stat-label">Best Streak</span>
+                            <div className="profile-stat-item">
+                                <span className="profile-stat-value">{gameStats.bestStreak}</span>
+                                <span className="profile-stat-label">Best Streak</span>
                             </div>
                         </div>
                     </section>
 
-                    <section className="recent-matches-card">
+                    <section className="profile-recent-matches-card">
                         <h2>Recent Matches</h2>
-                        <div className="matches-list">
+                        <div className="profile-matches-list">
                             {recentMatches.map((match, index) => (
-                                <div key={index} className={`match-item ${match.result.toLowerCase()}`}>
-                                    <span className="match-opponent">{match.opponent}</span>
-                                    <span className="match-result">{match.result}</span>
-                                    <div className="match-details">
+                                <div key={index} className={`profile-match-item ${match.result.toLowerCase()}`}>
+                                    <span className="profile-match-opponent">{match.opponent}</span>
+                                    <span className="profile-match-result">{match.result}</span>
+                                    <div className="profile-match-details">
                                         <span>{match.playerScore} - {match.opponentScore}</span>
-                                        <span className="match-date">{match.date}</span>
+                                        <span className="profile-match-date">{match.date}</span>
                                     </div>
                                 </div>
                             ))}
@@ -232,7 +232,7 @@ const LoadingState = () => (
     <div className="profile-page">
         <Header />
         <div className="profile-container">
-            <div className="loading-spinner">Loading...</div>
+            <div className="profile-loading-spinner">Loading...</div>
         </div>
     </div>
 );
@@ -241,7 +241,7 @@ const ErrorState = ({ error, onRetry }) => (
     <div className="profile-page">
         <Header />
         <div className="profile-container">
-            <div className="error-card">
+            <div className="profile-error-card">
                 <p>Error: {error}</p>
                 <button onClick={onRetry}>Retry</button>
             </div>
