@@ -1,4 +1,4 @@
-import { getDatabase, onValue, ref, remove } from 'firebase/database';
+import { get, getDatabase, onValue, ref, remove } from 'firebase/database';
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { useAuth } from '../Auth';
@@ -8,9 +8,9 @@ import Header from './Header';
 
 function MatchmakingPage() {
     const { user } = useAuth();
-    const navigate = useNavigate();
     const [matchStatus, setMatchStatus] = useState('idle');
     const [queueCount, setQueueCount] = useState(0);
+    const navigate = useNavigate();
     const db = getDatabase();
 
     useEffect(() => {
@@ -20,37 +20,30 @@ function MatchmakingPage() {
             setQueueCount(Object.keys(queueData).length);
         });
 
+
+        const checkExistingGame = async () => {
+            const gamesRef = ref(db, 'games');
+            const snapshot = await get(gamesRef);
+            const games = snapshot.val() || {};
+
+            for (const [gameID, game] of Object.entries(games)) {
+                if (game.state === 'in_progress' &&
+                    (game.player1.id === user.uid || game.player2.id === user.uid)) {
+                    navigate(`/game/${gameID}`);
+                    return;
+                }
+            }
+        };
+
+        checkExistingGame();
+
         return () => {
             unsubscribeQueueCount();
             if (matchStatus === 'searching') {
                 remove(ref(db, `matchmaking_queue/${user.uid}`));
             }
         };
-    }, [db, user.uid, matchStatus]);
-
-    useEffect(() => {
-        if (matchStatus === 'searching') {
-            const queueRef = ref(db, `matchmaking_queue/${user.uid}`);
-            const gamesRef = ref(db, 'games');
-
-            const unsubscribeQueue = onValue(queueRef, (snapshot) => {
-                if (!snapshot.exists()) {
-                    onValue(gamesRef, (gameSnapshot) => {
-                        const games = gameSnapshot.val() || {};
-                        for (const [gameId, game] of Object.entries(games)) {
-                            if (game.state === 'in_progress' &&
-                                (game.player1.id === user.uid || game.player2.id === user.uid)) {
-                                navigate(`/game/${gameId}`);
-                                return;
-                            }
-                        }
-                    }, { onlyOnce: true });
-                }
-            });
-
-            return () => unsubscribeQueue();
-        }
-    }, [matchStatus, user.uid, navigate, db]);
+    }, [db, user.uid, matchStatus, navigate]);
 
     const handleFindMatch = async () => {
         setMatchStatus('searching');
@@ -70,9 +63,12 @@ function MatchmakingPage() {
 
             playerInfo = await playerInfo.json();
             const result = await findMatch(user.uid, playerInfo.username, playerInfo.rating);
+
             if (result?.gameID) {
                 setMatchStatus('matched');
                 navigate(`/game/${result.gameID}`);
+            } else if (result?.error === 'Match timeout') {
+                setMatchStatus('idle');
             }
         } catch (err) {
             await remove(ref(db, `matchmaking_queue/${user.uid}`));
@@ -106,9 +102,7 @@ function MatchmakingPage() {
             <div className="matchmaking-container">
                 <div className="matchmaking-card">
                     <h2 className="matchmaking-title">Matchmaking</h2>
-
                     {renderQueueCount()}
-
                     {matchStatus === 'idle' && (
                         <button
                             className="find-match-button"

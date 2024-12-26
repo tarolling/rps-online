@@ -6,17 +6,42 @@ import calculateRating from '../utils/calculateRating';
 const FIRST_TO = 4;
 const db = getDatabase();
 
+const checkExistingGame = async (uid) => {
+    const gamesRef = ref(db, 'games');
+    const snapshot = await get(gamesRef);
+    const games = snapshot.val() || {};
+
+    for (const game of Object.values(games)) {
+        if (game.state === GameStates.IN_PROGRESS &&
+            (game.player1.id === uid || game.player2.id === uid)) {
+            return game.id;
+        }
+    }
+    return null;
+};
+
 export const findMatch = async (uid, username, userRating) => {
     const queueRef = ref(db, 'matchmaking_queue');
 
     try {
+        const existingGameID = await checkExistingGame(uid);
+        if (existingGameID) {
+            return { gameID: existingGameID };
+        }
+
         const snapshot = await get(queueRef);
         const queue = snapshot.val() || {};
 
+        // Remove any stale queue entries for this user
+        await remove(ref(db, `matchmaking_queue/${uid}`));
+
         for (const [playerID, playerData] of Object.entries(queue)) {
             if (playerID !== uid && Math.abs(playerData.rating - userRating) <= 100) {
-                const gameID = await createGame(playerID, playerData.username, playerData.rating, uid, username, userRating);
-                return { gameID, opponent: playerData };
+                const opponentGameID = await checkExistingGame(playerID);
+                if (!opponentGameID) {
+                    const gameID = await createGame(playerID, playerData.username, playerData.rating, uid, username, userRating);
+                    return { gameID, opponent: playerData };
+                }
             }
         }
 
@@ -28,34 +53,36 @@ export const findMatch = async (uid, username, userRating) => {
 
         return new Promise((resolve) => {
             const userQueueRef = ref(db, `matchmaking_queue/${uid}`);
-            const gamesRef = ref(db, 'games');
+            let timeoutID;
+            let cleanup = false;
 
             const unsubscribeQueue = onValue(userQueueRef, async (snapshot) => {
-                if (!snapshot.exists()) {
-                    const gamesSnapshot = await get(gamesRef);
-                    const games = gamesSnapshot.val() || {};
+                if (cleanup) return false;
 
-                    for (const [gameID, game] of Object.entries(games)) {
-                        if (game.state === GameStates.IN_PROGRESS &&
-                            (game.player1.id === uid || game.player2.id === uid)) {
-                            off(userQueueRef);
-                            resolve({ gameID });
-                            return;
-                        }
+                if (!snapshot.exists()) {
+                    const existingGameID = await checkExistingGame(uid);
+                    if (existingGameID) {
+                        cleanup = true;
+                        clearTimeout(timeoutID);
+                        off(userQueueRef);
+                        resolve({ gameID: existingGameID });
                     }
                 }
             });
 
-            setTimeout(() => {
+            timeoutID = setTimeout(() => {
+                cleanup = true;
                 off(userQueueRef);
                 remove(ref(db, `matchmaking_queue/${uid}`));
                 resolve({ error: 'Match timeout' });
             }, 60000);
 
             return () => {
+                cleanup = true;
+                clearTimeout(timeoutID);
                 unsubscribeQueue();
                 off(userQueueRef);
-            }
+            };
         });
     } catch (error) {
         console.error('Error in findMatch:', error);
