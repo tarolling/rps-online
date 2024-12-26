@@ -70,9 +70,9 @@ function MatchmakingPage() {
 
             playerInfo = await playerInfo.json();
             const result = await findMatch(user.uid, playerInfo.username, playerInfo.rating);
-            if (result?.gameId) {
+            if (result?.gameID) {
                 setMatchStatus('matched');
-                navigate(`/game/${result.gameId}`);
+                navigate(`/game/${result.gameID}`);
             }
         } catch (err) {
             await remove(ref(db, `matchmaking_queue/${user.uid}`));
