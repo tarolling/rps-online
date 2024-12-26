@@ -27,7 +27,7 @@ export default async function handler(req, res) {
         const response = await session.executeRead(async tx => {
             const data = await tx.run(`
                 MATCH (p:Player {uid: $playerID})-[r:PLAYED]->(p2:Player)
-                ORDER BY r.timestamp
+                ORDER BY r.timestamp DESC
                 LIMIT 3
                 RETURN p2.username AS username,
                     r.result AS result,
