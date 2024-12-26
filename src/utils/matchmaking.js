@@ -233,6 +233,8 @@ export const endGame = async (gameID, playerID) => {
             throw new Error("Game not found");
         }
 
+        console.log('game obj', JSON.stringify(game));
+
         const mainPlayer = playerID === game.player1.id ? 'p1' : 'p2';
         const result = playerID === game.winner.id ? GameResults.WIN : GameResults.LOSS;
         console.log('player id:', playerID);
