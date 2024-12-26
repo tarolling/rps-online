@@ -63,7 +63,7 @@ function Header() {
                         />
                         <div className={`dropdown-content ${isDropdownOpen ? 'show' : ''}`}>
                             <button
-                                onClick={() => handleNavigation('/profile')}
+                                onClick={() => handleNavigation(`/profile/${user.uid}`)}
                                 className='dropdown-item'
                             >
                                 Profile
