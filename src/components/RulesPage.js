@@ -1,17 +1,17 @@
 import React from "react";
 import Header from "./Header";
 
-function RulesPage() {
+export default function RulesPage() {
     return (
         <div>
             <Header />
-            <h1>Rules</h1>
-            <ol>
-                <li>Don&#39;t be stupid.</li>
-                <li>Games are first to 4 wins.</li>
-            </ol>
+            <div style={{ padding: '20px' }}>
+                <h1>Rules</h1>
+                <ol>
+                    <li>Don&#39;t be stupid.</li>
+                    <li>Games are first to 4 wins.</li>
+                </ol>
+            </div>
         </div>
     );
 }
-
-export default RulesPage;

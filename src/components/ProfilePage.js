@@ -1,11 +1,11 @@
 import React from 'react';
 import Header from './Header';
 
-export default function FriendsPage() {
+export default function ProfilePage() {
     return (
         <div>
             <Header />
-            <h1>Friends in progress...</h1>
+            <h1>Profiles in progress...</h1>
         </div>
     )
 }

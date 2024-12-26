@@ -55,10 +55,24 @@ function MatchmakingPage() {
     const handleFindMatch = async () => {
         setMatchStatus('searching');
         try {
-            const result = await findMatch(user.uid, user.rating || 500);
-            if (result?.gameId) {
+            let playerInfo = await fetch('/api/fetchPlayer', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    uid: user.uid,
+                }),
+            });
+            if (!playerInfo.ok) {
+                throw new Error("Could not fetch player information");
+            }
+
+            playerInfo = await playerInfo.json();
+            const result = await findMatch(user.uid, playerInfo.username, playerInfo.rating);
+            if (result?.gameID) {
                 setMatchStatus('matched');
-                navigate(`/game/${result.gameId}`);
+                navigate(`/game/${result.gameID}`);
             }
         } catch (err) {
             await remove(ref(db, `matchmaking_queue/${user.uid}`));

@@ -1,33 +1,64 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { useAuth } from '../Auth';
-import Header from './Header';
 import '../styles/DashboardPage.css';
+import Header from './Header';
 
 function DashboardPage() {
     const navigate = useNavigate();
     const { user } = useAuth();
+    const [gameStats, setGameStats] = useState({
+        totalGames: 0,
+        winRate: "N/A",
+        currentStreak: 0,
+        bestStreak: 0
+    });
+    const [recentMatches, setRecentMatches] = useState([]);
     const [playerData, setPlayerData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    // TODO: fetch real stats
-    const gameStats = {
-        totalGames: 156,
-        wins: 89,
-        losses: 62,
-        draws: 5,
-        winRate: "58.2%",
-        currentStreak: 4,
-        bestStreak: 12
-    };
+    useEffect(() => {
+        const fetchStats = async () => {
+            const stats = await fetch('/api/fetchDashboardStats', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    playerID: user.uid
+                }),
+            });
 
-    // TODO: populate with real data
-    const recentMatches = [
-        { opponent: "Player123", result: "Win", choice: "Rock", opponentChoice: "Scissors", date: "2024-03-21" },
-        { opponent: "GameMaster", result: "Loss", choice: "Paper", opponentChoice: "Scissors", date: "2024-03-20" },
-        { opponent: "RPSKing", result: "Win", choice: "Scissors", opponentChoice: "Paper", date: "2024-03-19" },
-    ];
+            const data = await stats.json();
+            if (data?.error) return;
+
+            setGameStats((prevState) => ({
+                ...prevState,
+                totalGames: data.totalGames,
+                winRate: `${data.winRate.toFixed(1)}%`,
+                currentStreak: data.currentStreak,
+                bestStreak: data.bestStreak
+            }));
+
+            const recentGames = await fetch('/api/fetchRecentGames', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    playerID: user.uid
+                }),
+            });
+
+            const games = await recentGames.json();
+            if (games?.error) return;
+
+            setRecentMatches(games);
+        };
+
+        fetchStats();
+    }, []);
 
     const handleNavigation = (path) => {
         navigate(path);
@@ -110,7 +141,7 @@ function DashboardPage() {
                                     <span className="match-opponent">{match.opponent}</span>
                                     <span className="match-result">{match.result}</span>
                                     <div className="match-details">
-                                        <span>{match.choice} vs {match.opponentChoice}</span>
+                                        <span>{match.playerScore} - {match.opponentScore}</span>
                                         <span className="match-date">{match.date}</span>
                                     </div>
                                 </div>

@@ -55,7 +55,7 @@ export default function App() {
               }
             />
             <Route path="/play" element={<ProtectedRoute><MatchmakingPage /></ProtectedRoute>} />
-            <Route path="/game/:gameId" element={<ProtectedRoute><GamePage /></ProtectedRoute>} />
+            <Route path="/game/:gameID" element={<ProtectedRoute><GamePage /></ProtectedRoute>} />
             <Route path="/rules" element={<RulesPage />} />
           </Routes>
         </Router>

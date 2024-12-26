@@ -37,7 +37,7 @@ export default async function handler(req, res) {
             return result.records[0];
         });
 
-        res.status(200).json({ username: read.get("username"), rating: read.get("rating") });
+        res.status(200).json({ username: read.get("username"), rating: neo4j.integer.toNumber(read.get("rating")) });
     } catch (err) {
         console.error('Error executing query:', err);
         res.status(500).json({ error: 'Failed to fetch player info.' });
