@@ -81,7 +81,7 @@ export default async function handler(req, res) {
                 data = data.records.map((record) => ({
                     name: record.get("name"),
                     tag: record.get("tag"),
-                    role: record.get("memberRole"),
+                    memberRole: record.get("memberRole"),
                     memberCount: record.get("memberCount")
                 }));
                 resultBody = { clubs: data };
