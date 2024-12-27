@@ -51,13 +51,15 @@ function Header() {
                 <button onClick={() => handleNavigation('/rules')} className="nav-link">
                     Rules
                 </button>
+                <button onClick={() => handleNavigation('/clubs')} className="nav-link">
+                    Clubs
+                </button>
             </nav>
             <div className="header-user">
                 {user ? (
                     <div
                         className="profile-dropdown"
-                        onMouseEnter={() => setIsDropdownOpen(true)}
-                        onMouseLeave={() => setIsDropdownOpen(false)}
+                        onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                     >
                         <img
                             src={user?.photoURL ?? logo}

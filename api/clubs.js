@@ -28,6 +28,19 @@ export default async function handler(req, res) {
 
         switch (methodType) {
             case 'create':
+                data = await session.executeWrite(async tx => {
+                    return await tx.run(`
+                    MATCH (p:Player {uid: $founderID})
+                    CREATE (p)-[:MEMBER {role: 'Founder'}]->(c:Club $props)
+                    `, {
+                        founderID: req.body.founderID,
+                        props: {
+                            name: req.body.name,
+                            tag: req.body.tag,
+                            availability: req.body.availability,
+                        }
+                    });
+                });
                 break;
             case 'join':
                 break;
@@ -41,10 +54,18 @@ export default async function handler(req, res) {
                     RETURN c.id AS id, c.name AS name
                     `, { searchTerm: req.body.searchTerm });
                 });
-
                 resultBody = { clubs: data.records };
                 break;
             case 'user':
+                data = await session.executeRead(async tx => {
+                    return await tx.run(`
+                    MATCH (p:Player {uid: $uid})-[r:MEMBER]->(c:Club)
+                    RETURN c.name AS name
+                        c.tag AS tag,
+                        r.role AS memberRole
+                    `, { uid: req.body.uid });
+                });
+                resultBody = { clubs: data.records };
                 break;
             default:
                 throw new Error("Method type not specified");

@@ -51,12 +51,12 @@ const ClubsPage = () => {
         }
     };
 
-    const handleJoinClub = async (clubID) => {
+    const handleJoinClub = async (clubName) => {
         try {
             await fetch('/api/clubs', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ methodType: 'join', uid: user.uid, clubID })
+                body: JSON.stringify({ methodType: 'join', uid: user.uid, clubName })
             });
             await fetchUserClubs();
             await fetchClubs();
@@ -65,12 +65,12 @@ const ClubsPage = () => {
         }
     };
 
-    const handleLeaveClub = async (clubID) => {
+    const handleLeaveClub = async (clubName) => {
         try {
             await fetch('/api/clubs', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ methodType: 'leave', uid: user.uid, clubID })
+                body: JSON.stringify({ methodType: 'leave', uid: user.uid, clubName })
             });
             await fetchUserClubs();
             await fetchClubs();
@@ -118,8 +118,8 @@ const ClubsPage = () => {
                     <section className="stats-card">
                         <h2>My Clubs</h2>
                         <div className="matches-list">
-                            {userClubs.map(club => (
-                                <div key={club.id} className="match-item">
+                            {userClubs.map((club, index) => (
+                                <div key={index} className="match-item">
                                     <div className="flex justify-between items-center">
                                         <div>
                                             <span className="match-opponent">{club.name}</span>
@@ -133,7 +133,7 @@ const ClubsPage = () => {
                                         <span>{club.memberCount}/50 members</span>
                                         {club.memberRole !== 'Founder' && (
                                             <button
-                                                onClick={() => handleLeaveClub(club.id)}
+                                                onClick={() => handleLeaveClub(club.name)}
                                                 className="text-red-500 hover:text-red-700"
                                             >
                                                 Leave
@@ -172,8 +172,8 @@ const ClubsPage = () => {
                         </div>
 
                         <div className="matches-list">
-                            {clubs.map(club => (
-                                <div key={club.id} className="match-item">
+                            {clubs.map((club, index) => (
+                                <div key={index} className="match-item">
                                     <div className="flex justify-between items-center">
                                         <div>
                                             <span className="match-opponent">{club.name}</span>
@@ -185,9 +185,9 @@ const ClubsPage = () => {
                                     </div>
                                     <div className="match-details">
                                         <span>{club.memberCount}/50 members</span>
-                                        {club.availability === 'open' && !userClubs.find(uc => uc.id === club.id) && (
+                                        {club.availability === 'open' && !userClubs.find(uc => uc.name === club.name) && (
                                             <button
-                                                onClick={() => handleJoinClub(club.id)}
+                                                onClick={() => handleJoinClub(club.name)}
                                                 className="text-blue-500 hover:text-blue-700"
                                             >
                                                 Join
