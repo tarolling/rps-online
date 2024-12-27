@@ -35,7 +35,7 @@ function LoginPage() {
             if (!response.ok) {
                 throw new Error("Unable to update player in database.");
             }
-            navigate('/');
+            navigate('/dashboard');
         } catch (err) {
             setError(err.message);
         }

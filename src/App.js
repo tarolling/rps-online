@@ -4,9 +4,11 @@ import React from 'react';
 import { Route, BrowserRouter as Router, Routes } from 'react-router';
 import './App.css';
 import { AuthProvider, ProtectedRoute } from './Auth';
+import ClubsPage from "./components/ClubsPage";
 import DashboardPage from './components/DashboardPage';
 import FriendsPage from './components/FriendsPage';
 import GamePage from './components/GamePage';
+import HomePage from './components/HomePage';
 import LeaderboardPage from './components/LeaderboardPage';
 import LoginPage from './components/LoginPage';
 import MatchmakingPage from './components/MatchmakingPage';
@@ -22,6 +24,12 @@ export default function App() {
           <Routes>
             <Route
               path="/"
+              element={
+                <HomePage />
+              }
+            />
+            <Route
+              path="/dashboard"
               element={
                 <ProtectedRoute>
                   <DashboardPage />
@@ -50,6 +58,7 @@ export default function App() {
             <Route path="/game/:gameID" element={<ProtectedRoute><GamePage /></ProtectedRoute>} />
             <Route path="/profile/:userId" element={<ProfilePage />} />
             <Route path="/rules" element={<RulesPage />} />
+            <Route path="/clubs" element={<ClubsPage />} />
           </Routes>
         </Router>
       </AuthProvider>

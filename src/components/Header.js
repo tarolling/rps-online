@@ -39,6 +39,9 @@ function Header() {
                 <button onClick={() => handleNavigation('/')} className='nav-link'>
                     Home
                 </button>
+                <button onClick={() => handleNavigation('/dashboard')} className='nav-link'>
+                    Dashboard
+                </button>
                 <button onClick={() => handleNavigation('/leaderboard')} className="nav-link">
                     Leaderboard
                 </button>
