@@ -60,7 +60,7 @@ export default async function handler(req, res) {
                 data = await session.executeRead(async tx => {
                     return await tx.run(`
                     MATCH (p:Player {uid: $uid})-[r:MEMBER]->(c:Club)
-                    RETURN c.name AS name
+                    RETURN c.name AS name,
                         c.tag AS tag,
                         r.role AS memberRole
                     `, { uid: req.body.uid });
