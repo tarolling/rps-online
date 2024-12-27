@@ -51,11 +51,18 @@ export default async function handler(req, res) {
                     return await tx.run(`
                     MATCH (c:Club)
                     WHERE toLower(c.name) CONTAINS toLower($searchTerm)
-                    RETURN c.name AS name
+                    WITH c.name AS name,
+                        c.tag AS tag,
+                        c.availability AS availability
+                    MATCH (:Player)-[:MEMBER]->(:Club {name: name})
+                    RETURN name, tag, availability, count(*) AS memberCount
                     `, { searchTerm: req.body.searchTerm });
                 });
                 data = data.records.map((record) => ({
-                    name: record.get("name")
+                    name: record.get("name"),
+                    tag: record.get("tag"),
+                    availability: record.get("availability"),
+                    memberCount: record.get("memberCount")
                 }));
                 resultBody = { clubs: data };
                 break;
@@ -63,16 +70,19 @@ export default async function handler(req, res) {
                 data = await session.executeRead(async tx => {
                     return await tx.run(`
                     MATCH (p:Player {uid: $uid})-[r:MEMBER]->(c:Club)
-                    RETURN c.name AS name,
+                    WITH c.name AS name,
                         c.tag AS tag,
                         r.role AS memberRole
+                    MATCH (:Player)-[:MEMBER]->(:Club {name: name})
+                    RETURN name, tag, memberRole, count(*) AS memberCount
                     `, { uid: req.body.uid });
                 });
 
                 data = data.records.map((record) => ({
                     name: record.get("name"),
                     tag: record.get("tag"),
-                    role: record.get("memberRole")
+                    role: record.get("memberRole"),
+                    memberCount: record.get("memberCount")
                 }));
                 resultBody = { clubs: data };
                 break;
