@@ -29,9 +29,6 @@ const ClubsPage = () => {
                 body: JSON.stringify({ methodType: 'search', searchTerm })
             });
             const data = await response.json();
-            data.clubs.forEach(element => {
-                console.log('club element:', JSON.stringify(element));
-            });
             setClubs(data.clubs);
         } catch (err) {
             setError('Failed to fetch clubs');
@@ -48,9 +45,6 @@ const ClubsPage = () => {
                 body: JSON.stringify({ methodType: 'user', uid: user.uid })
             });
             const data = await response.json();
-            data.clubs.forEach(element => {
-                console.log('user club element:', JSON.stringify(element));
-            });
             setUserClubs(data.clubs);
         } catch (err) {
             setError('Failed to fetch user clubs');

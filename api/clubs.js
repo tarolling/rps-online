@@ -62,7 +62,7 @@ export default async function handler(req, res) {
                     name: record.get("name"),
                     tag: record.get("tag"),
                     availability: record.get("availability"),
-                    memberCount: record.get("memberCount")
+                    memberCount: neo4j.integer.toNumber(record.get("memberCount"))
                 }));
                 resultBody = { clubs: data };
                 break;
@@ -82,7 +82,7 @@ export default async function handler(req, res) {
                     name: record.get("name"),
                     tag: record.get("tag"),
                     memberRole: record.get("memberRole"),
-                    memberCount: record.get("memberCount")
+                    memberCount: neo4j.integer.toNumber(record.get("memberCount"))
                 }));
                 resultBody = { clubs: data };
                 break;
