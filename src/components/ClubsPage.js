@@ -23,10 +23,10 @@ const ClubsPage = () => {
 
     const fetchClubs = async () => {
         try {
-            const response = await fetch('/api/clubs/search', {
+            const response = await fetch('/api/clubs', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ searchTerm })
+                body: JSON.stringify({ methodType: 'search', searchTerm })
             });
             const data = await response.json();
             setClubs(data.clubs);
@@ -39,10 +39,10 @@ const ClubsPage = () => {
 
     const fetchUserClubs = async () => {
         try {
-            const response = await fetch('/api/clubs/user', {
+            const response = await fetch('/api/clubs', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ uid: user.uid })
+                body: JSON.stringify({ methodType: 'user', uid: user.uid })
             });
             const data = await response.json();
             setUserClubs(data);
@@ -51,12 +51,12 @@ const ClubsPage = () => {
         }
     };
 
-    const handleJoinClub = async (clubId) => {
+    const handleJoinClub = async (clubID) => {
         try {
-            await fetch('/api/clubs/join', {
+            await fetch('/api/clubs', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userId: user.uid, clubId })
+                body: JSON.stringify({ methodType: 'join', uid: user.uid, clubID })
             });
             await fetchUserClubs();
             await fetchClubs();
@@ -65,12 +65,12 @@ const ClubsPage = () => {
         }
     };
 
-    const handleLeaveClub = async (clubId) => {
+    const handleLeaveClub = async (clubID) => {
         try {
-            await fetch('/api/clubs/leave', {
+            await fetch('/api/clubs', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userId: user.uid, clubId })
+                body: JSON.stringify({ methodType: 'leave', uid: user.uid, clubID })
             });
             await fetchUserClubs();
             await fetchClubs();
@@ -82,12 +82,13 @@ const ClubsPage = () => {
     const handleCreateClub = async (e) => {
         e.preventDefault();
         try {
-            await fetch('/api/clubs/create', {
+            await fetch('/api/clubs', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     ...createClubData,
-                    founderId: user.uid
+                    methodType: 'create',
+                    founderID: user.uid
                 })
             });
             setShowCreateModal(false);
