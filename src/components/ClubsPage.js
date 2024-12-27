@@ -45,10 +45,6 @@ const ClubsPage = () => {
                 body: JSON.stringify({ methodType: 'user', uid: user.uid })
             });
             const data = await response.json();
-            console.log("==================== USER CLUBS ====================");
-            data.clubs.forEach(element => {
-                console.log(Object.entries(element));
-            });
             setUserClubs(data.clubs);
         } catch (err) {
             setError('Failed to fetch user clubs');

@@ -51,10 +51,13 @@ export default async function handler(req, res) {
                     return await tx.run(`
                     MATCH (c:Club)
                     WHERE toLower(c.name) CONTAINS toLower($searchTerm)
-                    RETURN c.id AS id, c.name AS name
+                    RETURN c.name AS name
                     `, { searchTerm: req.body.searchTerm });
                 });
-                resultBody = { clubs: data.records };
+                data = data.records.map((record) => ({
+                    name: record.get("name")
+                }));
+                resultBody = { clubs: data };
                 break;
             case 'user':
                 data = await session.executeRead(async tx => {
@@ -65,7 +68,13 @@ export default async function handler(req, res) {
                         r.role AS memberRole
                     `, { uid: req.body.uid });
                 });
-                resultBody = { clubs: data.records };
+
+                data = data.records.map((record) => ({
+                    name: record.get("name"),
+                    tag: record.get("tag"),
+                    role: record.get("memberRole")
+                }));
+                resultBody = { clubs: data };
                 break;
             default:
                 throw new Error("Method type not specified");
