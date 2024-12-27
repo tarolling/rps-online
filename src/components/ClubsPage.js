@@ -29,7 +29,6 @@ const ClubsPage = () => {
                 body: JSON.stringify({ methodType: 'search', searchTerm })
             });
             const data = await response.json();
-            console.log('fetched clubs:', JSON.stringify(data));
             setClubs(data.clubs);
         } catch (err) {
             setError('Failed to fetch clubs');
@@ -46,7 +45,10 @@ const ClubsPage = () => {
                 body: JSON.stringify({ methodType: 'user', uid: user.uid })
             });
             const data = await response.json();
-            console.log('fetched user clubs:', JSON.stringify(data));
+            console.log("==================== USER CLUBS ====================");
+            data.clubs.forEach(element => {
+                console.log(Object.entries(element));
+            });
             setUserClubs(data.clubs);
         } catch (err) {
             setError('Failed to fetch user clubs');
@@ -114,9 +116,7 @@ const ClubsPage = () => {
                         Create New Club
                     </button>
                 </section>
-
                 <div className="dashboard-grid">
-                    {/* My Clubs Section */}
                     <section className="stats-card">
                         <h2>My Clubs</h2>
                         <div className="matches-list">
@@ -151,8 +151,6 @@ const ClubsPage = () => {
                             )}
                         </div>
                     </section>
-
-                    {/* Club Search Section */}
                     <section className="stats-card">
                         <div className="flex items-center gap-4 mb-4">
                             <div className="relative flex-1">
@@ -172,7 +170,6 @@ const ClubsPage = () => {
                                 Search
                             </button>
                         </div>
-
                         <div className="matches-list">
                             {clubs.map((club, index) => (
                                 <div key={index} className="match-item">
@@ -201,8 +198,6 @@ const ClubsPage = () => {
                         </div>
                     </section>
                 </div>
-
-                {/* Create Club Modal */}
                 {showCreateModal && (
                     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
                         <div className="bg-white rounded-lg p-6 max-w-md w-full">
@@ -275,7 +270,6 @@ const ClubsPage = () => {
                         </div>
                     </div>
                 )}
-
                 {error && (
                     <div className="fixed bottom-4 right-4 bg-red-100 border-l-4 border-red-500 text-red-700 p-4">
                         {error}
