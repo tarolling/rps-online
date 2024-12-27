@@ -29,6 +29,7 @@ const ClubsPage = () => {
                 body: JSON.stringify({ methodType: 'search', searchTerm })
             });
             const data = await response.json();
+            console.log('fetched clubs:', JSON.stringify(data));
             setClubs(data.clubs);
         } catch (err) {
             setError('Failed to fetch clubs');
