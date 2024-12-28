@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import { Choices, GameStates } from '../types/gameTypes';
 import { FIRST_TO, determineRoundWinner } from "../utils/matchmaking";
 import Header from "./Header";
@@ -28,41 +28,49 @@ function AIPage() {
 
     const aiAlgorithm = setupAI();
 
-    const handleChoice = (choiceOption) => {
-        setPlayerChoice(choiceOption);
-        setTimeout(() => {
-            resolveRound(choiceOption);
-        }, 1000);
+    const handleChoice = async (selectedChoice) => {
+        if (!playerChoice && gameData.state === GameStates.IN_PROGRESS) {
+            setPlayerChoice(selectedChoice);
+            setTimeout(() => {
+                resolveRound(selectedChoice);
+            }, 1000);
+        }
     };
 
-    const resolveRound = (choiceOption) => {
-        const tempChoice = aiAlgorithm(choiceMapTo[choiceOption]);
-        setAIChoice(choiceMapFrom[tempChoice]);
-        const roundWinner = determineRoundWinner(playerChoice, aiChoice);
+    const resolveRound = (selectedChoice) => {
+        let tempAIChoice = aiAlgorithm(choiceMapTo[selectedChoice]);
+        tempAIChoice = choiceMapFrom[tempAIChoice];
+        setAIChoice(tempAIChoice);
+
+        const roundWinner = determineRoundWinner(selectedChoice, tempAIChoice);
+        let gameState;
         if (roundWinner === 'player1') {
+            gameState = gameData.playerScore + 1 === FIRST_TO ? GameStates.FINISHED : GameStates.IN_PROGRESS;
             setGameData((prevData) => ({
                 ...prevData,
                 playerScore: gameData.playerScore++,
                 currentRound: gameData.currentRound++,
+                state: gameState
             }));
         } else if (roundWinner === 'player2') {
+            gameState = gameData.aiScore + 1 === FIRST_TO ? GameStates.FINISHED : GameStates.IN_PROGRESS;
             setGameData((prevData) => ({
                 ...prevData,
                 aiScore: gameData.aiScore++,
                 currentRound: gameData.currentRound++,
-            }));
-        } else {
-            setGameData((prevData) => ({
-                ...prevData,
-                currentRound: gameData.currentRound++,
+                state: gameState
             }));
         }
 
-        if (gameData.playerScore === FIRST_TO || gameData.aiScore === FIRST_TO) {
-            setGameData((prevData) => ({
-                ...prevData,
-                state: GameStates.FINISHED
-            }));
+        if (gameState !== GameStates.FINISHED) {
+            setTimeout(() => {
+                setGameData((prevData) => ({
+                    ...prevData,
+                    currentRound: gameData.currentRound++,
+                }));
+                setPlayerChoice(null);
+                setAIChoice(null);
+            }, 1000);
         }
     };
 
@@ -129,7 +137,7 @@ function AIPage() {
                     <div className="game-result">
                         <h2>{gameData.playerScore === FIRST_TO ? 'Victory!' : 'Defeat'}</h2>
                         <p className="final-score">Final Score: {gameData.playerScore} - {gameData.aiScore}</p>
-                        <button className="play-again-button" onClick={() => window.location.href = '/'}>
+                        <button className="play-again-button" onClick={() => window.location.href = '/playAI'}>
                             Play Again
                         </button>
                     </div>
