@@ -5,7 +5,7 @@ import '../styles/ProfilePage.css';
 import Header from './Header';
 
 function ProfilePage() {
-    const { userId } = useParams();
+    const { userID } = useParams();
     const navigate = useNavigate();
     const { user } = useAuth();
     const [profileData, setProfileData] = useState(null);
@@ -17,12 +17,12 @@ function ProfilePage() {
     const [userClub, setUserClub] = useState({});
     const [recentMatches, setRecentMatches] = useState([]);
 
-    const isOwnProfile = user?.uid === userId;
+    const isOwnProfile = user?.uid === userID;
 
     useEffect(() => {
         fetchProfileData();
         fetchStats();
-    }, [userId]);
+    }, [userID]);
 
     const handleNavigation = (path) => {
         navigate(path);
@@ -38,7 +38,7 @@ function ProfilePage() {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ uid: userId })
+                body: JSON.stringify({ uid: userID })
             });
 
             if (!response.ok) {
@@ -63,7 +63,7 @@ function ProfilePage() {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ playerID: userId }),
+                body: JSON.stringify({ playerID: userID }),
             });
 
             let data = await stats.json();
@@ -82,7 +82,7 @@ function ProfilePage() {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ playerID: userId }),
+                body: JSON.stringify({ playerID: userID }),
             });
 
             data = await recentGames.json();
@@ -93,7 +93,7 @@ function ProfilePage() {
             const userClub = await fetch('/api/clubs', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ methodType: 'user', uid: userId })
+                body: JSON.stringify({ methodType: 'user', uid: userID })
             });
             data = await userClub.json();
             if (!data.error) {
@@ -135,7 +135,7 @@ function ProfilePage() {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    uid: userId,
+                    uid: userID,
                     newUsername
                 })
             });
@@ -162,7 +162,7 @@ function ProfilePage() {
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({ uid: userId })
+                    body: JSON.stringify({ uid: userID })
                 });
 
                 if (!response.ok) {

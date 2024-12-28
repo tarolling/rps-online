@@ -14,6 +14,8 @@ function MatchmakingPage() {
     const db = getDatabase();
 
     useEffect(() => {
+        if (!user) return;
+
         const queueRef = ref(db, 'matchmaking_queue');
         const unsubscribeQueueCount = onValue(queueRef, (snapshot) => {
             const queueData = snapshot.val() || {};
@@ -96,54 +98,69 @@ function MatchmakingPage() {
         </div>
     );
 
+    const handleNavigation = (path) => {
+        navigate(path);
+    };
+
     return (
         <div>
             <Header />
             <div className="matchmaking-container">
-                <div className="matchmaking-card">
-                    <h2 className="matchmaking-title">Matchmaking</h2>
-                    {renderQueueCount()}
-                    {matchStatus === 'idle' && (
-                        <button
-                            className="find-match-button"
-                            onClick={handleFindMatch}
-                        >
-                            Find Match
-                        </button>
-                    )}
-
-                    {matchStatus === 'searching' && (
-                        <div className="status-container">
-                            {renderLoadingSpinner()}
-                            <p className="status-text">Searching for a match...</p>
+                {user && (
+                    <div className="matchmaking-card">
+                        <h2 className="matchmaking-title">Matchmaking</h2>
+                        {renderQueueCount()}
+                        {matchStatus === 'idle' && (
                             <button
-                                className="cancel-button"
-                                onClick={handleCancel}
-                            >
-                                Cancel
-                            </button>
-                        </div>
-                    )}
-
-                    {matchStatus === 'matched' && (
-                        <div className="matched-container">
-                            <div className="success-icon">✓</div>
-                            <p className="match-found-text">Match Found!</p>
-                            <p className="opponent-text">Joining...</p>
-                        </div>
-                    )}
-
-                    {matchStatus === 'error' && (
-                        <div className="error-container">
-                            <p className="error-text">Error finding match. Please try again.</p>
-                            <button
-                                className="retry-button"
+                                className="find-match-button"
                                 onClick={handleFindMatch}
                             >
-                                Retry
+                                Find Match
                             </button>
-                        </div>
-                    )}
+                        )}
+
+                        {matchStatus === 'searching' && (
+                            <div className="status-container">
+                                {renderLoadingSpinner()}
+                                <p className="status-text">Searching for a match...</p>
+                                <button
+                                    className="cancel-button"
+                                    onClick={handleCancel}
+                                >
+                                    Cancel
+                                </button>
+                            </div>
+                        )}
+
+                        {matchStatus === 'matched' && (
+                            <div className="matched-container">
+                                <div className="success-icon">✓</div>
+                                <p className="match-found-text">Match Found!</p>
+                                <p className="opponent-text">Joining...</p>
+                            </div>
+                        )}
+
+                        {matchStatus === 'error' && (
+                            <div className="error-container">
+                                <p className="error-text">Error finding match. Please try again.</p>
+                                <button
+                                    className="retry-button"
+                                    onClick={handleFindMatch}
+                                >
+                                    Retry
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                <div className="matchmaking-card">
+                    <button
+                        className="find-match-button"
+                        onClick={() => handleNavigation('/playAI')}
+                    >
+                        Play vs. AI
+                    </button>
                 </div>
             </div>
         </div>
