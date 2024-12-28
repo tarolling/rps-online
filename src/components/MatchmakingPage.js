@@ -45,7 +45,7 @@ function MatchmakingPage() {
                 remove(ref(db, `matchmaking_queue/${user.uid}`));
             }
         };
-    }, [db, user.uid, matchStatus, navigate]);
+    }, [db, user?.uid, matchStatus, navigate]);
 
     const handleFindMatch = async () => {
         setMatchStatus('searching');
@@ -155,11 +155,12 @@ function MatchmakingPage() {
                 )}
 
                 <div className="matchmaking-card">
+                    <h2 className="matchmaking-title">Play against AI</h2>
                     <button
                         className="find-match-button"
                         onClick={() => handleNavigation('/playAI')}
                     >
-                        Play vs. AI
+                        Play
                     </button>
                 </div>
             </div>
