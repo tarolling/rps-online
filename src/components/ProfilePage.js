@@ -57,6 +57,10 @@ function ProfilePage() {
     };
 
     const fetchStats = async () => {
+        setGameStats(null);
+        setUserClub(null);
+        setRecentMatches(null);
+
         try {
             const stats = await fetch('/api/fetchDashboardStats', {
                 method: 'POST',
