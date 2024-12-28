@@ -47,7 +47,7 @@ export default async function handler(req, res) {
                 await session.executeWrite(async tx => {
                     return await tx.run(`
                         MATCH (p:Player {uid: $uid}), (c:Club {name: $clubName})
-name                        CREATE (p)-[:MEMBER {role: 'Member'}]->(c)
+                        CREATE (p)-[:MEMBER {role: 'Member'}]->(c)
                         `,
                         {
                             uid: req.body.uid,
@@ -101,13 +101,14 @@ name                        CREATE (p)-[:MEMBER {role: 'Member'}]->(c)
                         { uid: req.body.uid });
                 });
 
-                data = data.records.map((record) => ({
-                    name: record.get("name"),
-                    tag: record.get("tag"),
-                    memberRole: record.get("memberRole"),
-                    memberCount: neo4j.integer.toNumber(record.get("memberCount"))
-                }));
-                resultBody = { clubs: data };
+                data = {
+                    name: data.records[0].get("name"),
+                    tag: data.records[0].get("tag"),
+                    memberRole: data.records[0].get("memberRole"),
+                    memberCount: neo4j.integer.toNumber(data.records[0].get("memberCount"))
+                };
+
+                resultBody = data;
                 break;
             default:
                 throw new Error("Method type not specified");

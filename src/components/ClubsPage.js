@@ -5,7 +5,7 @@ import Header from './Header';
 const ClubsPage = () => {
     const { user } = useAuth();
     const [clubs, setClubs] = useState([]);
-    const [userClubs, setUserClubs] = useState([]);
+    const [userClub, setUserClub] = useState({});
     const [searchTerm, setSearchTerm] = useState('');
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [createClubData, setCreateClubData] = useState({
@@ -18,7 +18,7 @@ const ClubsPage = () => {
 
     useEffect(() => {
         fetchClubs();
-        fetchUserClubs();
+        fetchUserClub();
     }, [user]);
 
     const fetchClubs = async () => {
@@ -37,7 +37,7 @@ const ClubsPage = () => {
         }
     };
 
-    const fetchUserClubs = async () => {
+    const fetchUserClub = async () => {
         try {
             const response = await fetch('/api/clubs', {
                 method: 'POST',
@@ -45,7 +45,7 @@ const ClubsPage = () => {
                 body: JSON.stringify({ methodType: 'user', uid: user.uid })
             });
             const data = await response.json();
-            setUserClubs(data.clubs);
+            setUserClub(data);
         } catch (err) {
             setError('Failed to fetch user clubs');
         }
@@ -58,7 +58,7 @@ const ClubsPage = () => {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ methodType: 'join', uid: user.uid, clubName })
             });
-            await fetchUserClubs();
+            await fetchUserClub();
             await fetchClubs();
         } catch (err) {
             setError('Failed to join club');
@@ -72,7 +72,7 @@ const ClubsPage = () => {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ methodType: 'leave', uid: user.uid, clubName })
             });
-            await fetchUserClubs();
+            await fetchUserClub();
             await fetchClubs();
         } catch (err) {
             setError('Failed to leave club');
@@ -93,7 +93,7 @@ const ClubsPage = () => {
             });
             setShowCreateModal(false);
             await fetchClubs();
-            await fetchUserClubs();
+            await fetchUserClub();
         } catch (err) {
             setError('Failed to create club');
         }
@@ -114,33 +114,31 @@ const ClubsPage = () => {
                 </section>
                 <div className="dashboard-grid">
                     <section className="stats-card">
-                        <h2>My Clubs</h2>
+                        <h2>My Club</h2>
                         <div className="matches-list">
-                            {userClubs.map((club, index) => (
-                                <div key={index} className="match-item">
-                                    <div className="flex justify-between items-center">
-                                        <div>
-                                            <span className="match-opponent">{club.name}</span>
-                                            <span className="text-sm text-gray-500 ml-2">[{club.tag}]</span>
-                                        </div>
-                                        <span className="text-sm font-medium text-blue-600">
-                                            {club.memberRole}
-                                        </span>
+                            {userClub ? (<div className="match-item">
+                                <div className="flex justify-between items-center">
+                                    <div>
+                                        <span className="match-opponent">{userClub.name}</span>
+                                        <span className="text-sm text-gray-500 ml-2">[{userClub.tag}]</span>
                                     </div>
-                                    <div className="match-details">
-                                        <span>{club.memberCount}/50 members</span>
-                                        {club.memberRole !== 'Founder' && (
-                                            <button
-                                                onClick={() => handleLeaveClub(club.name)}
-                                                className="text-red-500 hover:text-red-700"
-                                            >
-                                                Leave
-                                            </button>
-                                        )}
-                                    </div>
+                                    <span className="text-sm font-medium text-blue-600">
+                                        {userClub.memberRole}
+                                    </span>
                                 </div>
-                            ))}
-                            {userClubs.length === 0 && (
+                                <div className="match-details">
+                                    <span>{userClub.memberCount}/50 members</span>
+                                    {userClub.memberRole !== 'Founder' && (
+                                        <button
+                                            onClick={() => handleLeaveClub(userClub.name)}
+                                            className="text-red-500 hover:text-red-700"
+                                        >
+                                            Leave
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+                            ) : (
                                 <p className="text-gray-500 text-center py-4">
                                     You haven&apos;t joined any clubs yet
                                 </p>
@@ -180,7 +178,7 @@ const ClubsPage = () => {
                                     </div>
                                     <div className="match-details">
                                         <span>{club.memberCount}/50 members</span>
-                                        {club.availability === 'open' && !userClubs.find(uc => uc.name === club.name) && (
+                                        {club.availability === 'open' && !userClub.find(uc => uc.name === club.name) && (
                                             <button
                                                 onClick={() => handleJoinClub(club.name)}
                                                 className="text-blue-500 hover:text-blue-700"

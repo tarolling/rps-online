@@ -13,13 +13,8 @@ function ProfilePage() {
     const [error, setError] = useState(null);
     const [isEditing, setIsEditing] = useState(false);
     const [newUsername, setNewUsername] = useState('');
-    const [gameStats, setGameStats] = useState({
-        totalGames: 0,
-        winRate: "N/A",
-        currentStreak: 0,
-        bestStreak: 0
-    });
-    const [clubStats, setClubStats] = useState({});
+    const [gameStats, setGameStats] = useState({});
+    const [userClub, setUserClub] = useState({});
     const [recentMatches, setRecentMatches] = useState([]);
 
     const isOwnProfile = user?.uid === userId;
@@ -73,12 +68,13 @@ function ProfilePage() {
 
             let data = await stats.json();
             if (!data.error) {
-                setGameStats({
+                setGameStats((prevData) => ({
+                    ...prevData,
                     totalGames: data.totalGames,
                     winRate: `${data.winRate.toFixed(1)}%`,
                     currentStreak: data.currentStreak,
                     bestStreak: data.bestStreak
-                });
+                }));
             }
 
             const recentGames = await fetch('/api/fetchRecentGames', {
@@ -101,8 +97,13 @@ function ProfilePage() {
             });
             data = await userClub.json();
             if (!data.error) {
-                console.log('successing setting stats to:', JSON.stringify(data.clubs));
-                setClubStats(data.clubs);
+                setUserClub((prevData) => ({
+                    ...prevData,
+                    name: data.name,
+                    tag: data.tag,
+                    memberRole: data.memberRole,
+                    memberCount: data.memberCount
+                }));
             }
         } catch (err) {
             console.error('Error fetching stats:', err);
@@ -259,28 +260,32 @@ function ProfilePage() {
                         </div>
                     </section>
 
-                    {Object.keys(clubStats).length !== 0 && (
+                    {userClub ? (
                         <section className="profile-stats-card">
                             <h2>Club</h2>
                             <div className="profile-stats-grid">
                                 <div className="profile-stat-item">
-                                    <span className="profile-stat-value">{clubStats.name}</span>
+                                    <span className="profile-stat-value">{userClub.name}</span>
                                     <span className="profile-stat-label">Club Name</span>
                                 </div>
                                 <div className="profile-stat-item">
-                                    <span className="profile-stat-value">{clubStats.tag}</span>
+                                    <span className="profile-stat-value">{userClub.tag}</span>
                                     <span className="profile-stat-label">Club Tag</span>
                                 </div>
                                 <div className="profile-stat-item">
-                                    <span className="profile-stat-value">{clubStats.memberRole}</span>
+                                    <span className="profile-stat-value">{userClub.memberRole}</span>
                                     <span className="profile-stat-label">Role</span>
                                 </div>
                                 <div className="profile-stat-item">
-                                    <span className="profile-stat-value">{clubStats.memberCount}</span>
+                                    <span className="profile-stat-value">{userClub.memberCount}</span>
                                     <span className="profile-stat-label">Member Count</span>
                                 </div>
                             </div>
                         </section>
+                    ) : (
+                        <p className="text-gray-500 text-center py-4">
+                            This user is not in a club
+                        </p>
                     )}
                 </div>
             </div>
