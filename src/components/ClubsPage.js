@@ -5,7 +5,7 @@ import Header from './Header';
 const ClubsPage = () => {
     const { user } = useAuth();
     const [clubs, setClubs] = useState([]);
-    const [userClub, setUserClub] = useState({});
+    const [userClub, setUserClub] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [createClubData, setCreateClubData] = useState({
@@ -22,6 +22,8 @@ const ClubsPage = () => {
     }, [user]);
 
     const fetchClubs = async () => {
+        setClubs([]);
+
         try {
             const response = await fetch('/api/clubs', {
                 method: 'POST',
@@ -38,6 +40,8 @@ const ClubsPage = () => {
     };
 
     const fetchUserClub = async () => {
+        setUserClub(null);
+
         try {
             const response = await fetch('/api/clubs', {
                 method: 'POST',
