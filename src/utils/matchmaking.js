@@ -3,7 +3,7 @@ import { GameStates, Choices, GameResults } from '../types/gameTypes';
 import calculateRating from '../utils/calculateRating';
 
 
-const FIRST_TO = 4;
+export const FIRST_TO = 4;
 const db = getDatabase();
 
 const checkExistingGame = async (uid) => {
@@ -193,7 +193,7 @@ export const resolveRound = async (gameId, playerId) => {
     }
 };
 
-const determineRoundWinner = (choice1, choice2) => {
+export const determineRoundWinner = (choice1, choice2) => {
     if (choice1 === '' && choice2 === '') {
         return null;
     }

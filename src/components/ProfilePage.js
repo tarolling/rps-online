@@ -5,7 +5,7 @@ import '../styles/ProfilePage.css';
 import Header from './Header';
 
 function ProfilePage() {
-    const { userId } = useParams();
+    const { userID } = useParams();
     const navigate = useNavigate();
     const { user } = useAuth();
     const [profileData, setProfileData] = useState(null);
@@ -13,20 +13,16 @@ function ProfilePage() {
     const [error, setError] = useState(null);
     const [isEditing, setIsEditing] = useState(false);
     const [newUsername, setNewUsername] = useState('');
-    const [gameStats, setGameStats] = useState({
-        totalGames: 0,
-        winRate: "N/A",
-        currentStreak: 0,
-        bestStreak: 0
-    });
+    const [gameStats, setGameStats] = useState({});
+    const [userClub, setUserClub] = useState({});
     const [recentMatches, setRecentMatches] = useState([]);
 
-    const isOwnProfile = user?.uid === userId;
+    const isOwnProfile = user?.uid === userID;
 
     useEffect(() => {
         fetchProfileData();
         fetchStats();
-    }, [userId]);
+    }, [userID]);
 
     const handleNavigation = (path) => {
         navigate(path);
@@ -42,7 +38,7 @@ function ProfilePage() {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ uid: userId })
+                body: JSON.stringify({ uid: userID })
             });
 
             if (!response.ok) {
@@ -67,17 +63,18 @@ function ProfilePage() {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ playerID: userId }),
+                body: JSON.stringify({ playerID: userID }),
             });
 
-            const data = await stats.json();
+            let data = await stats.json();
             if (!data.error) {
-                setGameStats({
+                setGameStats((prevData) => ({
+                    ...prevData,
                     totalGames: data.totalGames,
                     winRate: `${data.winRate.toFixed(1)}%`,
                     currentStreak: data.currentStreak,
                     bestStreak: data.bestStreak
-                });
+                }));
             }
 
             const recentGames = await fetch('/api/fetchRecentGames', {
@@ -85,12 +82,28 @@ function ProfilePage() {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ playerID: userId }),
+                body: JSON.stringify({ playerID: userID }),
             });
 
-            const games = await recentGames.json();
-            if (!games.error) {
-                setRecentMatches(games);
+            data = await recentGames.json();
+            if (!data.error) {
+                setRecentMatches(data);
+            }
+
+            const userClub = await fetch('/api/clubs', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ methodType: 'user', uid: userID })
+            });
+            data = await userClub.json();
+            if (!data.error) {
+                setUserClub((prevData) => ({
+                    ...prevData,
+                    name: data.name,
+                    tag: data.tag,
+                    memberRole: data.memberRole,
+                    memberCount: data.memberCount
+                }));
             }
         } catch (err) {
             console.error('Error fetching stats:', err);
@@ -122,7 +135,7 @@ function ProfilePage() {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    uid: userId,
+                    uid: userID,
                     newUsername
                 })
             });
@@ -149,7 +162,7 @@ function ProfilePage() {
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({ uid: userId })
+                    body: JSON.stringify({ uid: userID })
                 });
 
                 if (!response.ok) {
@@ -246,6 +259,34 @@ function ProfilePage() {
                             ))}
                         </div>
                     </section>
+
+                    {userClub ? (
+                        <section className="profile-stats-card">
+                            <h2>Club</h2>
+                            <div className="profile-stats-grid">
+                                <div className="profile-stat-item">
+                                    <span className="profile-stat-value">{userClub.name}</span>
+                                    <span className="profile-stat-label">Club Name</span>
+                                </div>
+                                <div className="profile-stat-item">
+                                    <span className="profile-stat-value">{userClub.tag}</span>
+                                    <span className="profile-stat-label">Club Tag</span>
+                                </div>
+                                <div className="profile-stat-item">
+                                    <span className="profile-stat-value">{userClub.memberRole}</span>
+                                    <span className="profile-stat-label">Role</span>
+                                </div>
+                                <div className="profile-stat-item">
+                                    <span className="profile-stat-value">{userClub.memberCount}</span>
+                                    <span className="profile-stat-label">Member Count</span>
+                                </div>
+                            </div>
+                        </section>
+                    ) : (
+                        <p className="text-gray-500 text-center py-4">
+                            This user is not in a club
+                        </p>
+                    )}
                 </div>
             </div>
         </div>
