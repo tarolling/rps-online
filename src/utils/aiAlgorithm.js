@@ -1,3 +1,7 @@
+/**
+ * [Link to original algorithm in Python](https://web.archive.org/web/20201022115133/http://rpscontest.com/entry/175002)
+ * @returns closure
+ */
 export default function setupAI() {
     const randomChoice = (choices) => choices[Math.floor(Math.random() * choices.length)];
 

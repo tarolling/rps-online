@@ -90,12 +90,12 @@ function ProfilePage() {
                 setRecentMatches(data);
             }
 
-            const userClub = await fetch('/api/clubs', {
+            const clubData = await fetch('/api/clubs', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ methodType: 'user', uid: userID })
             });
-            data = await userClub.json();
+            data = await clubData.json();
             if (!data.error) {
                 setUserClub((prevData) => ({
                     ...prevData,
