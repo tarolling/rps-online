@@ -45,10 +45,15 @@ function AIPage() {
                 playerScore: gameData.playerScore++,
                 currentRound: gameData.currentRound++,
             }));
-        } else {
+        } else if (roundWinner === 'player2') {
             setGameData((prevData) => ({
                 ...prevData,
                 aiScore: gameData.aiScore++,
+                currentRound: gameData.currentRound++,
+            }));
+        } else {
+            setGameData((prevData) => ({
+                ...prevData,
                 currentRound: gameData.currentRound++,
             }));
         }
@@ -96,8 +101,7 @@ function AIPage() {
                         <div className="score">{gameData.aiScore}</div>
                         {aiChoice && (
                             <div className="choice-display">
-                                {gameData.state === GameStates.FINISHED ?
-                                    getChoiceEmoji(aiChoice) : '🤔'}
+                                {getChoiceEmoji(aiChoice)}
                             </div>
                         )}
                     </div>
