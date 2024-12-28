@@ -258,27 +258,29 @@ function ProfilePage() {
                         </div>
                     </section>
 
-                    <section className="profile-stats-card">
-                        <h2>Club</h2>
-                        <div className="profile-stats-grid">
-                            <div className="profile-stat-item">
-                                <span className="profile-stat-value">{clubStats?.name}</span>
-                                <span className="profile-stat-label">Club Name</span>
+                    {Object.keys(clubStats).length !== 0 && (
+                        <section className="profile-stats-card">
+                            <h2>Club</h2>
+                            <div className="profile-stats-grid">
+                                <div className="profile-stat-item">
+                                    <span className="profile-stat-value">{clubStats.name}</span>
+                                    <span className="profile-stat-label">Club Name</span>
+                                </div>
+                                <div className="profile-stat-item">
+                                    <span className="profile-stat-value">{clubStats.tag}</span>
+                                    <span className="profile-stat-label">Club Tag</span>
+                                </div>
+                                <div className="profile-stat-item">
+                                    <span className="profile-stat-value">{clubStats.memberRole}</span>
+                                    <span className="profile-stat-label">Role</span>
+                                </div>
+                                <div className="profile-stat-item">
+                                    <span className="profile-stat-value">{clubStats.memberCount}</span>
+                                    <span className="profile-stat-label">Member Count</span>
+                                </div>
                             </div>
-                            <div className="profile-stat-item">
-                                <span className="profile-stat-value">{clubStats?.tag}</span>
-                                <span className="profile-stat-label">Club Tag</span>
-                            </div>
-                            <div className="profile-stat-item">
-                                <span className="profile-stat-value">{clubStats?.memberRole}</span>
-                                <span className="profile-stat-label">Role</span>
-                            </div>
-                            <div className="profile-stat-item">
-                                <span className="profile-stat-value">{clubStats?.memberCount}</span>
-                                <span className="profile-stat-label">Member Count</span>
-                            </div>
-                        </div>
-                    </section>
+                        </section>
+                    )}
                 </div>
             </div>
         </div>
