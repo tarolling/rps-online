@@ -101,6 +101,7 @@ function ProfilePage() {
             });
             data = await userClub.json();
             if (!data.error) {
+                console.log('successing setting stats to:', JSON.stringify(data.clubs));
                 setClubStats(data.clubs);
             }
         } catch (err) {
