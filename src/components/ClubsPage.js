@@ -182,7 +182,7 @@ const ClubsPage = () => {
                                     </div>
                                     <div className="match-details">
                                         <span>{club.memberCount}/50 members</span>
-                                        {club.availability === 'open' && !userClub.find(uc => uc.name === club.name) && (
+                                        {club.availability === 'open' && !userClub?.find(uc => uc.name === club.name) && (
                                             <button
                                                 onClick={() => handleJoinClub(club.name)}
                                                 className="text-blue-500 hover:text-blue-700"
