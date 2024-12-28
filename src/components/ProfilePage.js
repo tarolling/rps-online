@@ -19,6 +19,7 @@ function ProfilePage() {
         currentStreak: 0,
         bestStreak: 0
     });
+    const [clubStats, setClubStats] = useState({});
     const [recentMatches, setRecentMatches] = useState([]);
 
     const isOwnProfile = user?.uid === userId;
@@ -70,7 +71,7 @@ function ProfilePage() {
                 body: JSON.stringify({ playerID: userId }),
             });
 
-            const data = await stats.json();
+            let data = await stats.json();
             if (!data.error) {
                 setGameStats({
                     totalGames: data.totalGames,
@@ -88,9 +89,19 @@ function ProfilePage() {
                 body: JSON.stringify({ playerID: userId }),
             });
 
-            const games = await recentGames.json();
-            if (!games.error) {
-                setRecentMatches(games);
+            data = await recentGames.json();
+            if (!data.error) {
+                setRecentMatches(data);
+            }
+
+            const userClub = await fetch('/api/clubs', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ methodType: 'user', uid: user.uid })
+            });
+            data = await userClub.json();
+            if (!data.error) {
+                setClubStats(data.clubs);
             }
         } catch (err) {
             console.error('Error fetching stats:', err);
@@ -244,6 +255,28 @@ function ProfilePage() {
                                     </div>
                                 </div>
                             ))}
+                        </div>
+                    </section>
+
+                    <section className="profile-stats-card">
+                        <h2>Club</h2>
+                        <div className="profile-stats-grid">
+                            <div className="profile-stat-item">
+                                <span className="profile-stat-value">{clubStats?.name}</span>
+                                <span className="profile-stat-label">Club Name</span>
+                            </div>
+                            <div className="profile-stat-item">
+                                <span className="profile-stat-value">{clubStats?.tag}</span>
+                                <span className="profile-stat-label">Club Tag</span>
+                            </div>
+                            <div className="profile-stat-item">
+                                <span className="profile-stat-value">{clubStats?.memberRole}</span>
+                                <span className="profile-stat-label">Role</span>
+                            </div>
+                            <div className="profile-stat-item">
+                                <span className="profile-stat-value">{clubStats?.memberCount}</span>
+                                <span className="profile-stat-label">Member Count</span>
+                            </div>
                         </div>
                     </section>
                 </div>

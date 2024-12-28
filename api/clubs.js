@@ -28,35 +28,57 @@ export default async function handler(req, res) {
 
         switch (methodType) {
             case 'create':
-                data = await session.executeWrite(async tx => {
+                await session.executeWrite(async tx => {
                     return await tx.run(`
-                    MATCH (p:Player {uid: $founderID})
-                    CREATE (p)-[:MEMBER {role: 'Founder'}]->(c:Club $props)
-                    `, {
-                        founderID: req.body.founderID,
-                        props: {
-                            name: req.body.name,
-                            tag: req.body.tag,
-                            availability: req.body.availability,
-                        }
-                    });
+                        MATCH (p:Player {uid: $founderID})
+                        CREATE (p)-[:MEMBER {role: 'Founder'}]->(c:Club $props)
+                        `,
+                        {
+                            founderID: req.body.founderID,
+                            props: {
+                                name: req.body.name,
+                                tag: req.body.tag,
+                                availability: req.body.availability,
+                            }
+                        });
                 });
                 break;
             case 'join':
+                await session.executeWrite(async tx => {
+                    return await tx.run(`
+                        MATCH (p:Player {uid: $uid}), (c:Club {name: $clubName})
+name                        CREATE (p)-[:MEMBER {role: 'Member'}]->(c)
+                        `,
+                        {
+                            uid: req.body.uid,
+                            clubName: req.body.clubName
+                        });
+                });
                 break;
             case 'leave':
+                await session.executeWrite(async tx => {
+                    return await tx.run(`
+                        MATCH (p:Player {uid: $uid})-[r:MEMBER]->(c:Club {name: $clubName})
+                        DELETE r
+                        `,
+                        {
+                            uid: req.body.uid,
+                            clubName: req.body.clubName
+                        });
+                });
                 break;
             case 'search':
                 data = await session.executeRead(async tx => {
                     return await tx.run(`
-                    MATCH (c:Club)
-                    WHERE toLower(c.name) CONTAINS toLower($searchTerm)
-                    WITH c.name AS name,
-                        c.tag AS tag,
-                        c.availability AS availability
-                    MATCH (:Player)-[:MEMBER]->(:Club {name: name})
-                    RETURN name, tag, availability, count(*) AS memberCount
-                    `, { searchTerm: req.body.searchTerm });
+                        MATCH (c:Club)
+                        WHERE toLower(c.name) CONTAINS toLower($searchTerm)
+                        WITH c.name AS name,
+                            c.tag AS tag,
+                            c.availability AS availability
+                        MATCH (:Player)-[:MEMBER]->(:Club {name: name})
+                        RETURN name, tag, availability, count(*) AS memberCount
+                        `,
+                        { searchTerm: req.body.searchTerm });
                 });
                 data = data.records.map((record) => ({
                     name: record.get("name"),
@@ -69,13 +91,14 @@ export default async function handler(req, res) {
             case 'user':
                 data = await session.executeRead(async tx => {
                     return await tx.run(`
-                    MATCH (p:Player {uid: $uid})-[r:MEMBER]->(c:Club)
-                    WITH c.name AS name,
-                        c.tag AS tag,
-                        r.role AS memberRole
-                    MATCH (:Player)-[:MEMBER]->(:Club {name: name})
-                    RETURN name, tag, memberRole, count(*) AS memberCount
-                    `, { uid: req.body.uid });
+                        MATCH (p:Player {uid: $uid})-[r:MEMBER]->(c:Club)
+                        WITH c.name AS name,
+                            c.tag AS tag,
+                            r.role AS memberRole
+                        MATCH (:Player)-[:MEMBER]->(:Club {name: name})
+                        RETURN name, tag, memberRole, count(*) AS memberCount
+                        `,
+                        { uid: req.body.uid });
                 });
 
                 data = data.records.map((record) => ({
