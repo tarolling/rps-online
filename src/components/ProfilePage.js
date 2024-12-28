@@ -93,7 +93,7 @@ function ProfilePage() {
             const userClub = await fetch('/api/clubs', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ methodType: 'user', uid: user.uid })
+                body: JSON.stringify({ methodType: 'user', uid: userId })
             });
             data = await userClub.json();
             if (!data.error) {
