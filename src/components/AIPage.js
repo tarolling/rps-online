@@ -49,7 +49,6 @@ function AIPage() {
             setGameData((prevData) => ({
                 ...prevData,
                 playerScore: gameData.playerScore++,
-                currentRound: gameData.currentRound++,
                 state: gameState
             }));
         } else if (roundWinner === 'player2') {
@@ -57,7 +56,6 @@ function AIPage() {
             setGameData((prevData) => ({
                 ...prevData,
                 aiScore: gameData.aiScore++,
-                currentRound: gameData.currentRound++,
                 state: gameState
             }));
         }
