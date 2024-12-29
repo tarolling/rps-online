@@ -1,13 +1,5 @@
 const formatRelativeTime = (neoDateTime) => {
-    const date = new Date(
-        neoDateTime.year,
-        neoDateTime.month - 1,
-        neoDateTime.day,
-        neoDateTime.hour,
-        neoDateTime.minute,
-        neoDateTime.second,
-        neoDateTime.nanosecond / 1000000
-    );
+    const date = neoDateTime.toStandardDate();
 
     console.log('neo date', date.toDateString());
 
