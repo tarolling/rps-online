@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { useAuth } from '../Auth';
 import '../styles/DashboardPage.css';
+import Footer from './Footer';
 import Header from './Header';
 
 function DashboardPage() {
@@ -153,6 +154,7 @@ function DashboardPage() {
                     </section>
                 </div>
             </div>
+            <Footer />
         </div>
     );
 }
@@ -163,6 +165,7 @@ const LoadingState = () => (
         <div className="dashboard-container">
             <div className="loading-spinner">Loading...</div>
         </div>
+        <Footer />
     </div>
 );
 
@@ -175,6 +178,7 @@ const ErrorState = ({ error, onRetry }) => (
                 <button onClick={onRetry}>Retry</button>
             </div>
         </div>
+        <Footer />
     </div>
 );
 

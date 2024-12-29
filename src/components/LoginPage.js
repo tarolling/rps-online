@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router";
 import { auth } from "../api/firebase";
 import Header from "./Header";
+import Footer from "./Footer";
 
 function LoginPage() {
     const [email, setEmail] = useState("");
@@ -59,7 +60,7 @@ function LoginPage() {
         <div>
             <Header />
             <div className="container">
-                <h2>Login</h2>
+                <h1>Login</h1>
                 <form onSubmit={handleLogin}>
                     <input
                         type="email"
@@ -86,6 +87,7 @@ function LoginPage() {
                 {error && <p style={{ color: "red" }}>{error}</p>}
                 {message && <p style={{ color: "green" }}>{message}</p>}
             </div>
+            <Footer />
         </div>
     );
 }

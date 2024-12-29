@@ -96,19 +96,3 @@
     display: flex;
     gap: 10px;
 }
-
-.button {
-    background: none;
-    border: 2px solid #0077cc;
-    color: #0077cc;
-    padding: 8px 16px;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: all 0.3s;
-    font-weight: bold;
-}
-
-.button:hover {
-    background-color: #0077cc;
-    color: white;
-}

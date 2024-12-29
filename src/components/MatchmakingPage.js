@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router';
 import { useAuth } from '../Auth';
 import '../styles/MatchmakingPage.css';
 import { findMatch } from '../utils/matchmaking';
+import Footer from './Footer';
 import Header from './Header';
 
 function MatchmakingPage() {
@@ -164,6 +165,7 @@ function MatchmakingPage() {
                     </button>
                 </div>
             </div>
+            <Footer />
         </div>
     );
 }

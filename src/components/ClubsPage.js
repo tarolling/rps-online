@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../Auth';
+import Footer from './Footer';
 import Header from './Header';
 
 const ClubsPage = () => {
@@ -274,6 +275,7 @@ const ClubsPage = () => {
                     </div>
                 )}
             </div>
+            <Footer />
         </div>
     );
 };

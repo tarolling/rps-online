@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
 import '../styles/LeaderboardPage.css';
+import Footer from './Footer';
 import Header from './Header';
 
 function LeaderboardPage() {
@@ -63,6 +64,7 @@ function LeaderboardPage() {
                     </table>
                 )}
             </div>
+            <Footer />
         </div>
     );
 }

@@ -1,8 +1,9 @@
 import React, { useCallback, useState } from "react";
 import { Choices, GameStates } from '../types/gameTypes';
-import { FIRST_TO, determineRoundWinner } from "../utils/matchmaking";
-import Header from "./Header";
 import setupAI from "../utils/aiAlgorithm";
+import { FIRST_TO, determineRoundWinner } from "../utils/matchmaking";
+import Footer from "./Footer";
+import Header from "./Header";
 
 const choiceMapTo = {
     'rock': 'R',
@@ -49,7 +50,7 @@ function AIPage() {
             const newAIScore = roundWinner === 'player2' ? prevData.aiScore + 1 : prevData.aiScore;
             const newRound = prevData.currentRound + 1;
 
-            const gameState = 
+            const gameState =
                 newPlayerScore === FIRST_TO || newAIScore === FIRST_TO
                     ? GameStates.FINISHED
                     : GameStates.IN_PROGRESS;
@@ -139,6 +140,7 @@ function AIPage() {
                     </div>
                 )}
             </div>
+            <Footer />
         </div>
     );
 }

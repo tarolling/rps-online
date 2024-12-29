@@ -5,6 +5,7 @@ import { useAuth } from '../Auth';
 import '../styles/GamePage.css';
 import { Choices, GameStates } from '../types/gameTypes';
 import { resolveRound } from '../utils/matchmaking';
+import Footer from './Footer';
 import Header from './Header';
 
 
@@ -106,6 +107,7 @@ const GamePage = () => {
                 <div className="game-container">
                     <div className="loading">Loading game...</div>
                 </div>
+                <Footer />
             </div>
         );
     }
@@ -122,6 +124,7 @@ const GamePage = () => {
                         </button>
                     </div>
                 </div>
+                <Footer />
             </div>
         );
     }
@@ -191,6 +194,7 @@ const GamePage = () => {
                     </div>
                 )}
             </div>
+            <Footer />
         </div>
     );
 };

@@ -1,5 +1,11 @@
+:root {
+  --main-bg-color: brown;
+  --primary-button-color: #333;
+  --primary-button-hover-color: #555;
+}
+
 body {
-  font-family: 'Arial', sans-serif;
+  font-family: "Arial", sans-serif;
   background: linear-gradient(120deg, #f0f0f0, #e8e8e8);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -7,14 +13,16 @@ body {
   padding: 0;
 }
 
-h1, h2, h3 {
+h1,
+h2,
+h3 {
   margin: 0;
   font-weight: bold;
   text-align: center;
 }
 
 button {
-  background: #333;
+  background: var(--primary-button-color);
   color: white;
   border: none;
   padding: 10px 20px;
@@ -26,7 +34,7 @@ button {
 }
 
 button:hover {
-  background: #555;
+  background: var(--primary-button-hover-color);
 }
 
 input {
@@ -56,7 +64,12 @@ input {
 }
 
 code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+  font-family:
+    source-code-pro,
+    Menlo,
+    Monaco,
+    Consolas,
+    "Courier New",
     monospace;
 }
 
@@ -70,4 +83,10 @@ code {
   color: green;
   font-size: 14px;
   margin-bottom: 10px;
+}
+
+.app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
