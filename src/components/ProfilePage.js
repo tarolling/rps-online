@@ -195,7 +195,7 @@ function ProfilePage() {
                                 <input
                                     type="text"
                                     value={newUsername}
-                                    onChange={(e) => setNewUsername(e.target.value)}
+                                    onChange={(e) => setNewUsername(e.target.value.trim())}
                                     className="profile-username-input"
                                 />
                                 <button onClick={handleUpdateUsername} className="profile-save-button">
