@@ -1,4 +1,4 @@
-import { DateTime } from "neo4j-driver";
+import neo4j, { DateTime } from "neo4j-driver";
 
 /**
  * 
@@ -6,18 +6,18 @@ import { DateTime } from "neo4j-driver";
  * @returns A formatted string
  */
 const formatRelativeTime = (neoDateTime) => {
-    console.log('erm what this');
-    for (const [k, v] of Object.entries(neoDateTime)) {
-        console.log(`${k}: ${JSON.stringify(v)}`);
-    }
-    const date = neoDateTime.toStandardDate();
-
-    console.log('neo date', date.toDateString());
+    const date = new Date(
+        neo4j.integer.toNumber(neoDateTime.year),
+        neo4j.integer.toNumber(neoDateTime.month) - 1,
+        neo4j.integer.toNumber(neoDateTime.day),
+        neo4j.integer.toNumber(neoDateTime.hour),
+        neo4j.integer.toNumber(neoDateTime.minute),
+        neo4j.integer.toNumber(neoDateTime.second),
+        neo4j.integer.toNumber(neoDateTime.nanosecond) / 1000000
+    );
 
     const now = Date.now();
-    now.to
     const diffInSeconds = Math.floor((now - date) / 1000);
-    console.log('diff in seconds:', diffInSeconds);
 
     const intervals = {
         year: 31536000,
