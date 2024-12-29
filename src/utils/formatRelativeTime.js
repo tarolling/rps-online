@@ -8,7 +8,7 @@ import { DateTime } from "neo4j-driver";
 const formatRelativeTime = (neoDateTime) => {
     console.log('erm what this');
     for (const [k, v] of Object.entries(neoDateTime)) {
-        console.log(`${k}: ${v}`);
+        console.log(`${k}: ${JSON.stringify(v)}`);
     }
     const date = neoDateTime.toStandardDate();
 
