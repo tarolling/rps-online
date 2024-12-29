@@ -43,28 +43,26 @@ function AIPage() {
         setAIChoice(tempAIChoice);
 
         const roundWinner = determineRoundWinner(selectedChoice, tempAIChoice);
-        let gameState;
-        if (roundWinner === 'player1') {
-            console.log('player wins');
-            gameState = gameData.playerScore + 1 === FIRST_TO ? GameStates.FINISHED : GameStates.IN_PROGRESS;
-            setGameData((prevData) => ({
-                ...prevData,
-                playerScore: gameData.playerScore++,
-                currentRound: gameData.currentRound++,
-                state: gameState
-            }));
-        } else if (roundWinner === 'player2') {
-            console.log('ai wins');
-            gameState = gameData.aiScore + 1 === FIRST_TO ? GameStates.FINISHED : GameStates.IN_PROGRESS;
-            setGameData((prevData) => ({
-                ...prevData,
-                aiScore: gameData.aiScore++,
-                currentRound: gameData.currentRound++,
-                state: gameState
-            }));
-        }
 
-        if (gameState !== GameStates.FINISHED) {
+        setGameData((prevData) => {
+            const newPlayerScore = roundWinner === 'player1' ? prevData.playerScore + 1 : prevData.playerScore;
+            const newAIScore = roundWinner === 'player2' ? prevData.aiScore + 1 : prevData.aiScore;
+            const newRound = prevData.currentRound + 1;
+
+            const gameState = 
+                newPlayerScore === FIRST_TO || newAIScore === FIRST_TO
+                    ? GameStates.FINISHED
+                    : GameStates.IN_PROGRESS;
+
+            return {
+                playerScore: newPlayerScore,
+                aiScore: newAIScore,
+                currentRound: newRound,
+                state: gameState
+            };
+        });
+
+        if (gameData.state !== GameStates.FINISHED) {
             setTimeout(() => {
                 setPlayerChoice(null);
                 setAIChoice(null);
