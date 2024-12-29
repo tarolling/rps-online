@@ -52,7 +52,7 @@
 .profile-cancel-button {
     padding: 0.5rem 1rem;
     border-radius: 6px;
-    background: #333;
+    background: var(--primary-button-color);
     color: white;
     border: none;
     cursor: pointer;
@@ -61,7 +61,7 @@
 
 .profile-edit-button:hover,
 .profile-save-button:hover {
-    background: #555;
+    background: var(--primary-button-hover-color);
 }
 
 .profile-delete-button {

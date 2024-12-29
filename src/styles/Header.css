@@ -3,7 +3,6 @@
     justify-content: space-between;
     align-items: center;
     padding: 10px 20px;
-    background: linear-gradient(to right, #f5f5f5, #e0e0e0);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     border-bottom: 3px solid #282c34;
 }
@@ -21,7 +20,7 @@
 .nav-link {
     background: none;
     border: none;
-    color: #000000;
+    color: var(--std-text-color);
     font-weight: bold;
     padding: 15px 30px;
     cursor: pointer;
@@ -30,7 +29,7 @@
 }
 
 .nav-link:hover {
-    color: #ffffff;
+    color: var(--std-text-hover-color);
 }
 
 .header-user {
