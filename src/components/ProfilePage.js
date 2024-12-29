@@ -4,6 +4,7 @@ import { useAuth } from '../Auth';
 import '../styles/ProfilePage.css';
 import Footer from './Footer';
 import Header from './Header';
+import formatRelativeTime from '../utils/formatRelativeTime';
 
 function ProfilePage() {
     const { userID } = useParams();
@@ -92,7 +93,10 @@ function ProfilePage() {
 
             data = await recentGames.json();
             if (!data.error) {
-                setRecentMatches(data);
+                setRecentMatches(data.map((record) => ({
+                    ...record,
+                    date: formatRelativeTime(record.date)
+                })));
             }
 
             const clubData = await fetch('/api/clubs', {
@@ -247,9 +251,11 @@ function ProfilePage() {
                             </div>
                         </section>
                     ) : (
-                        <p className="text-gray-500 text-center py-4">
-                            This player has not played any games
-                        </p>
+                        <section className="profile-stats-card">
+                            <span className="text-gray-500 text-center py-4">
+                                This player has not played any games
+                            </span>
+                        </section>
                     )}
 
                     <section className="profile-recent-matches-card">
@@ -294,9 +300,11 @@ function ProfilePage() {
                             </div>
                         </section>
                     ) : (
-                        <p className="text-gray-500 text-center py-4">
-                            This player is not in a club
-                        </p>
+                        <section className="profile-stats-card">
+                            <span className="text-gray-500 text-center py-4">
+                                This player is not in a club
+                            </span>
+                        </section>
                     )}
                 </div>
             </div>
