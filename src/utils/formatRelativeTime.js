@@ -6,7 +6,10 @@ import { DateTime } from "neo4j-driver";
  * @returns A formatted string
  */
 const formatRelativeTime = (neoDateTime) => {
-    console.log('erm what type:', typeof neoDateTime);
+    console.log('erm what this');
+    for (const [k, v] of Object.entries(neoDateTime)) {
+        console.log(`${k}: ${v}`);
+    }
     const date = neoDateTime.toStandardDate();
 
     console.log('neo date', date.toDateString());
