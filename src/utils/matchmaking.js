@@ -75,7 +75,7 @@ export const findMatch = async (uid, username, userRating) => {
                 off(userQueueRef);
                 remove(ref(db, `matchmaking_queue/${uid}`));
                 resolve({ error: 'Match timeout' });
-            }, 60000);
+            }, 90000);
 
             return () => {
                 cleanup = true;

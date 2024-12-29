@@ -13,8 +13,8 @@ function ProfilePage() {
     const [error, setError] = useState(null);
     const [isEditing, setIsEditing] = useState(false);
     const [newUsername, setNewUsername] = useState('');
-    const [gameStats, setGameStats] = useState({});
-    const [userClub, setUserClub] = useState({});
+    const [gameStats, setGameStats] = useState(null);
+    const [userClub, setUserClub] = useState(null);
     const [recentMatches, setRecentMatches] = useState([]);
 
     const isOwnProfile = user?.uid === userID;
@@ -57,6 +57,10 @@ function ProfilePage() {
     };
 
     const fetchStats = async () => {
+        setGameStats(null);
+        setUserClub(null);
+        setRecentMatches([]);
+
         try {
             const stats = await fetch('/api/fetchDashboardStats', {
                 method: 'POST',
@@ -90,12 +94,12 @@ function ProfilePage() {
                 setRecentMatches(data);
             }
 
-            const userClub = await fetch('/api/clubs', {
+            const clubData = await fetch('/api/clubs', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ methodType: 'user', uid: userID })
             });
-            data = await userClub.json();
+            data = await clubData.json();
             if (!data.error) {
                 setUserClub((prevData) => ({
                     ...prevData,
@@ -219,27 +223,33 @@ function ProfilePage() {
                 </section>
 
                 <div className="profile-grid">
-                    <section className="profile-stats-card">
-                        <h2>Statistics</h2>
-                        <div className="profile-stats-grid">
-                            <div className="profile-stat-item">
-                                <span className="profile-stat-value">{gameStats.totalGames}</span>
-                                <span className="profile-stat-label">Games Played</span>
+                    {gameStats ? (
+                        <section className="profile-stats-card">
+                            <h2>Statistics</h2>
+                            <div className="profile-stats-grid">
+                                <div className="profile-stat-item">
+                                    <span className="profile-stat-value">{gameStats.totalGames}</span>
+                                    <span className="profile-stat-label">Games Played</span>
+                                </div>
+                                <div className="profile-stat-item">
+                                    <span className="profile-stat-value">{gameStats.winRate}</span>
+                                    <span className="profile-stat-label">Win Rate</span>
+                                </div>
+                                <div className="profile-stat-item">
+                                    <span className="profile-stat-value">{gameStats.currentStreak}</span>
+                                    <span className="profile-stat-label">Current Streak</span>
+                                </div>
+                                <div className="profile-stat-item">
+                                    <span className="profile-stat-value">{gameStats.bestStreak}</span>
+                                    <span className="profile-stat-label">Best Streak</span>
+                                </div>
                             </div>
-                            <div className="profile-stat-item">
-                                <span className="profile-stat-value">{gameStats.winRate}</span>
-                                <span className="profile-stat-label">Win Rate</span>
-                            </div>
-                            <div className="profile-stat-item">
-                                <span className="profile-stat-value">{gameStats.currentStreak}</span>
-                                <span className="profile-stat-label">Current Streak</span>
-                            </div>
-                            <div className="profile-stat-item">
-                                <span className="profile-stat-value">{gameStats.bestStreak}</span>
-                                <span className="profile-stat-label">Best Streak</span>
-                            </div>
-                        </div>
-                    </section>
+                        </section>
+                    ) : (
+                        <p className="text-gray-500 text-center py-4">
+                            This player has not played any games
+                        </p>
+                    )}
 
                     <section className="profile-recent-matches-card">
                         <h2>Recent Matches</h2>
@@ -284,7 +294,7 @@ function ProfilePage() {
                         </section>
                     ) : (
                         <p className="text-gray-500 text-center py-4">
-                            This user is not in a club
+                            This player is not in a club
                         </p>
                     )}
                 </div>

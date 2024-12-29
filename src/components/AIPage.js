@@ -28,14 +28,14 @@ function AIPage() {
 
     const aiAlgorithm = setupAI();
 
-    const handleChoice = async (selectedChoice) => {
+    const handleChoice = useCallback(async (selectedChoice) => {
         if (!playerChoice && gameData.state === GameStates.IN_PROGRESS) {
             setPlayerChoice(selectedChoice);
             setTimeout(() => {
                 resolveRound(selectedChoice);
             }, 1000);
         }
-    };
+    }, [playerChoice]);
 
     const resolveRound = (selectedChoice) => {
         let tempAIChoice = aiAlgorithm(choiceMapTo[selectedChoice]);
@@ -43,31 +43,27 @@ function AIPage() {
         setAIChoice(tempAIChoice);
 
         const roundWinner = determineRoundWinner(selectedChoice, tempAIChoice);
-        let gameState;
-        if (roundWinner === 'player1') {
-            gameState = gameData.playerScore + 1 === FIRST_TO ? GameStates.FINISHED : GameStates.IN_PROGRESS;
-            setGameData((prevData) => ({
-                ...prevData,
-                playerScore: gameData.playerScore++,
-                currentRound: gameData.currentRound++,
-                state: gameState
-            }));
-        } else if (roundWinner === 'player2') {
-            gameState = gameData.aiScore + 1 === FIRST_TO ? GameStates.FINISHED : GameStates.IN_PROGRESS;
-            setGameData((prevData) => ({
-                ...prevData,
-                aiScore: gameData.aiScore++,
-                currentRound: gameData.currentRound++,
-                state: gameState
-            }));
-        }
 
-        if (gameState !== GameStates.FINISHED) {
+        setGameData((prevData) => {
+            const newPlayerScore = roundWinner === 'player1' ? prevData.playerScore + 1 : prevData.playerScore;
+            const newAIScore = roundWinner === 'player2' ? prevData.aiScore + 1 : prevData.aiScore;
+            const newRound = prevData.currentRound + 1;
+
+            const gameState = 
+                newPlayerScore === FIRST_TO || newAIScore === FIRST_TO
+                    ? GameStates.FINISHED
+                    : GameStates.IN_PROGRESS;
+
+            return {
+                playerScore: newPlayerScore,
+                aiScore: newAIScore,
+                currentRound: newRound,
+                state: gameState
+            };
+        });
+
+        if (gameData.state !== GameStates.FINISHED) {
             setTimeout(() => {
-                setGameData((prevData) => ({
-                    ...prevData,
-                    currentRound: gameData.currentRound++,
-                }));
                 setPlayerChoice(null);
                 setAIChoice(null);
             }, 1000);
