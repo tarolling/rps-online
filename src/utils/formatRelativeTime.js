@@ -1,9 +1,18 @@
+import { DateTime } from "neo4j-driver";
+
+/**
+ * 
+ * @param {DateTime} neoDateTime The time to be formatted
+ * @returns A formatted string
+ */
 const formatRelativeTime = (neoDateTime) => {
+    console.log('erm what type:', typeof neoDateTime);
     const date = neoDateTime.toStandardDate();
 
     console.log('neo date', date.toDateString());
 
     const now = Date.now();
+    now.to
     const diffInSeconds = Math.floor((now - date) / 1000);
     console.log('diff in seconds:', diffInSeconds);
 
