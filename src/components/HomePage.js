@@ -29,7 +29,7 @@ function HomePage() {
             const data = await response.json();
             setRecentMatches(data.map((record) => ({
                 ...record,
-                timestamp: formatRelativeTime(record.timestamp);
+                timestamp: formatRelativeTime(record.timestamp)
             })));
         };
 
