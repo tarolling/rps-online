@@ -9,8 +9,11 @@ const formatRelativeTime = (neoDateTime) => {
         neoDateTime.nanosecond / 1000000
     );
 
-    const now = new Date();
+    console.log('neo date', date.toDateString());
+
+    const now = Date.now();
     const diffInSeconds = Math.floor((now - date) / 1000);
+    console.log('diff in seconds:', diffInSeconds);
 
     const intervals = {
         year: 31536000,
