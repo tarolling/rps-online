@@ -28,14 +28,14 @@ function AIPage() {
 
     const aiAlgorithm = setupAI();
 
-    const handleChoice = async (selectedChoice) => {
+    const handleChoice = useCallback(async (selectedChoice) => {
         if (!playerChoice && gameData.state === GameStates.IN_PROGRESS) {
             setPlayerChoice(selectedChoice);
             setTimeout(() => {
                 resolveRound(selectedChoice);
             }, 1000);
         }
-    };
+    }, [playerChoice]);
 
     const resolveRound = (selectedChoice) => {
         let tempAIChoice = aiAlgorithm(choiceMapTo[selectedChoice]);
@@ -45,6 +45,7 @@ function AIPage() {
         const roundWinner = determineRoundWinner(selectedChoice, tempAIChoice);
         let gameState;
         if (roundWinner === 'player1') {
+            console.log('player wins');
             gameState = gameData.playerScore + 1 === FIRST_TO ? GameStates.FINISHED : GameStates.IN_PROGRESS;
             setGameData((prevData) => ({
                 ...prevData,
@@ -53,6 +54,7 @@ function AIPage() {
                 state: gameState
             }));
         } else if (roundWinner === 'player2') {
+            console.log('ai wins');
             gameState = gameData.aiScore + 1 === FIRST_TO ? GameStates.FINISHED : GameStates.IN_PROGRESS;
             setGameData((prevData) => ({
                 ...prevData,
