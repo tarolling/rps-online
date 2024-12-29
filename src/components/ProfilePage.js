@@ -59,7 +59,7 @@ function ProfilePage() {
     const fetchStats = async () => {
         setGameStats(null);
         setUserClub(null);
-        setRecentMatches(null);
+        setRecentMatches([]);
 
         try {
             const stats = await fetch('/api/fetchDashboardStats', {
