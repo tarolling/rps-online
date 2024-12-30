@@ -18,8 +18,6 @@ const formatRelativeTime = (neoDateTime) => {
 
     const now = new Date();
 
-    console.log('now:', now.toDateString());
-    console.log('date match was played:', date.toDateString());
     const diffInSeconds = Math.floor((now - date) / 1000);
 
     const intervals = {
