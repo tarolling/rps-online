@@ -10,7 +10,7 @@ import Header from './Header';
 function MatchmakingPage() {
     const { user } = useAuth();
     const [matchStatus, setMatchStatus] = useState('idle');
-    const [queueCount, setQueueCount] = useState(0);
+    const [onlineCount, setOnlineCount] = useState(0);
     const navigate = useNavigate();
     const db = getDatabase();
 
@@ -18,9 +18,20 @@ function MatchmakingPage() {
         if (!user) return;
 
         const queueRef = ref(db, 'matchmaking_queue');
-        const unsubscribeQueueCount = onValue(queueRef, (snapshot) => {
-            const queueData = snapshot.val() || {};
-            setQueueCount(Object.keys(queueData).length);
+        const gamesRef = ref(db, 'games');
+        const unsubscribeOnlineCount = onValue(queueRef, (queueSnapshot) => {
+            onValue(gamesRef, (gamesSnapshot) => {
+                const queueData = queueSnapshot.val() || {};
+                const gamesData = gamesSnapshot.val() || {};
+
+                const queueCount = Object.keys(queueData).length;
+                const activeGamesCount = Object.keys(gamesData).length;
+                const inGameCount = activeGamesCount * 2;
+
+                const totalOnline = queueCount + inGameCount;
+
+                setOnlineCount(totalOnline);
+            });
         });
 
 
@@ -41,12 +52,12 @@ function MatchmakingPage() {
         checkExistingGame();
 
         return () => {
-            unsubscribeQueueCount();
+            unsubscribeOnlineCount();
             if (matchStatus === 'searching') {
                 remove(ref(db, `matchmaking_queue/${user.uid}`));
             }
         };
-    }, [db, user?.uid, matchStatus, navigate]);
+    }, [db, user?.uid, matchStatus]);
 
     const handleFindMatch = async () => {
         setMatchStatus('searching');
@@ -91,10 +102,10 @@ function MatchmakingPage() {
         </div>
     );
 
-    const renderQueueCount = () => (
+    const renderOnlineCount = () => (
         <div className="queue-counter">
             <p className="queue-text">
-                Players in queue: <span className="queue-number">{queueCount}</span>
+                Players online: <span className="queue-number">{onlineCount}</span>
             </p>
         </div>
     );
@@ -110,7 +121,7 @@ function MatchmakingPage() {
                 {user && (
                     <div className="matchmaking-card">
                         <h2 className="matchmaking-title">Matchmaking</h2>
-                        {renderQueueCount()}
+                        {renderOnlineCount()}
                         {matchStatus === 'idle' && (
                             <button
                                 className="find-match-button"

@@ -283,6 +283,12 @@ export const endGame = async (gameID, playerID) => {
                     }),
                 });
 
+                const newRating = calculateRating(
+                    game.player1.rating,
+                    game.player2.rating,
+                    playerID === game.winner
+                );
+
                 await fetch('/api/adjustRating', {
                     method: 'POST',
                     headers: {
@@ -290,11 +296,7 @@ export const endGame = async (gameID, playerID) => {
                     },
                     body: JSON.stringify({
                         uid: playerID,
-                        newRating: calculateRating(
-                            game.player1.rating,
-                            game.player2.rating,
-                            playerID === game.winner
-                        ),
+                        newRating
                     }),
                 });
             } else {
@@ -315,6 +317,12 @@ export const endGame = async (gameID, playerID) => {
                     }),
                 });
 
+                const newRating = calculateRating(
+                    game.player2.rating,
+                    game.player1.rating,
+                    playerID === game.winner
+                );
+
                 await fetch('/api/adjustRating', {
                     method: 'POST',
                     headers: {
@@ -322,11 +330,7 @@ export const endGame = async (gameID, playerID) => {
                     },
                     body: JSON.stringify({
                         uid: playerID,
-                        newRating: calculateRating(
-                            game.player2.rating,
-                            game.player1.rating,
-                            playerID === game.winner
-                        ),
+                        newRating
                     }),
                 });
             }

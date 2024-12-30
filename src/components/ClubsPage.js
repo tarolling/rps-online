@@ -51,7 +51,7 @@ const ClubsPage = () => {
             });
             const data = await response.json();
             if (data.error) {
-                throw new Error();
+                return;
             }
             setUserClub(data);
         } catch (err) {

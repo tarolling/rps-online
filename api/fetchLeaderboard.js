@@ -26,11 +26,11 @@ export default async function handler(req, res) {
         const leaderboard = await session.executeRead(async tx => {
             let result = await tx.run(`
             MATCH (p:Player)
+            ORDER BY p.rating DESC
+            LIMIT 100
             RETURN p.uid AS uid,
                 p.username AS username,
                 p.rating AS rating
-            ORDER BY p.rating DESC
-            LIMIT 100
             `)
 
             if (!result || result.records.length === 0) {
