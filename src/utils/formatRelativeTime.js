@@ -19,8 +19,6 @@ const formatRelativeTime = (neoDateTime) => {
     );
 
     const now = new Date();
-    console.log('now:', now.toLocaleString());
-    console.log('date recorded:', date.toLocaleString());
     const diffInSeconds = Math.floor((now - date) / 1000);
 
     const intervals = {
