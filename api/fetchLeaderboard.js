@@ -37,8 +37,6 @@ export default async function handler(req, res) {
                 return [];
             }
 
-            console.log('records:', JSON.stringify(result.records));
-
             return result.records.map((record) => ({
                 uid: record.get("uid"),
                 username: record.get("username"),
