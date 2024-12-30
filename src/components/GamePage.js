@@ -27,6 +27,15 @@ const GamePage = () => {
     const playerData = isPlayer1 ? game?.player1 : game?.player2;
     const opponentData = isPlayer1 ? game?.player2 : game?.player1;
 
+    const getChoiceEmoji = (choiceType) => {
+        switch (choiceType) {
+            case Choices.ROCK: return '✊';
+            case Choices.PAPER: return '✋';
+            case Choices.SCISSORS: return '✌️';
+            default: return '';
+        }
+    };
+
     const makeChoice = useCallback(async (selectedChoice) => {
         if (!choice && game?.state === GameStates.IN_PROGRESS) {
             setChoice(selectedChoice);
@@ -42,16 +51,7 @@ const GamePage = () => {
                 setChoice(null);
             }
         }
-    }, [choice]);
-
-    const getChoiceEmoji = (choiceType) => {
-        switch (choiceType) {
-            case Choices.ROCK: return '✊';
-            case Choices.PAPER: return '✋';
-            case Choices.SCISSORS: return '✌️';
-            default: return '';
-        }
-    };
+    }, [choice, game]);
 
     useEffect(() => {
         if (!gameID || !playerID) return;
@@ -75,6 +75,10 @@ const GamePage = () => {
             }
         });
 
+        return () => unsubscribe();
+    }, [choice, timeLeft]);
+
+    useEffect(() => {
         let timer;
         if (game?.state === GameStates.IN_PROGRESS && !choice && timeLeft > 0) {
             timer = setInterval(() => {
@@ -88,11 +92,9 @@ const GamePage = () => {
             }, 1000);
         }
 
-        return () => {
-            unsubscribe();
-            clearInterval(timer);
-        };
-    }, [choice, timeLeft]);
+        return () => clearInterval(timer);
+    }, [timeLeft]);
+
 
 
     if (loading) {
