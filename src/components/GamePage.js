@@ -27,6 +27,48 @@ const GamePage = () => {
     const playerData = isPlayer1 ? game?.player1 : game?.player2;
     const opponentData = isPlayer1 ? game?.player2 : game?.player1;
 
+    useEffect(() => {
+        if (!gameID || !playerID) return;
+
+        const gameRef = ref(db, `games/${gameID}`);
+        const unsubscribe = onValue(gameRef, (snapshot) => {
+            const gameData = snapshot.val();
+            if (gameData) {
+                setGame(gameData);
+                setLoading(false);
+
+                if (gameData.player1.choice && gameData.player2.choice &&
+                    gameData.state === GameStates.IN_PROGRESS) {
+                    resolveRound(gameID, user.uid);
+                }
+            }
+
+            if (gameData?.currentRound !== game?.currentRound) {
+                setChoice(null);
+                setTimeLeft(ROUND_TIME);
+            }
+        });
+
+        return () => unsubscribe();
+    }, [gameID, playerID, user.uid, game]);
+
+    useEffect(() => {
+        let timer;
+        if (game?.state === GameStates.IN_PROGRESS && !choice && timeLeft > 0) {
+            timer = setInterval(() => {
+                setTimeLeft(prev => {
+                    if (prev <= 1) {
+                        makeChoice(Choices.NONE);
+                        return 0;
+                    }
+                    return prev - 1;
+                });
+            }, 1000);
+        }
+
+        return () => clearInterval(timer);
+    }, [game, choice, timeLeft]);
+
     const getChoiceEmoji = (choiceType) => {
         switch (choiceType) {
             case Choices.ROCK: return '✊';
@@ -52,49 +94,6 @@ const GamePage = () => {
             }
         }
     }, [choice, game]);
-
-    useEffect(() => {
-        if (!gameID || !playerID) return;
-
-        const gameRef = ref(db, `games/${gameID}`);
-        const unsubscribe = onValue(gameRef, (snapshot) => {
-            const gameData = snapshot.val();
-            if (gameData) {
-                setGame(gameData);
-                setLoading(false);
-
-                if (gameData.player1.choice && gameData.player2.choice &&
-                    gameData.state === GameStates.IN_PROGRESS) {
-                    resolveRound(gameID, user.uid);
-                }
-            }
-
-            if (gameData?.currentRound !== game?.currentRound) {
-                setChoice(null);
-                setTimeLeft(ROUND_TIME);
-            }
-        });
-
-        return () => unsubscribe();
-    }, [choice, timeLeft]);
-
-    useEffect(() => {
-        let timer;
-        if (game?.state === GameStates.IN_PROGRESS && !choice && timeLeft > 0) {
-            timer = setInterval(() => {
-                setTimeLeft(prev => {
-                    if (prev <= 1) {
-                        makeChoice(Choices.NONE);
-                        return 0;
-                    }
-                    return prev - 1;
-                });
-            }, 1000);
-        }
-
-        return () => clearInterval(timer);
-    }, [timeLeft]);
-
 
 
     if (loading) {
