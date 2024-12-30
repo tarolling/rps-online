@@ -50,9 +50,12 @@ const ClubsPage = () => {
                 body: JSON.stringify({ methodType: 'user', uid: user.uid })
             });
             const data = await response.json();
+            if (data.error) {
+                throw new Error();
+            }
             setUserClub(data);
         } catch (err) {
-            setError('Failed to fetch user clubs');
+            setError('Failed to fetch user club');
         }
     };
 

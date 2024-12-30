@@ -188,7 +188,7 @@ const GamePage = () => {
                     <div className="game-result">
                         <h2>{game.winner === playerID ? 'Victory!' : 'Defeat'}</h2>
                         <p className="final-score">Final Score: {playerData.score} - {opponentData.score}</p>
-                        <button className="play-again-button" onClick={() => window.location.href = '/'}>
+                        <button className="play-again-button" onClick={() => window.location.href = '/play'}>
                             Play Again
                         </button>
                     </div>
