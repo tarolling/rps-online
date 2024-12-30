@@ -67,7 +67,7 @@ const GamePage = () => {
         }
 
         return () => clearInterval(timer);
-    }, [choice]);
+    }, [game?.state, choice]);
 
     const makeChoice = useCallback(async (selectedChoice) => {
         if (!choice && game?.state === GameStates.IN_PROGRESS) {
