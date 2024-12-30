@@ -86,6 +86,12 @@ const ClubsPage = () => {
 
     const handleCreateClub = async (e) => {
         e.preventDefault();
+
+        if (userClub) {
+            setError("You are already in a club!");
+            return;
+        }
+
         try {
             await fetch('/api/clubs', {
                 method: 'POST',
