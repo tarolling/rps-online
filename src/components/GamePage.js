@@ -67,7 +67,7 @@ const GamePage = () => {
         }
 
         return () => clearInterval(timer);
-    }, [game, choice, timeLeft]);
+    }, [game, choice]);
 
     const getChoiceEmoji = (choiceType) => {
         switch (choiceType) {
