@@ -4,6 +4,7 @@ import { useAuth } from '../Auth';
 import '../styles/DashboardPage.css';
 import Footer from './Footer';
 import Header from './Header';
+import formatRelativeTime from '../utils/formatRelativeTime';
 
 function DashboardPage() {
     const navigate = useNavigate();
@@ -146,7 +147,7 @@ function DashboardPage() {
                                     <span className="match-result">{match.result}</span>
                                     <div className="match-details">
                                         <span>{match.playerScore} - {match.opponentScore}</span>
-                                        <span className="match-date">{match.date}</span>
+                                        <span className="match-date">{formatRelativeTime(match.date)}</span>
                                     </div>
                                 </div>
                             ))}

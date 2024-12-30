@@ -93,10 +93,7 @@ function ProfilePage() {
 
             data = await recentGames.json();
             if (!data.error) {
-                setRecentMatches(data.map((record) => ({
-                    ...record,
-                    date: formatRelativeTime(record.date)
-                })));
+                setRecentMatches(data);
             }
 
             const clubData = await fetch('/api/clubs', {
@@ -270,7 +267,7 @@ function ProfilePage() {
                                     <span className="profile-match-result">{match.result}</span>
                                     <div className="profile-match-details">
                                         <span>{match.playerScore} - {match.opponentScore}</span>
-                                        <span className="profile-match-date">{match.date}</span>
+                                        <span className="profile-match-date">{formatRelativeTime(match.date)}</span>
                                     </div>
                                 </div>
                             ))}
