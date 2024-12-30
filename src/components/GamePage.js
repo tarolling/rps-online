@@ -41,7 +41,7 @@ const GamePage = () => {
                 setChoice(null);
             }
         }
-    }, [choice, game, gameID, isPlayer1, db]);
+    }, [choice, game, db]);
 
     const getChoiceEmoji = (choiceType) => {
         switch (choiceType) {
@@ -62,11 +62,6 @@ const GamePage = () => {
                 setGame(gameData);
                 setLoading(false);
 
-                const playerKey = isPlayer1 ? 'player1Choice' : 'player2Choice';
-                if (gameData[playerKey]) {
-                    setChoice(gameData[playerKey].choice);
-                }
-
                 if (gameData.player1.choice && gameData.player2.choice &&
                     gameData.state === GameStates.IN_PROGRESS) {
                     resolveRound(gameID, user.uid);
@@ -80,7 +75,7 @@ const GamePage = () => {
         });
 
         return () => unsubscribe();
-    }, [gameID, playerID, isPlayer1]);
+    }, []);
 
     useEffect(() => {
         let timer;
