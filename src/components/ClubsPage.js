@@ -86,7 +86,6 @@ const ClubsPage = () => {
 
     const handleCreateClub = async (e) => {
         e.preventDefault();
-        console.log('user club here:', JSON.stringify(userClub));
 
         if (userClub) {
             setError("You are already in a club!");
