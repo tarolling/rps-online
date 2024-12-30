@@ -7,7 +7,7 @@ import neo4j, { DateTime } from "neo4j-driver";
  */
 const formatRelativeTime = (neoDateTime) => {
     const date = new Date(
-        new Date.UTC(
+        Date.UTC(
             neo4j.integer.toNumber(neoDateTime.year),
             neo4j.integer.toNumber(neoDateTime.month) - 1,
             neo4j.integer.toNumber(neoDateTime.day),
