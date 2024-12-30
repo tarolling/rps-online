@@ -16,7 +16,7 @@ const formatRelativeTime = (neoDateTime) => {
         neo4j.integer.toNumber(neoDateTime.nanosecond) / 1000000
     );
 
-    const now = Date.now();
+    const now = new Date();
     const diffInSeconds = Math.floor((now - date) / 1000);
 
     const intervals = {
