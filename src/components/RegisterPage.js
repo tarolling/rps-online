@@ -1,6 +1,7 @@
-import React, { useState } from "react";
 import { createUserWithEmailAndPassword, sendEmailVerification } from "firebase/auth";
+import React, { useState } from "react";
 import { auth } from "../api/firebase";
+import Footer from "./Footer";
 import Header from "./Header";
 
 function RegisterPage() {
@@ -64,14 +65,14 @@ function RegisterPage() {
                         type="username"
                         placeholder="Username"
                         value={username}
-                        onChange={(e) => setUsername(e.target.value)}
+                        onChange={(e) => setUsername(e.target.value.trim())}
                         required
                     />
                     <input
                         type="email"
                         placeholder="Email"
                         value={email}
-                        onChange={(e) => setEmail(e.target.value)}
+                        onChange={(e) => setEmail(e.target.value.trim())}
                         required
                     />
                     <input
@@ -86,6 +87,7 @@ function RegisterPage() {
                 {error && <p style={{ color: "red" }}>{error}</p>}
                 {message && <p style={{ color: "green" }}>{message}</p>}
             </div>
+            <Footer />
         </div>
     );
 }

@@ -6,6 +6,7 @@
     background: linear-gradient(to right, #f5f5f5, #e0e0e0);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     border-bottom: 3px solid #282c34;
+    position: relative;
 }
 
 .header-logo .logo {
@@ -16,6 +17,7 @@
 .header-nav {
     display: flex;
     gap: 20px;
+    align-items: center;
 }
 
 .nav-link {
@@ -30,7 +32,8 @@
 }
 
 .nav-link:hover {
-    color: #ffffff;
+    color: white;
+    background: var(--primary-button-hover-color);
 }
 
 .header-user {
@@ -97,18 +100,103 @@
     gap: 10px;
 }
 
-.button {
-    background: none;
-    border: 2px solid #0077cc;
-    color: #0077cc;
-    padding: 8px 16px;
-    border-radius: 4px;
+/* Hamburger Menu Styles */
+.hamburger-menu {
+    display: none;
+    flex-direction: column;
+    justify-content: space-around;
+    width: 30px;
+    height: 25px;
+    background: transparent;
+    border: none;
     cursor: pointer;
-    transition: all 0.3s;
-    font-weight: bold;
+    padding: 0;
+    margin: 0;
 }
 
-.button:hover {
-    background-color: #0077cc;
-    color: white;
+.hamburger-menu span {
+    width: 30px;
+    height: 3px;
+    background: #282c34;
+    border-radius: 3px;
+    transition: all 0.3s ease;
+}
+
+.hamburger-menu.open span:nth-child(1) {
+    transform: translateY(8px) rotate(45deg);
+}
+
+.hamburger-menu.open span:nth-child(2) {
+    opacity: 0;
+}
+
+.hamburger-menu.open span:nth-child(3) {
+    transform: translateY(-8px) rotate(-45deg);
+}
+
+.mobile-auth {
+    display: none;
+}
+
+/* Mobile Styles */
+@media (max-width: 768px) {
+    .header-nav {
+        display: none;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: #f5f5f5;
+        flex-direction: column;
+        padding: 20px;
+        gap: 10px;
+        border-top: 1px solid #ddd;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        z-index: 1000;
+    }
+
+    .header-nav.mobile-open {
+        display: flex;
+    }
+
+    .hamburger-menu {
+        display: flex;
+        order: 3;
+    }
+
+    .header-user {
+        order: 2;
+    }
+
+    .mobile-auth {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .nav-link {
+        text-align: center;
+        padding: 15px;
+    }
+
+    /* Hide desktop auth buttons on mobile when menu is open */
+    .mobile-open+.header-user {
+        display: none;
+    }
+
+    .header-logo .logo {
+        height: 40px;
+    }
+
+    .auth-buttons {
+        flex-direction: column;
+    }
+
+    .auth-buttons button {
+        width: 100%;
+    }
+}
+
+/* Prevent body scroll when mobile menu is open */
+body.menu-open {
+    overflow: hidden;
 }

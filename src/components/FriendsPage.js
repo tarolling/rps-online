@@ -1,4 +1,5 @@
 import React from 'react';
+import Footer from './Footer';
 import Header from './Header';
 
 export default function FriendsPage() {
@@ -6,6 +7,7 @@ export default function FriendsPage() {
         <div>
             <Header />
             <h1>Friends in progress...</h1>
+            <Footer />
         </div>
     )
 }

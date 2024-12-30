@@ -2,7 +2,6 @@ import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/react";
 import React from 'react';
 import { Route, BrowserRouter as Router, Routes } from 'react-router';
-import './App.css';
 import { AuthProvider, ProtectedRoute } from './Auth';
 import AIPage from "./components/AIPage";
 import ClubsPage from "./components/ClubsPage";

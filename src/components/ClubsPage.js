@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../Auth';
+import Footer from './Footer';
 import Header from './Header';
 
 const ClubsPage = () => {
@@ -211,7 +212,7 @@ const ClubsPage = () => {
                                         value={createClubData.name}
                                         onChange={(e) => setCreateClubData(prev => ({
                                             ...prev,
-                                            name: e.target.value
+                                            name: e.target.value.trim()
                                         }))}
                                         required
                                     />
@@ -226,7 +227,7 @@ const ClubsPage = () => {
                                         value={createClubData.tag}
                                         onChange={(e) => setCreateClubData(prev => ({
                                             ...prev,
-                                            tag: e.target.value.toUpperCase()
+                                            tag: e.target.value.trim().toUpperCase()
                                         }))}
                                         maxLength={4}
                                         required
@@ -274,6 +275,7 @@ const ClubsPage = () => {
                     </div>
                 )}
             </div>
+            <Footer />
         </div>
     );
 };

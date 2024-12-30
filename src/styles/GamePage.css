@@ -91,9 +91,7 @@
     align-items: center;
     gap: 0.5rem;
     padding: 1.5rem;
-    border-radius: 12px;
-    background: #333;
-    border: 2px solid #444;
+    background: var(--primary-button-color);
     cursor: pointer;
     transition: all 0.2s ease;
     min-width: 120px;
@@ -101,8 +99,7 @@
 
 .choice-button:hover:not(:disabled) {
     transform: translateY(-4px);
-    border-color: #2563eb;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    background: var(--primary-button-hover-color);
 }
 
 .choice-button.selected {
@@ -151,16 +148,15 @@
     padding: 1rem 2rem;
     font-size: 1.25rem;
     border-radius: 8px;
-    background: #333;
+    background: var(--primary-button-color);
     color: white;
-    border: none;
     cursor: pointer;
     transition: all 0.2s ease;
 }
 
 .play-again-button:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    background: var(--primary-button-hover-color);
 }
 
 .loading {
