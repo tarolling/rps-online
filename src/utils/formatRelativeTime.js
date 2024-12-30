@@ -7,13 +7,15 @@ import neo4j, { DateTime } from "neo4j-driver";
  */
 const formatRelativeTime = (neoDateTime) => {
     const date = new Date(
-        neo4j.integer.toNumber(neoDateTime.year),
-        neo4j.integer.toNumber(neoDateTime.month) - 1,
-        neo4j.integer.toNumber(neoDateTime.day),
-        neo4j.integer.toNumber(neoDateTime.hour),
-        neo4j.integer.toNumber(neoDateTime.minute),
-        neo4j.integer.toNumber(neoDateTime.second),
-        neo4j.integer.toNumber(neoDateTime.nanosecond) / 1000000
+        new Date.UTC(
+            neo4j.integer.toNumber(neoDateTime.year),
+            neo4j.integer.toNumber(neoDateTime.month) - 1,
+            neo4j.integer.toNumber(neoDateTime.day),
+            neo4j.integer.toNumber(neoDateTime.hour),
+            neo4j.integer.toNumber(neoDateTime.minute),
+            neo4j.integer.toNumber(neoDateTime.second),
+            neo4j.integer.toNumber(neoDateTime.nanosecond) / 1000000
+        )
     );
 
     const now = new Date();
