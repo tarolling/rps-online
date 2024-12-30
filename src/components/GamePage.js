@@ -30,8 +30,9 @@ const GamePage = () => {
     const makeChoice = useCallback(async (selectedChoice) => {
         if (!choice && game?.state === GameStates.IN_PROGRESS) {
             setChoice(selectedChoice);
-            const playerKey = isPlayer1 ? 'player1' : 'player2';
+            console.log('setting choice to', selectedChoice);
 
+            const playerKey = isPlayer1 ? 'player1' : 'player2';
             try {
                 await update(ref(db, `games/${gameID}`), {
                     [`${playerKey}/choice`]: selectedChoice
@@ -41,7 +42,7 @@ const GamePage = () => {
                 setChoice(null);
             }
         }
-    }, [choice, game, db]);
+    }, [choice]);
 
     const getChoiceEmoji = (choiceType) => {
         switch (choiceType) {
@@ -74,12 +75,7 @@ const GamePage = () => {
             }
         });
 
-        return () => unsubscribe();
-    }, []);
-
-    useEffect(() => {
         let timer;
-
         if (game?.state === GameStates.IN_PROGRESS && !choice && timeLeft > 0) {
             timer = setInterval(() => {
                 setTimeLeft(prev => {
@@ -92,8 +88,12 @@ const GamePage = () => {
             }, 1000);
         }
 
-        return () => clearInterval(timer);
-    }, [game?.state, choice, timeLeft, makeChoice]);
+        return () => {
+            unsubscribe();
+            clearInterval(timer);
+        };
+    }, [choice, timeLeft]);
+
 
     if (loading) {
         return (
