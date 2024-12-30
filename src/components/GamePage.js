@@ -67,21 +67,11 @@ const GamePage = () => {
         }
 
         return () => clearInterval(timer);
-    }, [game, choice]);
-
-    const getChoiceEmoji = (choiceType) => {
-        switch (choiceType) {
-            case Choices.ROCK: return '✊';
-            case Choices.PAPER: return '✋';
-            case Choices.SCISSORS: return '✌️';
-            default: return '';
-        }
-    };
+    }, [game, choice, timeLeft]);
 
     const makeChoice = useCallback(async (selectedChoice) => {
         if (!choice && game?.state === GameStates.IN_PROGRESS) {
             setChoice(selectedChoice);
-            console.log('setting choice to', selectedChoice);
 
             const playerKey = isPlayer1 ? 'player1' : 'player2';
             try {
@@ -95,6 +85,14 @@ const GamePage = () => {
         }
     }, [choice, game]);
 
+    const getChoiceEmoji = (choiceType) => {
+        switch (choiceType) {
+            case Choices.ROCK: return '✊';
+            case Choices.PAPER: return '✋';
+            case Choices.SCISSORS: return '✌️';
+            default: return '';
+        }
+    };
 
     if (loading) {
         return (
