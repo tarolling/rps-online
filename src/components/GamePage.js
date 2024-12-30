@@ -20,6 +20,7 @@ const GamePage = () => {
     const [game, setGame] = useState(null);
     const [loading, setLoading] = useState(true);
     const [choice, setChoice] = useState(null);
+    const [roundOver, setRoundOver] = useState(false);
     const [timeLeft, setTimeLeft] = useState(ROUND_TIME);
     const db = getDatabase();
 
@@ -39,13 +40,17 @@ const GamePage = () => {
 
                 if (gameData.player1.choice && gameData.player2.choice &&
                     gameData.state === GameStates.IN_PROGRESS) {
-                    resolveRound(gameID, user.uid);
+                    setRoundOver(true);
+                    setTimeout(() => {
+                        resolveRound(gameID, user.uid);
+                    }, 1000);
                 }
             }
 
             if (gameData?.currentRound !== game?.currentRound) {
                 setChoice(null);
                 setTimeLeft(ROUND_TIME);
+                setRoundOver(false);
             }
         });
 
@@ -152,7 +157,7 @@ const GamePage = () => {
                         <div className="score">{opponentData.score || 0}</div>
                         {game[isPlayer1 ? 'player2' : 'player1'].choice && (
                             <div className="choice-display">
-                                {game.state === GameStates.FINISHED ?
+                                {roundOver ?
                                     getChoiceEmoji(game[isPlayer1 ? 'player2' : 'player1'].choice) :
                                     '🤔'}
                             </div>
