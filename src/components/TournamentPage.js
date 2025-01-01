@@ -41,15 +41,6 @@ const TournamentPage = () => {
         }
     };
 
-    const handleMatchComplete = async (matchId, winnerId) => {
-        try {
-            await advanceWinner(tournamentID, matchId, winnerId);
-        } catch (error) {
-            console.error('Error completing match:', error);
-            alert('Failed to update match result');
-        }
-    };
-
     const registerForTournament = async () => {
         if (!tournament || !user) return;
 
@@ -132,6 +123,8 @@ const TournamentPage = () => {
             rounds[match.round].push(match);
         });
 
+        console.log('rounds:', JSON.stringify(rounds));
+
         return (
             <div className="bracket">
                 {Object.entries(rounds).map(([round, matches]) => (
@@ -146,7 +139,7 @@ const TournamentPage = () => {
                                     </div>
                                     <div className={`player ${match.winner === match.player2?.id ? 'winner' : ''}`}>
                                         <span className="seed">{match.player2?.seed || '?'}</span>
-                                        <span className="name">{match.player2?.username || 'TBD'}</span>
+                                        <span className="name">{match.status === 'bye' ? 'BYE' : (match.player2?.username || 'TBD')}</span>
                                     </div>
                                 </div>
                             ))}
