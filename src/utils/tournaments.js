@@ -8,37 +8,39 @@ const getNextPowerOfTwo = (n) => {
     return Math.pow(2, Math.ceil(Math.log2(n)));
 };
 
-// Generate empty slots up to the next power of 2
-const generateEmptySlots = (participants, totalSlots) => {
-    const slots = [...participants];
-    while (slots.length < totalSlots) {
-        slots.push(null);
+const generateSeeds = (numPlayers) => {
+    const rounds = Math.log(numPlayers) / Math.log(2) - 1;
+    let pls = [1, 2];
+    for (let i = 0; i < rounds; i++) {
+        pls = nextLayer(pls);
     }
-    return slots;
-};
+    return pls;
+
+    function nextLayer(pls) {
+        const out = [];
+        const length = pls.length * 2 + 1;
+        pls.forEach((d) => {
+            out.push(d);
+            out.push(length - d);
+        });
+        return out;
+    }
+}
+
 
 // Seed participants using standard tournament seeding pattern
-const seedParticipants = (participants, totalSlots) => {
-    const seeds = Array(totalSlots).fill(null);
+const seedParticipants = (participants, numPlayers) => {
     const participantArray = participants.sort((a, b) => b.rating - a.rating);
 
-    // Standard tournament seeding pattern
-    for (let i = 0; i < participantArray.length; i++) {
-        let seed = i + 1;
-        let position;
+    const seedIndices = generateSeeds(numPlayers);
+    const seeds = Array(seedIndices.length).fill(null);
 
-        // Calculate position using standard bracket seeding
-        if (seed === 1) position = 0;
-        else if (seed === 2) position = totalSlots - 1;
-        else {
-            // For other seeds, use standard bracket placement
-            let power = Math.floor(Math.log2(seed - 1));
-            let subGroup = seed - Math.pow(2, power);
-            let groupSize = Math.pow(2, power + 1);
-            position = (subGroup * 2 + 1) * (totalSlots / groupSize);
-        }
-
-        seeds[position] = participantArray[i];
+    for (let i = 0; i < seedIndices.length; i++) {
+        if (seedIndices[i] > participantArray.length) continue;
+        seeds[i] = {
+            ...participantArray[seedIndices[i] - 1],
+            seed: seedIndices[i]
+        };
     }
 
     return seeds;
@@ -46,10 +48,9 @@ const seedParticipants = (participants, totalSlots) => {
 
 // Generate all matches for the tournament
 const generateBracket = (seededParticipants) => {
-    const rounds = Math.log2(seededParticipants.length);
     const bracket = [];
+    const nextRoundPlayers = [];
 
-    // Generate first round matches
     for (let i = 0; i < seededParticipants.length; i += 2) {
         const player1 = seededParticipants[i];
         const player2 = seededParticipants[i + 1];
@@ -64,25 +65,28 @@ const generateBracket = (seededParticipants) => {
                 : null,
             status: player2 === null ? 'bye' : 'pending',
             winner: player2 === null ? player1 : null,
-            seed1: i + 1,
-            seed2: i + 2
         });
+
+        nextRoundPlayers.push(!player2 ? player1 : null);
     }
 
-    // Generate placeholder matches for subsequent rounds
-    for (let round = 2; round <= rounds; round++) {
-        const matchesInRound = seededParticipants.length / Math.pow(2, round);
-        for (let i = 0; i < matchesInRound; i++) {
-            bracket.push({
-                matchId: `round${round}_match${i + 1}`,
-                round: round,
-                player1: null,
-                player2: null,
-                nextMatchId: round < rounds ? `round${round + 1}_match${Math.floor(i / 2) + 1}` : null,
-                status: 'pending',
-                winner: null
-            });
-        }
+    if (seededParticipants.length === 2) return bracket;
+
+    for (let i = 0; i < nextRoundPlayers.length; i += 2) {
+        const player1 = nextRoundPlayers[i];
+        const player2 = nextRoundPlayers[i + 1];
+
+        bracket.push({
+            matchId: `round2_match${i / 2 + 1}`,
+            round: 2,
+            player1: player1,
+            player2: player2,
+            nextMatchId: nextRoundPlayers.length !== 2 ?
+                `round3_match${Math.floor(i / 4) + 1}`
+                : null,
+            status: 'pending',
+            winner: null,
+        });
     }
 
     return bracket;
@@ -104,14 +108,15 @@ export const startTournament = async (tournamentId) => {
         // Convert participants object to array
         const participantsArray = Object.values(tournament.participants);
 
-        // Calculate total slots needed (next power of 2)
-        const totalSlots = getNextPowerOfTwo(participantsArray.length);
-
         // Seed participants
-        const seededParticipants = seedParticipants(participantsArray, totalSlots);
+        const seededParticipants = seedParticipants(participantsArray, participantsArray.length);
 
         // Generate bracket
         const bracket = generateBracket(seededParticipants);
+
+        for (const match of bracket) {
+            console.log('match generated:', JSON.stringify(match));
+        }
 
         // Create games for first round matches
         const matchGames = {};
@@ -134,8 +139,6 @@ export const startTournament = async (tournamentId) => {
                 }
             }
         }
-
-        console.log('we here');
 
         // Update tournament with bracket and game references
         await set(ref(db, `tournaments/${tournamentId}`), {

@@ -33,11 +33,6 @@ function Header() {
         navigate(path);
     };
 
-    const closeAllMenus = () => {
-        setIsDropdownOpen(false);
-        setIsMobileMenuOpen(false);
-    };
-
     useEffect(() => {
         if (windowWidth > 768) {
             setIsMobileMenuOpen(false);
@@ -85,6 +80,9 @@ function Header() {
                 </button>
                 <button onClick={() => handleNavigation('/clubs')} className="nav-link">
                     Clubs
+                </button>
+                <button onClick={() => handleNavigation('/tournaments')} className="nav-link">
+                    Tournaments
                 </button>
 
                 {/* Mobile-only auth buttons */}

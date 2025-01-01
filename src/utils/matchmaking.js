@@ -267,8 +267,6 @@ export const endGame = async (gameID, playerID) => {
         }
 
         if (!game.tournamentId) {
-
-
             const mainPlayer = playerID === game.player1.id ? 'p1' : 'p2';
             const result = playerID === game.winner ? GameResults.WIN : GameResults.LOSS;
             const gameStats = calculateGameStats(game, mainPlayer);
@@ -348,9 +346,7 @@ export const endGame = async (gameID, playerID) => {
             }
         }
 
-        if (!game.tournamentId) {
-            await remove(gameRef);
-        }
+        await remove(gameRef);
     } catch (error) {
         console.error('Error ending game:', error);
         throw error;
