@@ -58,7 +58,7 @@ const TournamentsPage = () => {
 
         setNewTournament({
             name: '',
-            playerCap: 8,
+            playerCap: parseInt(newTournament.playerCap),
             description: ''
         });
     };

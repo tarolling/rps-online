@@ -146,6 +146,8 @@ export const startTournament = async (tournamentId) => {
             }
         }
 
+        console.log('we here');
+
         // Update tournament with bracket and game references
         await set(ref(db, `tournaments/${tournamentId}`), {
             ...tournament,
