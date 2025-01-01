@@ -231,20 +231,7 @@ const TournamentPage = () => {
                         {userRegistered && (
                             <div className="your-matches">
                                 <h2>Your Next Match</h2>
-                                {getUserNextMatch() ? (
-                                    <div className="match-card">
-                                        <p>Your upcoming match:</p>
-                                        <p>vs {getUserNextMatch().player1?.id === user.uid ?
-                                            getUserNextMatch().player2?.username :
-                                            getUserNextMatch().player1?.username}
-                                        </p>
-                                        <Link to={`/game/${getUserNextMatch().matchID}`}>
-                                            <button className="play-btn">Play Match</button>
-                                        </Link>
-                                    </div>
-                                ) : (
-                                    <p>No upcoming matches</p>
-                                )}
+                                {renderMatchCard()}
                             </div>
                         )}
                     </>
