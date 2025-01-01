@@ -59,7 +59,9 @@ const generateBracket = (seededParticipants) => {
             round: 1,
             player1: player1,
             player2: player2,
-            nextMatchId: `round2_match${Math.floor(i / 4) + 1}`,
+            nextMatchId: seededParticipants.length !== 2 ?
+                `round2_match${Math.floor(i / 4) + 1}`
+                : null,
             status: player2 === null ? 'bye' : 'pending',
             winner: player2 === null ? player1 : null,
             seed1: i + 1,
