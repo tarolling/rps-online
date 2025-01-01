@@ -113,6 +113,10 @@ export const startTournament = async (tournamentId) => {
         // Generate bracket
         const bracket = generateBracket(seededParticipants);
 
+        for (const match of bracket) {
+            console.log('match generated:', JSON.stringify(match));
+        }
+
         // Create games for first round matches
         const matchGames = {};
         for (const match of bracket) {
@@ -134,8 +138,6 @@ export const startTournament = async (tournamentId) => {
                 }
             }
         }
-
-        console.log('we here');
 
         // Update tournament with bracket and game references
         await set(ref(db, `tournaments/${tournamentId}`), {
