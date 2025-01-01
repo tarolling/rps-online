@@ -36,7 +36,7 @@ export const findMatch = async (uid, username, userRating) => {
         await remove(ref(db, `matchmaking_queue/${uid}`));
 
         for (const [playerID, playerData] of Object.entries(queue)) {
-            if (playerID !== uid && Math.abs(playerData.rating - userRating) <= 100) {
+            if (playerID !== uid && Math.abs(playerData.rating - userRating) <= 200) {
                 const opponentGameID = await checkExistingGame(playerID);
                 if (!opponentGameID) {
                     const gameID = await createGame(playerID, playerData.username, playerData.rating, uid, username, userRating);
