@@ -41,15 +41,20 @@ const TournamentsPage = () => {
         const tournamentsRef = ref(db, 'tournaments');
         const newTournamentRef = push(tournamentsRef);
 
-        await set(newTournamentRef, {
-            name: newTournament.name,
-            description: newTournament.description,
-            playerCap: parseInt(newTournament.playerCap),
-            status: 'registration',
-            createdAt: Date.now(),
-            createdBy: user.uid,
-            participants: {}
-        });
+        try {
+            await set(newTournamentRef, {
+                name: newTournament.name,
+                description: newTournament.description,
+                playerCap: parseInt(newTournament.playerCap),
+                status: 'registration',
+                createdAt: Date.now(),
+                createdBy: user.uid,
+                participants: {}
+            });
+        } catch (error) {
+            console.error("An error occurred:", error);
+        }
+
 
         setNewTournament({
             name: '',
