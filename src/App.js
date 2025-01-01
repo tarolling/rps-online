@@ -15,6 +15,8 @@ import MatchmakingPage from './components/MatchmakingPage';
 import ProfilePage from './components/ProfilePage';
 import RegisterPage from './components/RegisterPage';
 import RulesPage from './components/RulesPage';
+import TournamentsPage from "./components/TournamentsPage";
+import TournamentPage from "./components/TournamentPage";
 
 export default function App() {
   return (
@@ -34,6 +36,8 @@ export default function App() {
             <Route path="/rules" element={<RulesPage />} />
             <Route path="/clubs" element={<ProtectedRoute><ClubsPage /></ProtectedRoute>} />
             <Route path="/playAI" element={<AIPage />} />
+            <Route path="/tournaments" element={<TournamentsPage />} />
+            <Route path="/tournament/:tournamentID" element={<TournamentPage />} />
           </Routes>
         </Router>
       </AuthProvider>
