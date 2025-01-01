@@ -43,6 +43,9 @@ function Footer() {
                     <button onClick={() => handleNavigation('/clubs')} className="footer-link">
                         Clubs
                     </button>
+                    <button onClick={() => handleNavigation('/tournaments')} className="footer-link">
+                        Tournaments
+                    </button>
                 </div>
 
                 <div className="footer-section">
@@ -90,7 +93,7 @@ function Footer() {
                 </div>
             </div>
             <div className="footer-bottom">
-                <p>&copy; 2024 Ranked RPS. All rights reserved.</p>
+                <p>&copy; {new Date().getFullYear()} Ranked RPS. All rights reserved.</p>
             </div>
         </footer>
     );

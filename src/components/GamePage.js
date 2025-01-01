@@ -100,15 +100,11 @@ const GamePage = () => {
             const processGameEnd = async () => {
                 try {
                     if (game.tournamentId) {
-                        // Update tournament bracket with the winner
                         await advanceWinner(
                             game.tournamentId,
                             game.matchId,
                             game.winner
                         );
-
-                        // Navigate back to tournament page
-                        navigate(`/tournament/${game.tournamentId}`);
                     }
 
                     // Mark results as processed to prevent duplicate processing

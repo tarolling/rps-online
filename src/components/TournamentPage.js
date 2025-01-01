@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router';
 import { useAuth } from '../Auth';
 import '../styles/TournamentPage.css';
-import { advanceWinner, startTournament } from '../utils/tournaments';
+import { startTournament } from '../utils/tournaments';
 import Footer from './Footer';
 import Header from './Header';
 
@@ -85,7 +85,6 @@ const TournamentPage = () => {
 
         const gameID = tournament.matchGames?.[match.matchId];
         const isPlayer1 = match.player1?.id === user?.uid;
-        const opponent = isPlayer1 ? match.player2 : match.player1;
 
         return (
             <div className="match-card">
@@ -123,8 +122,6 @@ const TournamentPage = () => {
             rounds[match.round].push(match);
         });
 
-        console.log('rounds:', JSON.stringify(rounds));
-
         return (
             <div className="bracket">
                 {Object.entries(rounds).map(([round, matches]) => (
@@ -133,11 +130,11 @@ const TournamentPage = () => {
                         <div className="matches">
                             {matches.map((match) => (
                                 <div key={match.matchID} className={`match ${match.status}`}>
-                                    <div className={`player ${match.winner?.id === match.player1?.id ? 'winner' : ''}`}>
+                                    <div className={`player ${!match.winner ? '' : match.winner?.id === match.player1?.id ? 'winner' : ''}`}>
                                         <span className="seed">{match.player1?.seed || '?'}</span>
                                         <span className="name">{match.player1?.username || 'TBD'}</span>
                                     </div>
-                                    <div className={`player ${match.winner?.id === match.player2?.id ? 'winner' : ''}`}>
+                                    <div className={`player ${!match.winner ? '' : match.winner?.id === match.player2?.id ? 'winner' : ''}`}>
                                         <span className="seed">{match.status === 'bye' ? 'X' : (match.player2?.seed || '?')}</span>
                                         <span className="name">{match.status === 'bye' ? 'BYE' : (match.player2?.username || 'TBD')}</span>
                                     </div>
