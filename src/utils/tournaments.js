@@ -1,4 +1,5 @@
 import { get, getDatabase, ref, set, push } from 'firebase/database';
+import { createGame } from './matchmaking';
 
 const db = getDatabase();
 
@@ -85,31 +86,6 @@ const generateBracket = (seededParticipants) => {
     return bracket;
 };
 
-// Create a game for a match
-const createGame = async (tournamentId, match) => {
-    if (!match.player1 || !match.player2 || match.status === 'bye') return null;
-
-    const gameRef = push(ref(db, 'tournament_games'));
-    const gameData = {
-        tournamentId,
-        matchId: match.matchId,
-        player1: {
-            id: match.player1.id,
-            username: match.player1.username,
-            score: 0
-        },
-        player2: {
-            id: match.player2.id,
-            username: match.player2.username,
-            score: 0
-        },
-        status: 'pending',
-        createdAt: Date.now()
-    };
-
-    await set(gameRef, gameData);
-    return gameRef.key;
-};
 
 // Start the tournament and create the bracket
 export const startTournament = async (tournamentId) => {
@@ -139,7 +115,18 @@ export const startTournament = async (tournamentId) => {
         const matchGames = {};
         for (const match of bracket) {
             if (match.round === 1 && match.status !== 'bye') {
-                const gameId = await createGame(tournamentId, match);
+                const gameId = await createGame(
+                    match.player1.id,
+                    match.player1.username,
+                    match.player1.rating,
+                    match.player2.id,
+                    match.player2.username,
+                    match.player2.rating,
+                    {
+                        tournamentId: tournamentId,
+                        matchId: match.matchId
+                    }
+                );
                 if (gameId) {
                     matchGames[match.matchId] = gameId;
                 }
@@ -202,7 +189,18 @@ export const advanceWinner = async (tournamentId, matchId, winnerId) => {
 
                 // If both players are set, create the next game
                 if (nextMatch.player1 && nextMatch.player2) {
-                    const gameId = await createGame(tournamentId, nextMatch);
+                    const gameId = await createGame(
+                        nextMatch.player1.id,
+                        nextMatch.player1.username,
+                        nextMatch.player1.rating,
+                        nextMatch.player2.id,
+                        nextMatch.player2.username,
+                        nextMatch.player2.rating,
+                        {
+                            tournamentId: tournamentId,
+                            matchId: nextMatch.matchId
+                        }
+                    );
                     if (gameId) {
                         tournament.matchGames[nextMatch.matchId] = gameId;
                     }

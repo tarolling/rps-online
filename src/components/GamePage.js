@@ -1,10 +1,11 @@
-import { getDatabase, onValue, ref, update } from 'firebase/database';
+import { get, getDatabase, onValue, ref, update } from 'firebase/database';
 import React, { useCallback, useEffect, useState } from 'react';
-import { useParams } from 'react-router';
+import { useNavigate, useParams } from 'react-router';
 import { useAuth } from '../Auth';
 import '../styles/GamePage.css';
 import { Choices, GameStates } from '../types/gameTypes';
-import { resolveRound } from '../utils/matchmaking';
+import { endGame, resolveRound } from '../utils/matchmaking';
+import { advanceWinner } from '../utils/tournaments';
 import Footer from './Footer';
 import Header from './Header';
 
@@ -15,15 +16,17 @@ const ROUND_TIME = 30;
 const GamePage = () => {
     const { gameID } = useParams();
     const { user } = useAuth();
-    const playerID = user?.uid;
+    const navigate = useNavigate();
 
     const [game, setGame] = useState(null);
+    const [tournamentInfo, setTournamentInfo] = useState(null);
     const [loading, setLoading] = useState(true);
     const [choice, setChoice] = useState(null);
     const [roundOver, setRoundOver] = useState(false);
     const [timeLeft, setTimeLeft] = useState(ROUND_TIME);
     const db = getDatabase();
 
+    const playerID = user?.uid;
     const isPlayer1 = game?.player1.id === playerID;
     const playerData = isPlayer1 ? game?.player1 : game?.player2;
     const opponentData = isPlayer1 ? game?.player2 : game?.player1;
@@ -73,6 +76,56 @@ const GamePage = () => {
 
         return () => clearInterval(timer);
     }, [game?.state, choice]);
+
+    useEffect(() => {
+        const fetchTournamentInfo = async () => {
+            if (!game?.tournamentId) return;
+
+            const tournamentRef = ref(db, `tournaments/${game.tournamentId}`);
+            const snapshot = await get(tournamentRef);
+            const data = snapshot.val();
+            if (data) {
+                setTournamentInfo(data);
+            }
+        };
+
+        if (game?.tournamentId) {
+            fetchTournamentInfo();
+        }
+    }, [game?.tournamentId]);
+
+    // Modify the game end handling
+    useEffect(() => {
+        if (game?.state === GameStates.FINISHED && !game.resultsProcessed) {
+            const processGameEnd = async () => {
+                try {
+                    if (game.tournamentId) {
+                        // Update tournament bracket with the winner
+                        await advanceWinner(
+                            game.tournamentId,
+                            game.matchId,
+                            game.winner
+                        );
+
+                        // Navigate back to tournament page
+                        navigate(`/tournament/${game.tournamentId}`);
+                    }
+
+                    // Mark results as processed to prevent duplicate processing
+                    await update(ref(db, `games/${gameID}`), {
+                        resultsProcessed: true
+                    });
+
+                    // End the game (this will handle normal game cleanup)
+                    await endGame(gameID, playerID);
+                } catch (error) {
+                    console.error('Error processing game end:', error);
+                }
+            };
+
+            processGameEnd();
+        }
+    }, [game?.state, game?.tournamentId]);
 
     const makeChoice = useCallback(async (selectedChoice) => {
         if (!choice && game?.state === GameStates.IN_PROGRESS) {
@@ -132,6 +185,12 @@ const GamePage = () => {
         <div>
             <Header />
             <div className="game-container">
+                {tournamentInfo && (
+                    <div className="tournament-context">
+                        <h2>{tournamentInfo.name}</h2>
+                        <p>Tournament Match {game.matchId}</p>
+                    </div>
+                )}
                 <div className="game-header">
                     <div className="player-info">
                         <h3>You</h3>

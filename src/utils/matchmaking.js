@@ -100,7 +100,7 @@ export const findMatch = async (uid, username, userRating) => {
  * @param {number} player2Rating Player 2's current rating
  * @returns The ID of the created game
  */
-const createGame = async (player1ID, player1Username, player1Rating, player2ID, player2Username, player2Rating) => {
+export const createGame = async (player1ID, player1Username, player1Rating, player2ID, player2Username, player2Rating, tournamentInfo = null) => {
     const gameID = crypto.randomUUID();
     const gameRef = ref(db, `games/${gameID}`);
 
@@ -123,14 +123,20 @@ const createGame = async (player1ID, player1Username, player1Rating, player2ID, 
         },
         rounds: [],
         currentRound: 1,
-        timestamp: Date.now()
+        timestamp: Date.now(),
+        ...(tournamentInfo && {
+            tournamentId: tournamentInfo.tournamentId,
+            matchId: tournamentInfo.matchId
+        })
     };
 
     try {
         await Promise.all([
             set(gameRef, game),
-            remove(ref(db, `matchmaking_queue/${player1ID}`)),
-            remove(ref(db, `matchmaking_queue/${player2ID}`))
+            ...(!tournamentInfo ? [
+                remove(ref(db, `matchmaking_queue/${player1ID}`)),
+                remove(ref(db, `matchmaking_queue/${player2ID}`))
+            ] : [])
         ]);
 
         return gameID;
@@ -260,85 +266,91 @@ export const endGame = async (gameID, playerID) => {
             throw new Error("Game not found");
         }
 
-        const mainPlayer = playerID === game.player1.id ? 'p1' : 'p2';
-        const result = playerID === game.winner ? GameResults.WIN : GameResults.LOSS;
-        const gameStats = calculateGameStats(game, mainPlayer);
+        if (!game.tournamentId) {
 
-        try {
-            if (mainPlayer === 'p1') {
-                await fetch('/api/postGameStats', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        playerID: game.player1.id,
-                        opponentID: game.player2.id,
-                        playerRating: game.player1.rating,
-                        opponentRating: game.player2.rating,
-                        playerScore: game.player1.score,
-                        opponentScore: game.player2.score,
-                        result,
-                        gameStats
-                    }),
-                });
 
-                const newRating = calculateRating(
-                    game.player1.rating,
-                    game.player2.rating,
-                    playerID === game.winner
-                );
+            const mainPlayer = playerID === game.player1.id ? 'p1' : 'p2';
+            const result = playerID === game.winner ? GameResults.WIN : GameResults.LOSS;
+            const gameStats = calculateGameStats(game, mainPlayer);
 
-                await fetch('/api/adjustRating', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        uid: playerID,
-                        newRating
-                    }),
-                });
-            } else {
-                await fetch('/api/postGameStats', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        playerID: game.player2.id,
-                        opponentID: game.player1.id,
-                        playerRating: game.player2.rating,
-                        opponentRating: game.player1.rating,
-                        playerScore: game.player2.score,
-                        opponentScore: game.player1.score,
-                        result,
-                        gameStats
-                    }),
-                });
+            try {
+                if (mainPlayer === 'p1') {
+                    await fetch('/api/postGameStats', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            playerID: game.player1.id,
+                            opponentID: game.player2.id,
+                            playerRating: game.player1.rating,
+                            opponentRating: game.player2.rating,
+                            playerScore: game.player1.score,
+                            opponentScore: game.player2.score,
+                            result,
+                            gameStats
+                        }),
+                    });
 
-                const newRating = calculateRating(
-                    game.player2.rating,
-                    game.player1.rating,
-                    playerID === game.winner
-                );
+                    const newRating = calculateRating(
+                        game.player1.rating,
+                        game.player2.rating,
+                        playerID === game.winner
+                    );
 
-                await fetch('/api/adjustRating', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        uid: playerID,
-                        newRating
-                    }),
-                });
+                    await fetch('/api/adjustRating', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            uid: playerID,
+                            newRating
+                        }),
+                    });
+                } else {
+                    await fetch('/api/postGameStats', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            playerID: game.player2.id,
+                            opponentID: game.player1.id,
+                            playerRating: game.player2.rating,
+                            opponentRating: game.player1.rating,
+                            playerScore: game.player2.score,
+                            opponentScore: game.player1.score,
+                            result,
+                            gameStats
+                        }),
+                    });
+
+                    const newRating = calculateRating(
+                        game.player2.rating,
+                        game.player1.rating,
+                        playerID === game.winner
+                    );
+
+                    await fetch('/api/adjustRating', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            uid: playerID,
+                            newRating
+                        }),
+                    });
+                }
+            } catch (error) {
+                console.error('Error sending game stats', error);
             }
-        } catch (error) {
-            console.error('Error sending game stats', error);
         }
 
-        remove(gameRef);
+        if (!game.tournamentId) {
+            await remove(gameRef);
+        }
     } catch (error) {
         console.error('Error ending game:', error);
         throw error;
