@@ -49,6 +49,10 @@ const generateBracket = (seededParticipants) => {
     const rounds = Math.log2(seededParticipants.length);
     const bracket = [];
 
+    for (const part of seededParticipants) {
+        console.log("seeded participant:", part);
+    }
+
     // Generate first round matches
     for (let i = 0; i < seededParticipants.length; i += 2) {
         const player1 = seededParticipants[i];
