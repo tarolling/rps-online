@@ -22,6 +22,10 @@ const seedParticipants = (participants, totalSlots) => {
     const seeds = Array(totalSlots).fill(null);
     const participantArray = participants.sort((a, b) => b.rating - a.rating);
 
+    for (const part of participantArray) {
+        console.log("sorted participant:", part);
+    }
+
     // Standard tournament seeding pattern
     for (let i = 0; i < participantArray.length; i++) {
         let seed = i + 1;
