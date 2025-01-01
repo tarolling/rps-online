@@ -66,7 +66,7 @@ const TournamentPage = () => {
 
         await set(ref(db, `tournaments/${tournamentID}/participants/${user.uid}`), {
             id: user.uid,
-            username: user.displayName,
+            username: user.displayName || "test",
             skillRating: userData?.skillRating || 1000,
             registered: Date.now()
         });
