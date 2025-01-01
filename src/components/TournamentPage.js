@@ -1,11 +1,11 @@
-import { get, getDatabase, onValue, ref, set } from 'firebase/database';
+import { getDatabase, onValue, ref, set } from 'firebase/database';
 import React, { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router';
 import { useAuth } from '../Auth';
 import '../styles/TournamentPage.css';
+import { advanceWinner, startTournament } from '../utils/tournaments';
 import Footer from './Footer';
 import Header from './Header';
-import { startTournament, advanceWinner, getCurrentMatch, getMatchGame } from '../utils/tournaments';
 
 const ADMIN_USER_ID = 'TSrV38YAcgXZcL1LPxpnes95pnl1';
 
@@ -59,7 +59,6 @@ const TournamentPage = () => {
             return;
         }
 
-        // Get user's skill rating
         const response = await fetch('/api/fetchPlayer', {
             method: 'POST',
             headers: {
@@ -71,7 +70,6 @@ const TournamentPage = () => {
         if (!response.ok) {
             throw new Error("Unable to fetch player in database.");
         }
-
         const userData = await response.json();
 
         await set(ref(db, `tournaments/${tournamentID}/participants/${user.uid}`), {
@@ -94,26 +92,32 @@ const TournamentPage = () => {
     const renderMatchCard = (match) => {
         if (!match) return null;
 
+        const gameID = tournament.matchGames?.[match.matchId];
+        const isPlayer1 = match.player1?.id === user?.uid;
+        const opponent = isPlayer1 ? match.player2 : match.player1;
+
         return (
             <div className="match-card">
                 <h3>Your Match</h3>
                 <div className="players">
-                    <div className={`player ${match.player1.id === user.uid ? 'you' : ''}`}>
-                        {match.player1.username}
-                        {match.player1.id === user.uid && ' (You)'}
+                    <div className={`player ${isPlayer1 ? 'you' : ''}`}>
+                        {match.player1?.username}
+                        {isPlayer1 && ' (You)'}
                     </div>
                     <div className="vs">vs</div>
-                    <div className={`player ${match.player2.id === user.uid ? 'you' : ''}`}>
-                        {match.player2.username}
-                        {match.player2.id === user.uid && ' (You)'}
+                    <div className={`player ${!isPlayer1 ? 'you' : ''}`}>
+                        {match.player2?.username}
+                        {!isPlayer1 && ' (You)'}
                     </div>
                 </div>
-                <Link
-                    to={`/game/${tournament.matchGames[match.matchId]}`}
-                    className="play-btn"
-                >
-                    Play Match
-                </Link>
+                {gameID && (
+                    <Link
+                        to={`/game/${gameID}`}
+                        className="play-btn"
+                    >
+                        Play Match
+                    </Link>
+                )}
             </div>
         );
     };
@@ -231,7 +235,9 @@ const TournamentPage = () => {
                         {userRegistered && (
                             <div className="your-matches">
                                 <h2>Your Next Match</h2>
-                                {renderMatchCard()}
+                                {renderMatchCard(getUserNextMatch()) || (
+                                    <p className="no-matches">No upcoming matches</p>
+                                )}
                             </div>
                         )}
                     </>
