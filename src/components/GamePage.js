@@ -246,9 +246,15 @@ const GamePage = () => {
                     <div className="game-result">
                         <h2>{game.winner === playerID ? 'Victory!' : 'Defeat'}</h2>
                         <p className="final-score">Final Score: {playerData.score} - {opponentData.score}</p>
-                        <button className="play-again-button" onClick={() => window.location.href = '/play'}>
-                            Play Again
-                        </button>
+                        {!game?.tournamentId ?
+                            (<button className="play-again-button" onClick={() => window.location.href = '/play'}>
+                                Play Again
+                            </button>
+                            ) : (
+                                <button className="play-again-button" onClick={() => navigate(`/tournament/${game.tournamentId}`)}>
+                                    Return to Tournament
+                                </button>
+                            )}
                     </div>
                 )}
             </div>
