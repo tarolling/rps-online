@@ -141,11 +141,11 @@ const TournamentPage = () => {
                             {matches.map((match) => (
                                 <div key={match.matchID} className={`match ${match.status}`}>
                                     <div className={`player ${match.winner === match.player1?.id ? 'winner' : ''}`}>
-                                        <span className="seed">{match.seed1 || '?'}</span>
+                                        <span className="seed">{match.player1?.seed || '?'}</span>
                                         <span className="name">{match.player1?.username || 'TBD'}</span>
                                     </div>
                                     <div className={`player ${match.winner === match.player2?.id ? 'winner' : ''}`}>
-                                        <span className="seed">{match.seed2 || '?'}</span>
+                                        <span className="seed">{match.player2?.seed || '?'}</span>
                                         <span className="name">{match.player2?.username || 'TBD'}</span>
                                     </div>
                                 </div>

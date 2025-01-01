@@ -32,12 +32,15 @@ const generateSeeds = (numPlayers) => {
 const seedParticipants = (participants, numPlayers) => {
     const participantArray = participants.sort((a, b) => b.rating - a.rating);
 
-    const seedIndices = generateSeeds(numPlayers).map(num => num - 1);
+    const seedIndices = generateSeeds(numPlayers);
     const seeds = Array(seedIndices.length).fill(null);
 
     for (let i = 0; i < seedIndices.length; i++) {
-        if (seedIndices[i] >= participantArray.length) continue;
-        seeds[i] = participantArray[seedIndices[i]];
+        if (seedIndices[i] > participantArray.length) continue;
+        seeds[i] = {
+            ...participantArray[seedIndices[i] - 1],
+            seed: seedIndices[i]
+        };
     }
 
     return seeds;
@@ -45,14 +48,9 @@ const seedParticipants = (participants, numPlayers) => {
 
 // Generate all matches for the tournament
 const generateBracket = (seededParticipants) => {
-    const rounds = Math.log2(seededParticipants.length);
     const bracket = [];
+    const nextRoundPlayers = [];
 
-    for (const part of seededParticipants) {
-        console.log("seeded participant:", part);
-    }
-
-    // Generate first round matches
     for (let i = 0; i < seededParticipants.length; i += 2) {
         const player1 = seededParticipants[i];
         const player2 = seededParticipants[i + 1];
@@ -67,25 +65,28 @@ const generateBracket = (seededParticipants) => {
                 : null,
             status: player2 === null ? 'bye' : 'pending',
             winner: player2 === null ? player1 : null,
-            seed1: i + 1,
-            seed2: i + 2
         });
+
+        nextRoundPlayers.push(!player2 ? player1 : null);
     }
 
-    // Generate placeholder matches for subsequent rounds
-    for (let round = 2; round <= rounds; round++) {
-        const matchesInRound = seededParticipants.length / Math.pow(2, round);
-        for (let i = 0; i < matchesInRound; i++) {
-            bracket.push({
-                matchId: `round${round}_match${i + 1}`,
-                round: round,
-                player1: null,
-                player2: null,
-                nextMatchId: round < rounds ? `round${round + 1}_match${Math.floor(i / 2) + 1}` : null,
-                status: 'pending',
-                winner: null
-            });
-        }
+    if (seededParticipants.length === 2) return bracket;
+
+    for (let i = 0; i < nextRoundPlayers.length; i += 2) {
+        const player1 = nextRoundPlayers[i];
+        const player2 = nextRoundPlayers[i + 1];
+
+        bracket.push({
+            matchId: `round2_match${i / 2 + 1}`,
+            round: 2,
+            player1: player1,
+            player2: player2,
+            nextMatchId: nextRoundPlayers.length !== 2 ?
+                `round3_match${Math.floor(i / 4) + 1}`
+                : null,
+            status: 'pending',
+            winner: null,
+        });
     }
 
     return bracket;
