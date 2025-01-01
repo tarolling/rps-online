@@ -60,14 +60,24 @@ const TournamentPage = () => {
         }
 
         // Get user's skill rating
-        const userRef = ref(db, `users/${user.uid}`);
-        const userSnapshot = await get(userRef);
-        const userData = userSnapshot.val();
+        const response = await fetch('/api/fetchPlayer', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ uid: user.uid })
+        });
+
+        if (!response.ok) {
+            throw new Error("Unable to fetch player in database.");
+        }
+
+        const userData = await response.json();
 
         await set(ref(db, `tournaments/${tournamentID}/participants/${user.uid}`), {
             id: user.uid,
-            username: user.displayName || "test",
-            skillRating: userData?.skillRating || 1000,
+            username: userData.username,
+            rating: userData.rating,
             registered: Date.now()
         });
     };
@@ -199,11 +209,11 @@ const TournamentPage = () => {
                             <h3>Registered Players</h3>
                             <div className="participants-grid">
                                 {tournament.participants && Object.values(tournament.participants)
-                                    .sort((a, b) => b.skillRating - a.skillRating)
+                                    .sort((a, b) => b.rating - a.rating)
                                     .map(participant => (
                                         <div key={participant.id} className="participant-card">
                                             <span className="name">{participant.username}</span>
-                                            <span className="rating">Rating: {participant.skillRating}</span>
+                                            <span className="rating">Rating: {participant.rating}</span>
                                         </div>
                                     ))}
                             </div>

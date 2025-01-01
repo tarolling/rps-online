@@ -19,7 +19,7 @@ const generateEmptySlots = (participants, totalSlots) => {
 // Seed participants using standard tournament seeding pattern
 const seedParticipants = (participants, totalSlots) => {
     const seeds = Array(totalSlots).fill(null);
-    const participantArray = participants.sort((a, b) => b.skillRating - a.skillRating);
+    const participantArray = participants.sort((a, b) => b.rating - a.rating);
 
     // Standard tournament seeding pattern
     for (let i = 0; i < participantArray.length; i++) {
