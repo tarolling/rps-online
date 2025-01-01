@@ -35,7 +35,7 @@ const seedParticipants = (participants, numPlayers) => {
     const seedIndices = generateSeeds(numPlayers).map(num => num - 1);
     const seeds = Array(seedIndices.length).fill(null);
 
-    for (let i = 0; i < participantArray.length; i++) {
+    for (let i = 0; i < seedIndices.length; i++) {
         if (seedIndices[i] >= participantArray.length) continue;
         seeds[i] = participantArray[seedIndices[i]];
     }
