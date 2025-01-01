@@ -5,6 +5,10 @@ import { useAuth } from '../Auth';
 import '../styles/TournamentPage.css';
 import Footer from './Footer';
 import Header from './Header';
+import { startTournament, advanceWinner, getCurrentMatch, getMatchGame } from '../utils/tournaments';
+
+const ADMIN_USER_ID = 'TSrV38YAcgXZcL1LPxpnes95pnl1';
+
 
 const TournamentPage = () => {
     const { tournamentID } = useParams();
@@ -25,6 +29,26 @@ const TournamentPage = () => {
 
         return () => unsubscribe();
     }, [tournamentID, user]);
+
+    const handleStartTournament = async () => {
+        if (!tournament || tournament.status !== 'registration') return;
+
+        try {
+            await startTournament(tournamentID);
+        } catch (error) {
+            console.error('Error starting tournament:', error);
+            alert('Failed to start tournament');
+        }
+    };
+
+    const handleMatchComplete = async (matchId, winnerId) => {
+        try {
+            await advanceWinner(tournamentID, matchId, winnerId);
+        } catch (error) {
+            console.error('Error completing match:', error);
+            alert('Failed to update match result');
+        }
+    };
 
     const registerForTournament = async () => {
         if (!tournament || !user) return;
@@ -54,6 +78,33 @@ const TournamentPage = () => {
         return tournament.bracket.find(match =>
             (match.player1?.id === user.uid || match.player2?.id === user.uid) &&
             match.status === 'pending'
+        );
+    };
+
+    const renderMatchCard = (match) => {
+        if (!match) return null;
+
+        return (
+            <div className="match-card">
+                <h3>Your Match</h3>
+                <div className="players">
+                    <div className={`player ${match.player1.id === user.uid ? 'you' : ''}`}>
+                        {match.player1.username}
+                        {match.player1.id === user.uid && ' (You)'}
+                    </div>
+                    <div className="vs">vs</div>
+                    <div className={`player ${match.player2.id === user.uid ? 'you' : ''}`}>
+                        {match.player2.username}
+                        {match.player2.id === user.uid && ' (You)'}
+                    </div>
+                </div>
+                <Link
+                    to={`/game/${tournament.matchGames[match.matchId]}`}
+                    className="play-btn"
+                >
+                    Play Match
+                </Link>
+            </div>
         );
     };
 
@@ -108,6 +159,25 @@ const TournamentPage = () => {
                     <h1>{tournament.name}</h1>
                     <p className="description">{tournament.description}</p>
                 </div>
+
+                {user?.uid === ADMIN_USER_ID && tournament?.status === 'registration' && (
+                    <div className="admin-controls">
+                        <h2>Admin Controls</h2>
+                        <button
+                            className="start-btn"
+                            onClick={handleStartTournament}
+                            disabled={!tournament.participants ||
+                                Object.keys(tournament.participants).length < 2}
+                        >
+                            Start Tournament
+                        </button>
+                        <p className="min-players">
+                            {(!tournament.participants ||
+                                Object.keys(tournament.participants).length < 2) &&
+                                'At least 2 players required to start'}
+                        </p>
+                    </div>
+                )}
 
                 {tournament.status === 'registration' && (
                     <div className="registration-section">
