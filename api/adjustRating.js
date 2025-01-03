@@ -24,13 +24,15 @@ export default async function handler(req, res) {
         }
 
         session = driver.session({ database: 'neo4j' });
-        await session.executeWrite(async tx => {
-            await tx.run(`
-            MATCH (p:Player {uid: $uid})
-            SET p.rating = $newRating
-            `, { uid, newRating });
-        });
 
+        if (newRating) {
+            await session.executeWrite(async tx => {
+                await tx.run(`
+                    MATCH (p:Player {uid: $uid})
+                    SET p.rating = $newRating
+                    `, { uid, newRating });
+            });
+        }
         res.status(200).json({ success: true });
     } catch (err) {
         console.error('Error executing query:', err);

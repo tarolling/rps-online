@@ -4,6 +4,7 @@ import { useAuth } from '../Auth';
 import '../styles/ProfilePage.css';
 import Footer from './Footer';
 import Header from './Header';
+import formatRelativeTime from '../utils/formatRelativeTime';
 
 function ProfilePage() {
     const { userID } = useParams();
@@ -247,9 +248,11 @@ function ProfilePage() {
                             </div>
                         </section>
                     ) : (
-                        <p className="text-gray-500 text-center py-4">
-                            This player has not played any games
-                        </p>
+                        <section className="profile-stats-card">
+                            <span className="text-gray-500 text-center py-4">
+                                This player has not played any games
+                            </span>
+                        </section>
                     )}
 
                     <section className="profile-recent-matches-card">
@@ -264,7 +267,7 @@ function ProfilePage() {
                                     <span className="profile-match-result">{match.result}</span>
                                     <div className="profile-match-details">
                                         <span>{match.playerScore} - {match.opponentScore}</span>
-                                        <span className="profile-match-date">{match.date}</span>
+                                        <span className="profile-match-date">{formatRelativeTime(match.date)}</span>
                                     </div>
                                 </div>
                             ))}
@@ -294,9 +297,11 @@ function ProfilePage() {
                             </div>
                         </section>
                     ) : (
-                        <p className="text-gray-500 text-center py-4">
-                            This player is not in a club
-                        </p>
+                        <section className="profile-stats-card">
+                            <span className="text-gray-500 text-center py-4">
+                                This player is not in a club
+                            </span>
+                        </section>
                     )}
                 </div>
             </div>

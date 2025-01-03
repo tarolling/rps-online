@@ -166,6 +166,25 @@
     color: #666;
 }
 
+/* tourneys */
+.tournament-context {
+    background: rgba(0, 0, 0, 0.05);
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border-radius: 8px;
+    text-align: center;
+}
+
+.tournament-context h2 {
+    margin: 0;
+    color: #333;
+}
+
+.tournament-context p {
+    margin: 0.5rem 0 0;
+    color: #666;
+}
+
 @keyframes pulse {
     0% {
         opacity: 1;

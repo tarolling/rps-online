@@ -50,9 +50,12 @@ const ClubsPage = () => {
                 body: JSON.stringify({ methodType: 'user', uid: user.uid })
             });
             const data = await response.json();
+            if (data.error) {
+                return;
+            }
             setUserClub(data);
         } catch (err) {
-            setError('Failed to fetch user clubs');
+            setError('Failed to fetch user club');
         }
     };
 
@@ -86,6 +89,12 @@ const ClubsPage = () => {
 
     const handleCreateClub = async (e) => {
         e.preventDefault();
+
+        if (userClub) {
+            setError("You are already in a club!");
+            return;
+        }
+
         try {
             await fetch('/api/clubs', {
                 method: 'POST',
@@ -183,7 +192,7 @@ const ClubsPage = () => {
                                     </div>
                                     <div className="match-details">
                                         <span>{club.memberCount}/50 members</span>
-                                        {club.availability === 'open' && userClub?.name !== club.name && (
+                                        {club.availability === 'open' && !userClub && (
                                             <button
                                                 onClick={() => handleJoinClub(club.name)}
                                                 className="text-blue-500 hover:text-blue-700"

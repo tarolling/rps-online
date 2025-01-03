@@ -1,6 +1,6 @@
-import { getDatabase, onValue, ref, update } from 'firebase/database';
+import { get, getDatabase, onValue, ref, update } from 'firebase/database';
 import React, { useCallback, useEffect, useState } from 'react';
-import { useParams } from 'react-router';
+import { useNavigate, useParams } from 'react-router';
 import { useAuth } from '../Auth';
 import '../styles/GamePage.css';
 import { Choices, GameStates } from '../types/gameTypes';
@@ -15,42 +15,20 @@ const ROUND_TIME = 30;
 const GamePage = () => {
     const { gameID } = useParams();
     const { user } = useAuth();
-    const playerID = user?.uid;
+    const navigate = useNavigate();
 
     const [game, setGame] = useState(null);
+    const [tournamentInfo, setTournamentInfo] = useState(null);
     const [loading, setLoading] = useState(true);
     const [choice, setChoice] = useState(null);
+    const [roundOver, setRoundOver] = useState(false);
     const [timeLeft, setTimeLeft] = useState(ROUND_TIME);
     const db = getDatabase();
 
+    const playerID = user?.uid;
     const isPlayer1 = game?.player1.id === playerID;
     const playerData = isPlayer1 ? game?.player1 : game?.player2;
     const opponentData = isPlayer1 ? game?.player2 : game?.player1;
-
-    const makeChoice = useCallback(async (selectedChoice) => {
-        if (!choice && game?.state === GameStates.IN_PROGRESS) {
-            setChoice(selectedChoice);
-            const playerKey = isPlayer1 ? 'player1' : 'player2';
-
-            try {
-                await update(ref(db, `games/${gameID}`), {
-                    [`${playerKey}/choice`]: selectedChoice
-                });
-            } catch (error) {
-                console.error('Error making choice:', error);
-                setChoice(null);
-            }
-        }
-    }, [choice, game, gameID, isPlayer1, db]);
-
-    const getChoiceEmoji = (choiceType) => {
-        switch (choiceType) {
-            case Choices.ROCK: return '✊';
-            case Choices.PAPER: return '✋';
-            case Choices.SCISSORS: return '✌️';
-            default: return '';
-        }
-    };
 
     useEffect(() => {
         if (!gameID || !playerID) return;
@@ -62,29 +40,27 @@ const GamePage = () => {
                 setGame(gameData);
                 setLoading(false);
 
-                const playerKey = isPlayer1 ? 'player1Choice' : 'player2Choice';
-                if (gameData[playerKey]) {
-                    setChoice(gameData[playerKey].choice);
-                }
-
                 if (gameData.player1.choice && gameData.player2.choice &&
                     gameData.state === GameStates.IN_PROGRESS) {
-                    resolveRound(gameID, user.uid);
+                    setRoundOver(true);
+                    setTimeout(() => {
+                        resolveRound(gameID, user.uid);
+                    }, 1000);
                 }
             }
 
             if (gameData?.currentRound !== game?.currentRound) {
                 setChoice(null);
                 setTimeLeft(ROUND_TIME);
+                setRoundOver(false);
             }
         });
 
         return () => unsubscribe();
-    }, [gameID, playerID, isPlayer1]);
+    }, [gameID, playerID, user.uid, game]);
 
     useEffect(() => {
         let timer;
-
         if (game?.state === GameStates.IN_PROGRESS && !choice && timeLeft > 0) {
             timer = setInterval(() => {
                 setTimeLeft(prev => {
@@ -98,7 +74,49 @@ const GamePage = () => {
         }
 
         return () => clearInterval(timer);
-    }, [game?.state, choice, timeLeft, makeChoice]);
+    }, [game?.state, choice]);
+
+    useEffect(() => {
+        const fetchTournamentInfo = async () => {
+            if (!game?.tournamentId) return;
+
+            const tournamentRef = ref(db, `tournaments/${game.tournamentId}`);
+            const snapshot = await get(tournamentRef);
+            const data = snapshot.val();
+            if (data) {
+                setTournamentInfo(data);
+            }
+        };
+
+        if (game?.tournamentId) {
+            fetchTournamentInfo();
+        }
+    }, [game?.tournamentId]);
+
+    const makeChoice = useCallback(async (selectedChoice) => {
+        if (!choice && game?.state === GameStates.IN_PROGRESS) {
+            setChoice(selectedChoice);
+
+            const playerKey = isPlayer1 ? 'player1' : 'player2';
+            try {
+                await update(ref(db, `games/${gameID}`), {
+                    [`${playerKey}/choice`]: selectedChoice
+                });
+            } catch (error) {
+                console.error('Error making choice:', error);
+                setChoice(null);
+            }
+        }
+    }, [choice, game]);
+
+    const getChoiceEmoji = (choiceType) => {
+        switch (choiceType) {
+            case Choices.ROCK: return '✊';
+            case Choices.PAPER: return '✋';
+            case Choices.SCISSORS: return '✌️';
+            default: return '';
+        }
+    };
 
     if (loading) {
         return (
@@ -119,7 +137,7 @@ const GamePage = () => {
                 <div className="game-container">
                     <div className="error-container">
                         <p className="error-text">Game not found</p>
-                        <button className="retry-button" onClick={() => window.location.href = '/'}>
+                        <button className="retry-button" onClick={() => navigate('/')}>
                             Return to Home
                         </button>
                     </div>
@@ -133,6 +151,12 @@ const GamePage = () => {
         <div>
             <Header />
             <div className="game-container">
+                {tournamentInfo && (
+                    <div className="tournament-context">
+                        <h2>{tournamentInfo.name}</h2>
+                        <p>Tournament Match {game.matchId}</p>
+                    </div>
+                )}
                 <div className="game-header">
                     <div className="player-info">
                         <h3>You</h3>
@@ -158,7 +182,7 @@ const GamePage = () => {
                         <div className="score">{opponentData.score || 0}</div>
                         {game[isPlayer1 ? 'player2' : 'player1'].choice && (
                             <div className="choice-display">
-                                {game.state === GameStates.FINISHED ?
+                                {roundOver ?
                                     getChoiceEmoji(game[isPlayer1 ? 'player2' : 'player1'].choice) :
                                     '🤔'}
                             </div>
@@ -188,9 +212,15 @@ const GamePage = () => {
                     <div className="game-result">
                         <h2>{game.winner === playerID ? 'Victory!' : 'Defeat'}</h2>
                         <p className="final-score">Final Score: {playerData.score} - {opponentData.score}</p>
-                        <button className="play-again-button" onClick={() => window.location.href = '/'}>
-                            Play Again
-                        </button>
+                        {!game?.tournamentId ?
+                            (<button className="play-again-button" onClick={() => navigate('/play')}>
+                                Play Again
+                            </button>
+                            ) : (
+                                <button className="play-again-button" onClick={() => navigate(`/tournament/${game.tournamentId}`)}>
+                                    Return to Tournament
+                                </button>
+                            )}
                     </div>
                 )}
             </div>
