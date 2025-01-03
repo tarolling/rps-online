@@ -1,6 +1,7 @@
 import { getDatabase, ref, set, get, update, remove, onValue, off } from 'firebase/database';
 import { GameStates, Choices, GameResults } from '../types/gameTypes';
 import calculateRating from '../utils/calculateRating';
+import { advanceWinner } from './tournaments';
 
 
 export const FIRST_TO = 4;
@@ -344,6 +345,12 @@ export const endGame = async (gameID, playerID) => {
             } catch (error) {
                 console.error('Error sending game stats', error);
             }
+        } else {
+            await advanceWinner(
+                game.tournamentId,
+                game.matchId,
+                game.winner
+            );
         }
 
         await remove(gameRef);

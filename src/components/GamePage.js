@@ -4,8 +4,7 @@ import { useNavigate, useParams } from 'react-router';
 import { useAuth } from '../Auth';
 import '../styles/GamePage.css';
 import { Choices, GameStates } from '../types/gameTypes';
-import { endGame, resolveRound } from '../utils/matchmaking';
-import { advanceWinner } from '../utils/tournaments';
+import { resolveRound } from '../utils/matchmaking';
 import Footer from './Footer';
 import Header from './Header';
 
@@ -94,35 +93,6 @@ const GamePage = () => {
         }
     }, [game?.tournamentId]);
 
-    // Modify the game end handling
-    useEffect(() => {
-        if (game?.state === GameStates.FINISHED && !game.resultsProcessed) {
-            const processGameEnd = async () => {
-                try {
-                    if (game.tournamentId) {
-                        await advanceWinner(
-                            game.tournamentId,
-                            game.matchId,
-                            game.winner
-                        );
-                    }
-
-                    // Mark results as processed to prevent duplicate processing
-                    await update(ref(db, `games/${gameID}`), {
-                        resultsProcessed: true
-                    });
-
-                    // End the game (this will handle normal game cleanup)
-                    await endGame(gameID, playerID);
-                } catch (error) {
-                    console.error('Error processing game end:', error);
-                }
-            };
-
-            processGameEnd();
-        }
-    }, [game?.state, game?.tournamentId]);
-
     const makeChoice = useCallback(async (selectedChoice) => {
         if (!choice && game?.state === GameStates.IN_PROGRESS) {
             setChoice(selectedChoice);
@@ -167,7 +137,7 @@ const GamePage = () => {
                 <div className="game-container">
                     <div className="error-container">
                         <p className="error-text">Game not found</p>
-                        <button className="retry-button" onClick={() => window.location.href = '/'}>
+                        <button className="retry-button" onClick={() => navigate('/')}>
                             Return to Home
                         </button>
                     </div>
@@ -243,7 +213,7 @@ const GamePage = () => {
                         <h2>{game.winner === playerID ? 'Victory!' : 'Defeat'}</h2>
                         <p className="final-score">Final Score: {playerData.score} - {opponentData.score}</p>
                         {!game?.tournamentId ?
-                            (<button className="play-again-button" onClick={() => window.location.href = '/play'}>
+                            (<button className="play-again-button" onClick={() => navigate('/play')}>
                                 Play Again
                             </button>
                             ) : (
