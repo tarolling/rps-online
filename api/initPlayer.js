@@ -1,4 +1,5 @@
 import neo4j from "neo4j-driver";
+import config from '../src/config/settings.json';
 
 let driver;
 try {
@@ -31,13 +32,13 @@ export default async function handler(req, res) {
             MERGE (p:Player {uid: $uid})
             ON CREATE
                 SET p.username = $username,
-                    p.rating = 500,
+                    p.rating = $defaultRating,
                     p.created = timestamp(),
                     p.lastSeen = timestamp()
             ON MATCH
                 SET p.lastSeen = timestamp()
             RETURN p.username AS username
-            `, { uid, username });
+            `, { uid, username, defaultRating: config.defaultRating });
 
             if (!result || result.records.length === 0) {
                 throw new Error('Unable to modify player.');

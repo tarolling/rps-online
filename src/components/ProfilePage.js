@@ -230,6 +230,10 @@ function ProfilePage() {
                             <h2>Statistics</h2>
                             <div className="profile-stats-grid">
                                 <div className="profile-stat-item">
+                                    <span className="profile-stat-value">{profileData?.rating || "N/A"}</span>
+                                    <span className="profile-stat-label">Skill Rating</span>
+                                </div>
+                                <div className="profile-stat-item">
                                     <span className="profile-stat-value">{gameStats.totalGames}</span>
                                     <span className="profile-stat-label">Games Played</span>
                                 </div>

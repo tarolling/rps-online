@@ -1,12 +1,7 @@
-import { get, getDatabase, ref, set, push } from 'firebase/database';
+import { get, getDatabase, ref, set } from 'firebase/database';
 import { createGame } from './matchmaking';
 
 const db = getDatabase();
-
-// Calculate number of rounds needed and round up to next power of 2
-const getNextPowerOfTwo = (n) => {
-    return Math.pow(2, Math.ceil(Math.log2(n)));
-};
 
 const generateSeeds = (numPlayers) => {
     const rounds = Math.log(numPlayers) / Math.log(2) - 1;
@@ -28,7 +23,6 @@ const generateSeeds = (numPlayers) => {
 }
 
 
-// Seed participants using standard tournament seeding pattern
 const seedParticipants = (participants, numPlayers) => {
     const participantArray = participants.sort((a, b) => b.rating - a.rating);
 
@@ -46,7 +40,6 @@ const seedParticipants = (participants, numPlayers) => {
     return seeds;
 };
 
-// Generate all matches for the tournament
 const generateBracket = (seededParticipants) => {
     const bracket = [];
     const nextRoundPlayers = [];
@@ -93,10 +86,8 @@ const generateBracket = (seededParticipants) => {
 };
 
 
-// Start the tournament and create the bracket
 export const startTournament = async (tournamentId) => {
     try {
-        // Get tournament data
         const tournamentRef = ref(db, `tournaments/${tournamentId}`);
         const tournamentSnapshot = await get(tournamentRef);
         const tournament = tournamentSnapshot.val();
@@ -105,20 +96,12 @@ export const startTournament = async (tournamentId) => {
             throw new Error('Tournament not found or no participants');
         }
 
-        // Convert participants object to array
         const participantsArray = Object.values(tournament.participants);
 
-        // Seed participants
         const seededParticipants = seedParticipants(participantsArray, participantsArray.length);
 
-        // Generate bracket
         const bracket = generateBracket(seededParticipants);
 
-        for (const match of bracket) {
-            console.log('match generated:', JSON.stringify(match));
-        }
-
-        // Create games for first round matches
         const matchGames = {};
         for (const match of bracket) {
             if (match.round === 1 && match.status !== 'bye') {
@@ -140,7 +123,6 @@ export const startTournament = async (tournamentId) => {
             }
         }
 
-        // Update tournament with bracket and game references
         await set(ref(db, `tournaments/${tournamentId}`), {
             ...tournament,
             status: 'in_progress',
@@ -156,7 +138,6 @@ export const startTournament = async (tournamentId) => {
     }
 };
 
-// Advance winner to next round
 export const advanceWinner = async (tournamentId, matchId, winnerId) => {
     try {
         const tournamentRef = ref(db, `tournaments/${tournamentId}`);
@@ -167,22 +148,18 @@ export const advanceWinner = async (tournamentId, matchId, winnerId) => {
             throw new Error('Tournament or bracket not found');
         }
 
-        // Find current match and update winner
         const currentMatch = tournament.bracket.find(m => m.matchId === matchId);
-        if (!currentMatch || currentMatch.winner) return; // Match already has winner
+        if (!currentMatch || currentMatch.winner) return;
 
         const winningPlayer = currentMatch.player1.id === winnerId ?
             currentMatch.player1 : currentMatch.player2;
 
-        // Update current match
         currentMatch.winner = winningPlayer;
         currentMatch.status = 'completed';
 
-        // Find next match and update player
         if (currentMatch.nextMatchId) {
             const nextMatch = tournament.bracket.find(m => m.matchId === currentMatch.nextMatchId);
             if (nextMatch) {
-                // Determine if winner goes to player1 or player2 slot
                 const matchNumber = parseInt(currentMatch.matchId.split('match')[1]);
                 const isEvenMatch = matchNumber % 2 === 0;
 
@@ -192,7 +169,6 @@ export const advanceWinner = async (tournamentId, matchId, winnerId) => {
                     nextMatch.player1 = winningPlayer;
                 }
 
-                // If both players are set, create the next game
                 if (nextMatch.player1 && nextMatch.player2) {
                     const gameId = await createGame(
                         nextMatch.player1.id,
@@ -213,7 +189,6 @@ export const advanceWinner = async (tournamentId, matchId, winnerId) => {
             }
         }
 
-        // Check if tournament is complete (final match has a winner)
         const finalMatch = tournament.bracket.find(m => !m.nextMatchId);
         if (finalMatch && finalMatch.winner) {
             tournament.status = 'completed';
@@ -221,7 +196,6 @@ export const advanceWinner = async (tournamentId, matchId, winnerId) => {
             tournament.endTime = Date.now();
         }
 
-        // Update tournament
         await set(tournamentRef, tournament);
 
         return tournament;
@@ -231,7 +205,6 @@ export const advanceWinner = async (tournamentId, matchId, winnerId) => {
     }
 };
 
-// Get current match for a player
 export const getCurrentMatch = (tournament, playerId) => {
     if (!tournament?.bracket || !playerId) return null;
 
@@ -241,7 +214,6 @@ export const getCurrentMatch = (tournament, playerId) => {
     );
 };
 
-// Get game details for a match
 export const getMatchGame = async (tournamentId, matchId) => {
     try {
         const tournamentRef = ref(db, `tournaments/${tournamentId}`);
