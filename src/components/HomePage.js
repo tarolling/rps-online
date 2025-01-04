@@ -1,12 +1,15 @@
 import React, { useEffect, useState } from "react";
-import Footer from "./Footer";
-import Header from "./Header";
 import { useNavigate } from "react-router";
+import { useAuth } from '../Auth';
 import "../styles/HomePage.css";
 import formatRelativeTime from "../utils/formatRelativeTime";
+import Footer from "./Footer";
+import Header from "./Header";
 
 function HomePage() {
     const navigate = useNavigate();
+    const { user } = useAuth();
+
     const [recentMatches, setRecentMatches] = useState([]);
 
     const handleNavigation = (path) => {
@@ -41,15 +44,16 @@ function HomePage() {
         <div className="home-page">
             <Header />
 
-            {/* Hero Section */}
             <section className="hero">
                 <div className="hero-content">
                     <h1>Master the Game of Rock Paper Scissors</h1>
                     <p>Compete globally, climb the rankings, and become a champion!</p>
                     <div className="hero-buttons">
-                        <button onClick={() => handleNavigation('/register')} className="cta-button">
-                            Start Playing Now
-                        </button>
+                        {!user && (
+                            <button onClick={() => handleNavigation('/register')} className="cta-button">
+                                Start Playing Now
+                            </button>
+                        )}
                         <button onClick={() => handleNavigation('/rules')} className="secondary-button">
                             Learn the Rules
                         </button>
@@ -57,7 +61,6 @@ function HomePage() {
                 </div>
             </section>
 
-            {/* Features Section */}
             <section className="features">
                 <h2>Why Play With Us?</h2>
                 <div className="features-grid">
@@ -84,7 +87,6 @@ function HomePage() {
                 </div>
             </section>
 
-            {/* Live Matches Section */}
             <section className="live-matches">
                 <h2>Recent Matches</h2>
                 <div className="matches-container">
