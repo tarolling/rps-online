@@ -3,7 +3,7 @@
     "minInc": 10,
     "maxInc": 20,
     "distributionFactor": 750,
-    "defaultElo": 500,
+    "defaultRating": 1000,
     "defaultRank": "Veteran",
     "defaultTimeout": 10
 }
