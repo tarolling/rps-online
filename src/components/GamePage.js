@@ -57,7 +57,7 @@ const GamePage = () => {
         });
 
         return () => unsubscribe();
-    }, [gameID, playerID, user.uid, game]);
+    }, [gameID, playerID, user.uid, game?.state]);
 
     useEffect(() => {
         let timer;
@@ -114,7 +114,7 @@ const GamePage = () => {
             case Choices.ROCK: return '✊';
             case Choices.PAPER: return '✋';
             case Choices.SCISSORS: return '✌️';
-            default: return '';
+            default: return '❓';
         }
     };
 
@@ -184,7 +184,7 @@ const GamePage = () => {
                             <div className="choice-display">
                                 {roundOver ?
                                     getChoiceEmoji(game[isPlayer1 ? 'player2' : 'player1'].choice) :
-                                    '🤔'}
+                                    '✔️'}
                             </div>
                         )}
                     </div>
