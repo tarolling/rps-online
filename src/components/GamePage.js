@@ -162,11 +162,9 @@ const GamePage = () => {
                         <h3>You</h3>
                         <div className="username">{playerData?.username || 'Player'}</div>
                         <div className="score">{playerData?.score || 0}</div>
-                        {choice && (
-                            <div className="choice-display">
-                                {getChoiceEmoji(choice)}
-                            </div>
-                        )}
+                        <div className="choice-display">
+                            {getChoiceEmoji(choice)}
+                        </div>
                     </div>
 
                     <div className="game-status">
