@@ -76,7 +76,7 @@ function AIPage() {
             case Choices.ROCK: return '✊';
             case Choices.PAPER: return '✋';
             case Choices.SCISSORS: return '✌️';
-            default: return '';
+            default: return '❓';
         }
     };
 
@@ -89,11 +89,9 @@ function AIPage() {
                         <h3>You</h3>
                         <div className="username">Player</div>
                         <div className="score">{gameData.playerScore}</div>
-                        {playerChoice && (
-                            <div className="choice-display">
-                                {getChoiceEmoji(playerChoice)}
-                            </div>
-                        )}
+                        <div className="choice-display">
+                            {getChoiceEmoji(playerChoice)}
+                        </div>
                     </div>
 
                     <div className="game-status">
