@@ -40,9 +40,8 @@ const TournamentPage = () => {
     // Check admin claim from Firebase token
     useEffect(() => {
         if (!user) return;
-        user.getIdTokenResult().then((token) => {
-            setIsAdmin(!!token.claims.admin);
-        });
+        postJSON('/api/admin/isAdmin', { uid: user.uid })
+            .then(({ isAdmin }) => setIsAdmin(isAdmin));
     }, [user]);
 
     const handleStartTournament = async () => {
