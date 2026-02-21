@@ -1,0 +1,159 @@
+.main {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1rem;
+}
+
+.subtitle {
+    font-size: 0.875rem;
+    color: var(--color-text-muted);
+    margin: 0.25rem 0 1.5rem;
+}
+
+.form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    text-align: left;
+}
+
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+}
+
+.inputWrapper {
+    position: relative;
+}
+
+.inputWrapper input {
+    padding-right: 2.75rem;
+    margin: 0;
+}
+
+.eyeButton {
+    position: absolute;
+    right: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+    min-height: unset;
+    color: var(--color-text-muted);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    transition: color 0.2s;
+}
+
+.eyeButton:hover {
+    background: none;
+    color: var(--color-text);
+}
+
+/* Inline forgot password link-style button */
+.forgotButton {
+    align-self: flex-end;
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+    min-height: unset;
+    font-size: 0.78rem;
+    color: var(--color-primary);
+    cursor: pointer;
+    text-decoration: none;
+    transition: text-decoration 0.2s;
+}
+
+.forgotButton:hover {
+    background: none;
+    color: var(--color-primary-hover);
+    text-decoration: underline;
+}
+
+.errorBanner {
+    font-size: 0.85rem;
+    color: var(--color-danger);
+    background: color-mix(in srgb, var(--color-danger) 10%, transparent);
+    border: 1px solid color-mix(in srgb, var(--color-danger) 30%, transparent);
+    border-radius: var(--radius);
+    padding: 0.6rem 0.85rem;
+    margin: 0;
+    text-align: left;
+}
+
+.successBanner {
+    font-size: 0.85rem;
+    color: var(--color-success);
+    background: color-mix(in srgb, var(--color-success) 10%, transparent);
+    border: 1px solid color-mix(in srgb, var(--color-success) 30%, transparent);
+    border-radius: var(--radius);
+    padding: 0.6rem 0.85rem;
+    margin: 0;
+    text-align: left;
+}
+
+.submitButton {
+    width: 100%;
+    margin: 0.25rem 0 0;
+    background: var(--color-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.submitButton:hover:not(:disabled) {
+    background: var(--color-primary-hover);
+}
+
+.submitButton:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.spinner {
+    width: 18px;
+    height: 18px;
+    border: 2px solid rgba(255, 255, 255, 0.35);
+    border-top-color: #fff;
+    display: inline-block;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.registerLink {
+    margin-top: 1.25rem;
+    text-align: center;
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+}
+
+.registerLink a {
+    color: var(--color-primary);
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.registerLink a:hover {
+    text-decoration: underline;
+}
