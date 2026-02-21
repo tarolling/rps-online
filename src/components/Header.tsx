@@ -17,7 +17,7 @@ export default function Header() {
 
     const handleLogout = async () => {
         await signOut(auth);
-        await fetch('/api/logout', { method: 'POST' }); // clear session cookie
+        await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/logout`, { method: 'POST' }); // clear session cookie
         router.push('/login');
     }
 

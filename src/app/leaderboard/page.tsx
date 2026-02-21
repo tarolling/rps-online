@@ -18,7 +18,7 @@ function LeaderboardPage() {
     const router = useRouter();
 
     useEffect(() => {
-        fetch("/api/fetchLeaderboard")
+        fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/fetchLeaderboard`)
             .then((res) => {
                 if (!res.ok) throw new Error(res.statusText);
                 return res.json();

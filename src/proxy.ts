@@ -14,7 +14,7 @@ export async function proxy(request: NextRequest) {
 
     // Verify the session cookie via the admin API
     try {
-        const verifyUrl = new URL('/api/auth/verify', request.url);
+        const verifyUrl = new URL(`${process.env.NEXT_PUBLIC_BASE_URL}/api/auth/verify`, request.url);
         const res = await fetch(verifyUrl, {
             headers: { Cookie: `session=${session}` }
         });

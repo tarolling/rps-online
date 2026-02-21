@@ -51,7 +51,7 @@ export default function RegisterPage() {
 
         setLoading(true);
         try {
-            let response = await fetch("/api/checkUsername", {
+            let response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/checkUsername`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ username }),
@@ -64,7 +64,7 @@ export default function RegisterPage() {
             const userInfo = await createUserWithEmailAndPassword(auth, email, password);
             await sendEmailVerification(userInfo.user);
 
-            response = await fetch("/api/initPlayer", {
+            response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/initPlayer`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ uid: userInfo.user.uid, username }),
