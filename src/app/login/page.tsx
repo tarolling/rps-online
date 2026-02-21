@@ -41,6 +41,15 @@ export default function LoginPage() {
 
             if (!response.ok) throw new Error("Unable to reach server; try again later.");
 
+            // get session token
+            const idToken = await userInfo.user.getIdToken();
+            const sessionRes = await fetch('/api/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ idToken }),
+            });
+            if (!sessionRes.ok) throw new Error('Failed to create session.');
+
             router.push("/dashboard");
         } catch (err: any) {
             setError(err.message);

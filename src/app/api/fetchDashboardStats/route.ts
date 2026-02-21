@@ -59,6 +59,15 @@ export async function POST(req: NextRequest) {
                 playerId
             });
 
+            if (data.records.length === 0) {
+                return {
+                    totalGames: 0,
+                    winRate: 0,
+                    currentStreak: 0,
+                    bestStreak: 0
+                }
+            }
+
             return {
                 totalGames: neo4j.integer.toNumber(data.records[0].get("totalGames")),
                 winRate: data.records[0].get("winRate"),
@@ -67,10 +76,10 @@ export async function POST(req: NextRequest) {
             };
         });
 
-        NextResponse.json(response);
+        return NextResponse.json(response);
     } catch (err) {
         console.error('fetchDashboardStats error:', err);
-        NextResponse.json({ error: 'Failed to record game stats.' }, { status: 500 });
+        return NextResponse.json({ error: 'Failed to record game stats.' }, { status: 500 });
     } finally {
         await session.close();
     }

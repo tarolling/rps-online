@@ -4,6 +4,7 @@ import Footer from "@/components/Footer";
 import styles from "./page.module.css";
 import formatRelativeTime from "@/lib/time";
 
+
 async function getRecentMatches() {
   const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/fetchRecentGames`, {
     next: { revalidate: 30 } // refresh every 30 seconds

@@ -1,18 +1,18 @@
 import { getDriver } from '@/lib/neo4j';
 import neo4j from 'neo4j-driver';
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
-export async function GET(request: Request) {
-    const { searchParams } = new URL(request.url);
-    const playerID = searchParams.get('playerID');
+export async function GET(request: NextRequest) {
+    const url = request.nextUrl;
+    const playerId = url.searchParams.get('playerId');
 
     const session = getDriver().session({ database: 'neo4j' });
 
     try {
         const response = await session.executeRead(async tx => {
-            if (playerID) {
+            if (playerId) {
                 const data = await tx.run(`
-                    MATCH (:Player {uid: $playerID})-[r:PLAYED]->(p2:Player)
+                    MATCH (:Player {uid: $playerId})-[r:PLAYED]-(p2:Player)
                     ORDER BY r.timestamp DESC
                     LIMIT 3
                     RETURN p2.uid AS uid,
@@ -21,7 +21,7 @@ export async function GET(request: Request) {
                         r.playerScore AS playerScore,
                         r.opponentScore AS opponentScore,
                         r.timestamp AS date
-                `, { playerID });
+                `, { playerId });
 
                 return data.records.map(record => ({
                     opponentID: record.get('uid'),

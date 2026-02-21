@@ -9,7 +9,7 @@ import Header from "@/components/Header";
 import formatRelativeTime from "@/lib/time";
 import styles from "./ProfilePage.module.css";
 import { DateTime } from "neo4j-driver";
-import { postJSON } from "@/lib/api";
+import { getJSON, postJSON } from "@/lib/api";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -66,8 +66,8 @@ function ProfilePage() {
         setRecentMatches([]);
         try {
             const [stats, games, club] = await Promise.allSettled([
-                postJSON("/api/fetchDashboardStats", { playerID: userId }),
-                postJSON("/api/fetchRecentGames", { playerID: userId }),
+                postJSON("/api/fetchDashboardStats", { playerId: userId }),
+                getJSON("/api/fetchRecentGames", { playerId: userId }),
                 postJSON("/api/clubs", { methodType: "user", uid: userId }),
             ]);
 

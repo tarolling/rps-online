@@ -71,6 +71,15 @@ export default function RegisterPage() {
             });
             if (!response.ok) throw new Error("Unable to initialize player; contact support.");
 
+            // get session token
+            const idToken = await userInfo.user.getIdToken();
+            const sessionRes = await fetch('/api/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ idToken }),
+            });
+            if (!sessionRes.ok) throw new Error('Failed to create session.');
+
             setMessage("Account created! Check your email to verify before logging in.");
         } catch (err: any) {
             setError(err.message);

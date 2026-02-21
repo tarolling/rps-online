@@ -5,37 +5,14 @@ import { useCallback, useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { Choice, GameState } from '@/lib/common';
-import { resolveRound } from '@/lib/matchmaking';
+import { Game, resolveRound } from '@/lib/matchmaking';
 import Footer from '@/components/Footer';
 import Header from '@/components/Header';
 import styles from '@/styles/game.module.css';
-
-// ── Types ─────────────────────────────────────────────────────────────────────
-
-type PlayerState = {
-    id: string;
-    username: string;
-    score: number;
-    choice: Choice | null;
-};
-
-type Game = {
-    state: GameState;
-    player1: PlayerState;
-    player2: PlayerState;
-    currentRound: number;
-    winner?: string;
-    tournamentId?: string;
-    matchId?: string;
-};
-
-type TournamentInfo = {
-    name: string;
-};
+import config from "@/config/settings.json";
+import { Tournament } from '@/types/tournament';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
-
-const ROUND_TIME = 30;
 
 const CHOICE_EMOJI: Record<string, string> = {
     [Choice.Rock]: '✊',
@@ -48,17 +25,17 @@ const PLAYABLE_CHOICES = [Choice.Rock, Choice.Paper, Choice.Scissors];
 // ── Component ─────────────────────────────────────────────────────────────────
 
 const GamePage = () => {
-    const { gameID } = useParams<{ gameID: string }>();
+    const { gameId } = useParams<{ gameId: string }>();
     const { user } = useAuth();
     const router = useRouter();
     const db = getDatabase();
 
     const [game, setGame] = useState<Game | null>(null);
-    const [tournamentInfo, setTournamentInfo] = useState<TournamentInfo | null>(null);
+    const [tournamentInfo, setTournamentInfo] = useState<Tournament | null>(null);
     const [loading, setLoading] = useState(true);
     const [choice, setChoice] = useState<Choice | null>(null);
     const [roundOver, setRoundOver] = useState(false);
-    const [timeLeft, setTimeLeft] = useState(ROUND_TIME);
+    const [timeLeft, setTimeLeft] = useState(config.roundTimeout);
 
     const playerID = user?.uid;
     const isPlayer1 = game?.player1.id === playerID;
@@ -66,56 +43,54 @@ const GamePage = () => {
     const opponentData = isPlayer1 ? game?.player2 : game?.player1;
     const opponentKey = isPlayer1 ? 'player2' : 'player1';
 
+    // Server-anchored round timer — auto-submits when it hits zero
+    useEffect(() => {
+        if (game?.state !== GameState.InProgress || !game.roundStartTimestamp || choice) return;
+
+        const tick = () => {
+            const elapsed = Math.floor((Date.now() - game.roundStartTimestamp) / 1000);
+            const remaining = Math.max(0, config.roundTimeout - elapsed);
+            setTimeLeft(remaining);
+            if (remaining === 0) makeChoice(null);
+        };
+
+        tick();
+        const timer = setInterval(tick, 1000);
+        return () => clearInterval(timer);
+    }, [game?.roundStartTimestamp, game?.state, choice]);
+
     // Subscribe to game state
     useEffect(() => {
-        if (!gameID || !playerID) return;
+        if (!gameId || !playerID) return;
 
-        const gameRef = ref(db, `games/${gameID}`);
+        const gameRef = ref(db, `games/${gameId}`);
         const unsubscribe = onValue(gameRef, (snapshot) => {
             const data: Game = snapshot.val();
+            setLoading(false);
             if (!data) return;
 
             setGame((prev) => {
-                // Reset per-round state when the round advances
                 if (data.currentRound !== prev?.currentRound) {
                     setChoice(null);
-                    setTimeLeft(ROUND_TIME);
+                    setTimeLeft(config.roundTimeout);
                     setRoundOver(false);
                 }
                 return data;
             });
-            setLoading(false);
 
-            // Both players have chosen — resolve the round
+            // Both players have submitted (choice may be null if they timed out)
             if (
-                data.player1.choice &&
-                data.player2.choice &&
+                data.player1.submitted &&
+                data.player2.submitted &&
                 data.state === GameState.InProgress
             ) {
                 setRoundOver(true);
-                setTimeout(() => resolveRound(gameID, playerID), 1000);
+                setTimeout(() => resolveRound(gameId, playerID), 1000);
             }
         });
 
         return () => unsubscribe();
-    }, [gameID, playerID]);
-
-    // Countdown timer — auto-submits None when it hits zero
-    useEffect(() => {
-        if (game?.state !== GameState.InProgress || choice || timeLeft <= 0) return;
-
-        const timer = setInterval(() => {
-            setTimeLeft((prev) => {
-                if (prev <= 1) {
-                    makeChoice(null);
-                    return 0;
-                }
-                return prev - 1;
-            });
-        }, 1000);
-
-        return () => clearInterval(timer);
-    }, [game?.state, choice]);
+    }, [gameId, playerID]);
 
     // Fetch tournament info if this is a tournament game
     useEffect(() => {
@@ -132,14 +107,15 @@ const GamePage = () => {
 
         const playerKey = isPlayer1 ? 'player1' : 'player2';
         try {
-            await update(ref(db, `games/${gameID}`), {
+            await update(ref(db, `games/${gameId}`), {
                 [`${playerKey}/choice`]: selected,
+                [`${playerKey}/submitted`]: true,
             });
         } catch (err) {
             console.error('Error making choice:', err);
             setChoice(null);
         }
-    }, [choice, game?.state, isPlayer1, gameID]);
+    }, [choice, game?.state, isPlayer1, gameId]);
 
     // ── Render ──────────────────────────────────────────────────────────────
 
@@ -148,7 +124,7 @@ const GamePage = () => {
             <Header />
             <main className={styles.main}>
                 <div className={styles.gameContainer}>
-                    <p className={styles.loading}>Loading game…</p>
+                    <p className={styles.loading}>Loading game...</p>
                 </div>
             </main>
             <Footer />

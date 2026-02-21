@@ -2,6 +2,8 @@ import { getDatabase, ref, set, get, update, remove, onValue, off } from 'fireba
 import { GameState, Choice, GameResults } from './common';
 import calculateRating from './calculateRating';
 import { advanceWinner } from './tournaments';
+import config from "@/config/settings.json";
+import { postJSON } from './api';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -10,12 +12,13 @@ interface Player {
     rating: number;
 }
 
-interface PlayerState {
+export interface PlayerState {
     id: string;
     username: string;
     score: number;
     rating: number;
     choice: Choice | null;
+    submitted: boolean;
 }
 
 interface RoundData {
@@ -24,7 +27,7 @@ interface RoundData {
     winner: string | null;
 }
 
-interface Game {
+export interface Game {
     id: string;
     state: GameState;
     player1: PlayerState;
@@ -36,6 +39,7 @@ interface Game {
     endTimestamp?: number;
     tournamentId?: string;
     matchId?: string;
+    roundStartTimestamp: number;
 }
 
 interface TournamentInfo {
@@ -57,20 +61,6 @@ export const FIRST_TO = 4;
 const db = getDatabase();
 
 // ── Internal helpers ──────────────────────────────────────────────────────────
-
-/**
- * POST JSON to an internal API route.
- * Throws if the response is not ok.
- */
-async function postJSON(url: string, body: object): Promise<any> {
-    const res = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-    });
-    if (!res.ok) throw new Error(`Request to ${url} failed: ${res.statusText}`);
-    return res.json();
-}
 
 /**
  * Returns the ID of an in-progress game the given player is currently in,
@@ -199,11 +189,12 @@ export async function createGame(
     const game: Game = {
         id: gameId,
         state: GameState.InProgress,
-        player1: { id: playerOneId, username: playerOneUsername, score: 0, rating: playerOneRating, choice: null },
-        player2: { id: playerTwoId, username: playerTwoUsername, score: 0, rating: playerTwoRating, choice: null },
+        player1: { id: playerOneId, username: playerOneUsername, score: 0, rating: playerOneRating, choice: null, submitted: false },
+        player2: { id: playerTwoId, username: playerTwoUsername, score: 0, rating: playerTwoRating, choice: null, submitted: false },
         rounds: [],
         currentRound: 1,
         timestamp: Date.now(),
+        roundStartTimestamp: Date.now(),
         ...(tournamentInfo && {
             tournamentId: tournamentInfo.tournamentId,
             matchId: tournamentInfo.matchId,
@@ -233,36 +224,42 @@ export async function createGame(
  */
 export async function resolveRound(gameId: string, playerId: string) {
     const gameRef = ref(db, `games/${gameId}`);
-
     try {
         const snapshot = await get(gameRef);
         if (!snapshot.exists()) throw new Error('Game not found');
-
         const game: Game = snapshot.val();
+
+        const elapsed = Date.now() - game.roundStartTimestamp;
+        const timeExpired = elapsed >= config.roundTimeout * 1000;
+        const bothSubmitted = game.player1.submitted && game.player2.submitted;
+        if (!bothSubmitted && !timeExpired) return null;
+
         const winner = determineRoundWinner(game.player1.choice, game.player2.choice);
+        const isGameOver = winner && (game[winner].score + 1) >= FIRST_TO;
 
         const updates: Record<string, any> = {
             'player1/choice': null,
+            'player1/submitted': false,
             'player2/choice': null,
+            'player2/submitted': false,
             'player1/score': game.player1.score,
             'player2/score': game.player2.score,
-            currentRound: game.currentRound + 1,
-            rounds: [...(game.rounds || []), {
-                player1Choice: game.player1.choice,
-                player2Choice: game.player2.choice,
-                winner,
-            }],
+            [`rounds/${game.currentRound}`]: {
+                player1Choice: game.player1.choice ?? 'none',
+                player2Choice: game.player2.choice ?? 'none',
+                winner: winner ?? 'draw',
+            },
+            currentRound: isGameOver ? game.currentRound : game.currentRound + 1,
+            roundStartTimestamp: Date.now(),
         };
 
         if (winner) {
             const newScore = game[winner].score + 1;
             updates[`${winner}/score`] = newScore;
-
             if (newScore >= FIRST_TO) {
                 updates.state = GameState.Finished;
                 updates.winner = game[winner].id;
                 updates.endTimestamp = Date.now();
-                updates.currentRound = game.currentRound; // don't advance on final round
             }
         }
 
@@ -328,7 +325,7 @@ export const calculateGameStats = (game: Game, mainPlayer: 'p1' | 'p2'): GameSta
  * - For tournament games: advances the winner to the next match.
  * - Removes the game from the database.
  */
-export const endGame = async (gameID: string, playerID: string): Promise<void> => {
+export async function endGame(gameID: string, playerID: string): Promise<void> {
     const gameRef = ref(db, `games/${gameID}`);
 
     try {
