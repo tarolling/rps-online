@@ -15,7 +15,7 @@ import styles from './TournamentPage.module.css';
 // ── Component ─────────────────────────────────────────────────────────────────
 
 const TournamentPage = () => {
-    const { tournamentID } = useParams<{ tournamentID: string }>();
+    const { tournamentId } = useParams<{ tournamentId: string }>();
     const { user } = useAuth();
     const db = getDatabase();
 
@@ -26,7 +26,7 @@ const TournamentPage = () => {
 
     // Subscribe to tournament data
     useEffect(() => {
-        const tournamentRef = ref(db, `tournaments/${tournamentID}`);
+        const tournamentRef = ref(db, `tournaments/${tournamentId}`);
         const unsubscribe = onValue(tournamentRef, (snapshot) => {
             const data: Tournament = snapshot.val();
             if (data) {
@@ -35,7 +35,7 @@ const TournamentPage = () => {
             }
         });
         return () => unsubscribe();
-    }, [tournamentID, user?.uid]);
+    }, [tournamentId, user?.uid]);
 
     // Check admin claim from Firebase token
     useEffect(() => {
@@ -48,7 +48,7 @@ const TournamentPage = () => {
         if (!tournament || tournament.status !== 'registration') return;
         setError(null);
         try {
-            await startTournament(tournamentID);
+            await startTournament(tournamentId);
         } catch (err) {
             console.error('Error starting tournament:', err);
             setError('Failed to start tournament. Please try again.');
@@ -70,7 +70,7 @@ const TournamentPage = () => {
                 '/api/fetchPlayer',
                 { uid: user.uid }
             );
-            await set(ref(db, `tournaments/${tournamentID}/participants/${user.uid}`), {
+            await set(ref(db, `tournaments/${tournamentId}/participants/${user.uid}`), {
                 id: user.uid,
                 username: userData.username,
                 rating: userData.rating,
