@@ -18,13 +18,15 @@ type NewTournamentForm = {
     description: string;
 };
 
+type TournamentEntry = Tournament & { firebaseKey: string };
+
 // ── Component ─────────────────────────────────────────────────────────────────
 
 const TournamentsPage = () => {
     const { user } = useAuth();
     const db = getDatabase();
 
-    const [tournaments, setTournaments] = useState<Tournament[]>([]);
+    const [tournaments, setTournaments] = useState<TournamentEntry[]>([]);
     const [isAdmin, setIsAdmin] = useState(false);
     const [form, setForm] = useState<NewTournamentForm>({ name: '', playerCap: 8, description: '' });
     const [error, setError] = useState<string | null>(null);
@@ -35,7 +37,10 @@ const TournamentsPage = () => {
             const data = snapshot.val();
             if (!data) return;
             setTournaments(
-                Object.entries(data).map(([id, t]) => ({ id, ...(t as Omit<Tournament, 'id'>) }))
+                Object.entries(data).map(([key, t]) => ({
+                    ...(t as Tournament),
+                    firebaseKey: key,
+                }))
             );
         });
         return () => unsubscribe();
@@ -147,8 +152,9 @@ const TournamentsPage = () => {
                         <div className={styles.grid}>
                             {active.map((t) => (
                                 <TournamentCard
-                                    key={t.id}
+                                    key={t.firebaseKey}
                                     tournament={t}
+                                    firebaseKey={t.firebaseKey}
                                     statusLabel={getStatusLabel(t)}
                                     linkLabel="View Tournament"
                                 />
@@ -164,8 +170,9 @@ const TournamentsPage = () => {
                         <div className={styles.grid}>
                             {past.map((t) => (
                                 <TournamentCard
-                                    key={t.id}
+                                    key={t.firebaseKey}
                                     tournament={t}
+                                    firebaseKey={t.firebaseKey}
                                     statusLabel={`Winner: ${t.winner?.username ?? 'Unknown'}`}
                                     linkLabel="View Results"
                                     completed
@@ -182,8 +189,9 @@ const TournamentsPage = () => {
 
 // ── Sub-components ────────────────────────────────────────────────────────────
 
-function TournamentCard({ tournament, statusLabel, linkLabel, completed = false }: {
+function TournamentCard({ tournament, firebaseKey, statusLabel, linkLabel, completed = false }: {
     tournament: Tournament;
+    firebaseKey: string;
     statusLabel: string;
     linkLabel: string;
     completed?: boolean;
@@ -195,7 +203,7 @@ function TournamentCard({ tournament, statusLabel, linkLabel, completed = false 
                 <p className={styles.cardDescription}>{tournament.description}</p>
             )}
             <p className={styles.cardStatus}>{statusLabel}</p>
-            <Link href={`/tournament/${tournament.id}`} className={styles.viewButton}>
+            <Link href={`/tournament/${firebaseKey}`} className={styles.viewButton}>
                 {linkLabel}
             </Link>
         </div>

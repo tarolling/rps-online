@@ -19,7 +19,6 @@ export interface Match {
 }
 
 export interface Tournament {
-    id: string,
     name: string;
     description: string;
     status: 'registration' | 'in_progress' | 'completed';
