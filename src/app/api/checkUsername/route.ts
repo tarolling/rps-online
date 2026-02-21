@@ -8,8 +8,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: "Username is required." }, { status: 400 });
     }
 
-    const driver = getDriver();
-    const session = driver.session({ database: "neo4j" });
+    const session = getDriver().session({ database: "neo4j" });
 
     try {
         const read = await session.executeRead(async tx => {

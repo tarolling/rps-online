@@ -4,7 +4,7 @@ import { get, getDatabase, onValue, ref, remove } from 'firebase/database';
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
-import { findMatch } from '@/util/matchmaking';
+import { findMatch } from '@/lib/matchmaking';
 import Footer from '@/components/Footer';
 import Header from '@/components/Header';
 import styles from './MatchmakingPage.module.css';

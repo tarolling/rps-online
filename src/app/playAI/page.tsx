@@ -2,9 +2,9 @@
 
 import { useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Choice, GameState } from '@/util/common';
-import setupAI from "@/util/aiAlgorithm";
-import { FIRST_TO, determineRoundWinner } from "@/util/matchmaking";
+import { Choice, GameState } from '@/lib/common';
+import setupAI from "@/lib/aiAlgorithm";
+import { FIRST_TO, determineRoundWinner } from "@/lib/matchmaking";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
 import styles from "@/styles/game.module.css";

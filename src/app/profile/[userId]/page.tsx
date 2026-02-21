@@ -6,9 +6,10 @@ import { useRouter, useParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
-import formatRelativeTime from "@/util/time";
+import formatRelativeTime from "@/lib/time";
 import styles from "./ProfilePage.module.css";
 import { DateTime } from "neo4j-driver";
+import { postJSON } from "@/lib/api";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -20,16 +21,6 @@ type Match = { opponentID: string; opponentUsername: string; result: string; pla
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 const USERNAME_REGEX = /^[a-zA-Z0-9_]{3,20}$/;
-
-async function postJSON(url: string, body: object) {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}${url}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-    });
-    if (!res.ok) throw new Error(`Request to ${url} failed.`);
-    return res.json();
-}
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
@@ -59,7 +50,7 @@ function ProfilePage() {
         try {
             setLoading(true);
             setError(null);
-            const data = await postJSON("/api/fetchPlayer", { uid: userId });
+            const data = await postJSON<ProfileData>("/api/fetchPlayer", { uid: userId });
             setProfileData(data);
             setNewUsername(data.username);
         } catch (err: any) {
