@@ -1,36 +1,7 @@
 import { get, getDatabase, ref, set } from 'firebase/database';
 import { createGame } from './matchmaking';
+import { Tournament, Participant, Match } from '../types/tournament';
 
-// ── Types ─────────────────────────────────────────────────────────────────────
-
-interface Participant {
-    id: string;
-    username: string;
-    rating: number;
-    seed?: number;
-}
-
-type MatchStatus = 'pending' | 'bye' | 'completed';
-
-interface Match {
-    matchId: string;
-    round: number;
-    player1: Participant | null;
-    player2: Participant | null;
-    nextMatchId: string | null;
-    status: MatchStatus;
-    winner: Participant | null;
-}
-
-interface Tournament {
-    participants: Record<string, Participant>;
-    status: 'pending' | 'in_progress' | 'completed';
-    bracket?: Match[];
-    matchGames?: Record<string, string>;
-    startTime?: number;
-    endTime?: number;
-    winner?: Participant;
-}
 
 // ── Seeding ───────────────────────────────────────────────────────────────────
 

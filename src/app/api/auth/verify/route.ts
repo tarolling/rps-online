@@ -1,4 +1,4 @@
-import { adminAuth } from '@/lib/firebase-admin';
+import { adminAuth } from '@/lib/firebaseAdmin';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 
