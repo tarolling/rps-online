@@ -14,7 +14,7 @@ export default function formatRelativeTime(neoDateTime: DateTime) {
     );
 
     const now = new Date();
-    const diffInSeconds = Math.floor((now - date) / 1000);
+    const diffInSeconds = Math.floor(now.getSeconds() - date.getSeconds());
 
     const intervals = {
         year: 31536000,

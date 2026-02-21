@@ -1,62 +1,125 @@
-/* Leaderboard table styles */
-table {
+/* LeaderboardPage.module.css */
+
+.main {
+    flex: 1;
+    padding: 2rem 1.5rem;
+    max-width: 720px;
+    margin: 0 auto;
     width: 100%;
-    border-collapse: collapse;
-    margin: 20px 0;
-    font-size: 18px;
-    text-align: left;
-    background-color: #f9f9f9;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    border-radius: 8px;
+}
+
+.status {
+    color: var(--color-text-muted);
+    text-align: center;
+    margin-top: 2rem;
+}
+
+/* Wrapper handles overflow on small screens */
+.tableWrapper {
+    margin-top: 1.5rem;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
     overflow: hidden;
 }
 
-/* Table header styles */
-table thead tr {
-    background-color: #0077cc;
-    color: #ffffff;
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 1rem;
+    background: var(--color-surface);
+}
+
+/* Header */
+.table thead tr {
+    background: var(--color-primary);
+    color: #fff;
     text-transform: uppercase;
-    font-weight: bold;
+    font-size: 0.75rem;
+    letter-spacing: 0.06em;
 }
 
-table thead th {
-    padding: 12px 15px;
+.table thead th {
+    padding: 0.85rem 1rem;
+    font-weight: 600;
+    text-align: left;
 }
 
-/* Table body styles */
-table tbody tr {
-    border-bottom: 1px solid #dddddd;
-    transition: background-color 0.2s ease-in-out;
+/* Body rows */
+.row {
+    border-bottom: 1px solid var(--color-border);
+    cursor: pointer;
+    transition: background 0.15s;
 }
 
-table tbody tr:nth-of-type(even) {
-    background-color: #f3f3f3;
+.row:last-child {
+    border-bottom: none;
 }
 
-table tbody tr:hover {
-    background-color: #eaeaea;
+.row:nth-child(even) {
+    background: var(--color-bg-secondary);
 }
 
-table tbody td {
-    padding: 12px 15px;
+.row:hover {
+    background: color-mix(in srgb, var(--color-primary) 8%, var(--color-surface));
 }
 
-/* Center alignment for numbers */
-table tbody td:nth-child(2) {
+.table tbody td {
+    padding: 0.85rem 1rem;
+}
+
+/* Rank column */
+.rankCol,
+.rank {
+    width: 3rem;
     text-align: center;
+    color: var(--color-text-muted);
+    font-size: 0.85rem;
 }
 
-/* Responsive design for smaller screens */
-@media (max-width: 600px) {
-    table {
-        font-size: 16px;
+/* Top 3 rank highlights */
+.row:nth-child(1) .rank {
+    color: #f59e0b;
+    font-weight: 700;
+}
+
+.row:nth-child(2) .rank {
+    color: #9ca3af;
+    font-weight: 700;
+}
+
+.row:nth-child(3) .rank {
+    color: #b45309;
+    font-weight: 700;
+}
+
+/* Username */
+.username a {
+    color: var(--color-text);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.username a:hover {
+    color: var(--color-primary);
+    text-decoration: underline;
+}
+
+/* Rating column */
+.ratingCol,
+.rating {
+    text-align: right;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: var(--color-primary);
+}
+
+@media (max-width: 480px) {
+    .table {
+        font-size: 0.9rem;
     }
 
-    table thead tr {
-        font-size: 14px;
-    }
-
-    table tbody td {
-        padding: 10px;
+    .table thead th,
+    .table tbody td {
+        padding: 0.7rem 0.75rem;
     }
 }

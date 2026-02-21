@@ -5,12 +5,12 @@ import styles from "./page.module.css";
 import formatRelativeTime from "@/util/time";
 
 async function getRecentMatches() {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/fetchRecentGames`, {
+  const res = await fetch(`/api/fetchRecentGames`, {
     next: { revalidate: 30 } // refresh every 30 seconds
   });
   if (!res.ok) return [];
   const data = await res.json();
-  return data.map((record) => ({
+  return data.map((record: any) => ({
     ...record,
     timestamp: formatRelativeTime(record.timestamp)
   }));
@@ -55,7 +55,7 @@ export default async function Home() {
       <section className={styles.liveMatches}>
         <h2>Recent Matches</h2>
         <div className={styles.matchesContainer}>
-          {recentMatches.map((match, index) => (
+          {recentMatches.map((match: any, index: number) => (
             <div key={index} className={styles.matchCard}>
               <div className={styles.matchHeader}>
                 <span className={styles.matchTime}>{match.timestamp}</span>
