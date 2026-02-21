@@ -1,0 +1,286 @@
+/* ProfilePage.module.css */
+
+.container {
+    max-width: 1100px;
+    margin: 2rem auto;
+    padding: 0 1.5rem 3rem;
+    flex: 1;
+}
+
+/* ── Profile Header ── */
+
+.profileHeader {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    padding: 1.75rem 2rem;
+    margin-bottom: 2rem;
+    box-shadow: var(--shadow);
+}
+
+.profileInfo {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.profileInfo h1 {
+    text-align: left;
+    font-size: 2rem;
+}
+
+.actions {
+    display: flex;
+    gap: 0.75rem;
+    flex-shrink: 0;
+}
+
+/* Username editing */
+.usernameEdit {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.usernameEditRow {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.usernameInput {
+    font-size: 1.5rem;
+    padding: 0.4rem 0.75rem;
+    border: 2px solid var(--color-border);
+    border-radius: var(--radius);
+    background: var(--color-surface);
+    color: var(--color-text);
+    width: auto;
+    margin: 0;
+}
+
+.usernameInput:focus {
+    outline: none;
+    border-color: var(--color-primary);
+}
+
+.fieldError {
+    font-size: 0.78rem;
+    color: var(--color-danger);
+}
+
+/* Action buttons */
+.editButton,
+.saveButton {
+    background: var(--color-primary);
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+}
+
+.editButton:hover,
+.saveButton:hover {
+    background: var(--color-primary-hover);
+}
+
+.cancelButton {
+    background: var(--color-text-muted);
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+}
+
+.cancelButton:hover {
+    background: var(--color-text);
+}
+
+.deleteButton {
+    background: var(--color-danger);
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+}
+
+.deleteButton:hover {
+    background: color-mix(in srgb, var(--color-danger) 80%, black);
+}
+
+/* ── Grid ── */
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+/* ── Cards ── */
+
+.card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    padding: 1.75rem;
+    box-shadow: var(--shadow);
+}
+
+.card h2 {
+    text-align: left;
+    font-size: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--color-text-muted);
+    margin-bottom: 1.25rem;
+}
+
+.emptyState {
+    color: var(--color-text-muted);
+    font-size: 0.9rem;
+    text-align: center;
+    padding: 1.5rem 0;
+}
+
+/* ── Stats ── */
+
+.statsGrid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+}
+
+.statItem {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 0.3rem;
+}
+
+.statValue {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--color-primary);
+    font-variant-numeric: tabular-nums;
+}
+
+.statLabel {
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-text-muted);
+}
+
+/* ── Recent Matches ── */
+
+.matchList {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.matchItem {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.85rem 1rem;
+    background: var(--color-bg-secondary);
+    border-radius: var(--radius);
+    border-left: 4px solid var(--color-border);
+    gap: 0.5rem;
+}
+
+.matchItem.win {
+    border-left-color: var(--color-success);
+}
+
+.matchItem.loss {
+    border-left-color: var(--color-danger);
+}
+
+.matchItem.draw {
+    border-left-color: #f59e0b;
+}
+
+.matchOpponent {
+    font-weight: 600;
+    color: var(--color-text);
+    text-decoration: none;
+    flex: 1;
+}
+
+.matchOpponent:hover {
+    color: var(--color-primary);
+    text-decoration: underline;
+}
+
+.matchResult {
+    font-weight: 700;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.matchItem.win .matchResult {
+    color: var(--color-success);
+}
+
+.matchItem.loss .matchResult {
+    color: var(--color-danger);
+}
+
+.matchItem.draw .matchResult {
+    color: #f59e0b;
+}
+
+.matchDetails {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.2rem;
+    font-size: 0.875rem;
+}
+
+.matchDate {
+    font-size: 0.78rem;
+    color: var(--color-text-muted);
+}
+
+/* ── Error card ── */
+
+.errorCard {
+    background: color-mix(in srgb, var(--color-danger) 10%, transparent);
+    border: 1px solid color-mix(in srgb, var(--color-danger) 30%, transparent);
+    color: var(--color-danger);
+    padding: 2rem;
+    border-radius: var(--radius);
+    text-align: center;
+}
+
+.errorCard button {
+    margin-top: 1rem;
+    background: var(--color-danger);
+    padding: 0.5rem 1.25rem;
+}
+
+.errorCard button:hover {
+    background: color-mix(in srgb, var(--color-danger) 80%, black);
+}
+
+/* ── Responsive ── */
+
+@media (max-width: 600px) {
+    .profileInfo {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .profileInfo h1 {
+        font-size: 1.5rem;
+    }
+
+    .statsGrid {
+        grid-template-columns: 1fr;
+    }
+
+    .matchItem {
+        flex-wrap: wrap;
+    }
+}

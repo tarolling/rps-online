@@ -40,7 +40,7 @@ export default function RegisterPage() {
         : "";
     const passwordMismatch = confirmPassword && password !== confirmPassword;
 
-    const handleRegister = async (e: React.FormEvent) => {
+    const handleRegister = async (e: React.SubmitEvent) => {
         e.preventDefault();
         setError("");
         setMessage("");
