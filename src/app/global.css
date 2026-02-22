@@ -1,0 +1,138 @@
+:root {
+  /* Color palette */
+  --color-bg: #f0f0f0;
+  --color-bg-secondary: #e8e8e8;
+  --color-surface: #ffffff;
+  --color-border: #dddddd;
+  --color-text: #1a1a1a;
+  --color-text-muted: #666666;
+
+  /* Brand */
+  --color-primary: #3498db;
+  --color-primary-hover: #2980b9;
+  --color-danger: #e74c3c;
+  --color-success: #27ae60;
+
+  /* Buttons (kept for compatibility) */
+  --primary-button-color: #333;
+  --primary-button-hover-color: #555;
+
+  /* Spacing & shape */
+  --radius: 8px;
+  --shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg: #1a1a1a;
+    --color-bg-secondary: #242424;
+    --color-surface: #2c2c2c;
+    --color-border: #444444;
+    --color-text: #f0f0f0;
+    --color-text-muted: #aaaaaa;
+    --shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: "Arial", sans-serif;
+  background: var(--color-bg);
+  color: var(--color-text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  margin: 0;
+  padding: 0;
+  /* Prevent horizontal scroll on mobile */
+  overflow-x: hidden;
+}
+
+h1,
+h2,
+h3 {
+  margin: 0;
+  font-weight: bold;
+  text-align: center;
+  color: var(--color-text);
+}
+
+button {
+  background: var(--primary-button-color);
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  margin: 5px;
+  border-radius: var(--radius);
+  font-size: 16px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+  /* Important for mobile — prevents tiny tap targets */
+  min-height: 44px;
+  touch-action: manipulation;
+}
+
+button:hover {
+  background: var(--primary-button-hover-color);
+}
+
+input {
+  padding: 10px;
+  margin: 10px 0;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  color: var(--color-text);
+  width: 100%;
+  font-size: 16px;
+  /* Prevents iOS zoom on focus */
+  box-sizing: border-box;
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  /* min- instead of fixed, so it doesn't clip on short mobile screens */
+  min-height: 100vh;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.card {
+  background: var(--color-surface);
+  border-radius: var(--radius);
+  padding: 20px;
+  box-shadow: var(--shadow);
+  width: 100%;
+  /* max- instead of fixed width, so it shrinks on small screens */
+  max-width: 360px;
+  text-align: center;
+}
+
+.error-message {
+  color: var(--color-danger);
+  font-size: 12px;
+  margin-top: 5px;
+}
+
+.success-message {
+  color: var(--color-success);
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+
+.app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New", monospace;
+}

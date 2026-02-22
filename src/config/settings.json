@@ -5,5 +5,5 @@
     "distributionFactor": 750,
     "defaultRating": 1000,
     "defaultRank": "Veteran",
-    "defaultTimeout": 10
+    "roundTimeout": 30
 }

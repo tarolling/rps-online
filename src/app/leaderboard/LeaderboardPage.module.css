@@ -1,0 +1,131 @@
+/* LeaderboardPage.module.css */
+
+.main {
+    flex: 1;
+    padding: 2rem 1.5rem;
+    max-width: 720px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+.status {
+    color: var(--color-text-muted);
+    text-align: center;
+    margin-top: 2rem;
+}
+
+/* Wrapper handles overflow on small screens */
+.tableWrapper {
+    margin-top: 1.5rem;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 1rem;
+    background: var(--color-surface);
+}
+
+/* Header */
+.table thead tr {
+    background: var(--color-primary);
+    color: #fff;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.06em;
+}
+
+.table thead th {
+    padding: 0.85rem 1rem;
+    font-weight: 600;
+    text-align: left;
+}
+
+/* Body rows */
+.row {
+    border-bottom: 1px solid var(--color-border);
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.row:last-child {
+    border-bottom: none;
+}
+
+.row:nth-child(even) {
+    background: var(--color-bg-secondary);
+}
+
+.row:hover {
+    background: color-mix(in srgb, var(--color-primary) 8%, var(--color-surface));
+}
+
+.table tbody td {
+    padding: 0.85rem 1rem;
+}
+
+/* Rank column */
+/* Top 3 row highlights */
+.row:nth-child(1) {
+    background: color-mix(in srgb, #f59e0b 8%, var(--color-surface));
+}
+
+.row:nth-child(2) {
+    background: color-mix(in srgb, #9ca3af 8%, var(--color-surface));
+}
+
+.row:nth-child(3) {
+    background: color-mix(in srgb, #b45309 8%, var(--color-surface));
+}
+
+/* Keep hover working over the tinted rows */
+.row:nth-child(1):hover,
+.row:nth-child(2):hover,
+.row:nth-child(3):hover {
+    background: color-mix(in srgb, var(--color-primary) 8%, var(--color-surface));
+}
+
+/* Remove the even-row zebra stripe for top 3 so it doesn't fight */
+.row:nth-child(2) {
+    background: color-mix(in srgb, #9ca3af 8%, var(--color-surface));
+}
+
+/* Rank icon sizing */
+.rank {
+    font-size: 1.1rem;
+}
+
+/* Username */
+.username a {
+    color: var(--color-text);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.username a:hover {
+    color: var(--color-primary);
+    text-decoration: underline;
+}
+
+/* Rating column */
+.ratingCol,
+.rating {
+    text-align: right;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: var(--color-primary);
+}
+
+@media (max-width: 480px) {
+    .table {
+        font-size: 0.9rem;
+    }
+
+    .table thead th,
+    .table tbody td {
+        padding: 0.7rem 0.75rem;
+    }
+}
