@@ -10,6 +10,7 @@ import formatRelativeTime from "@/lib/time";
 import styles from "./ProfilePage.module.css";
 import { getJSON, postJSON } from "@/lib/api";
 import { Match, ProfileData } from "@/types/common";
+import { getRankTier } from "@/lib/ranks";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -161,6 +162,7 @@ function ProfilePage() {
                         <h2>Statistics</h2>
                         {gameStats ? (
                             <div className={styles.statsGrid}>
+                                <StatItem value={`${getRankTier(profileData?.rating!).rank} ${getRankTier(profileData?.rating!).division}`} label="Rank" />
                                 <StatItem value={profileData?.rating ?? "N/A"} label="Skill Rating" />
                                 <StatItem value={gameStats.totalGames} label="Games Played" />
                                 <StatItem value={gameStats.winRate} label="Win Rate" />

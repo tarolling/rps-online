@@ -97,7 +97,7 @@ function MatchmakingPage() {
                 <div className={styles.grid}>
 
                     {/* Ranked matchmaking */}
-                    <div className={styles.card}>
+                    {user && (<div className={styles.card}>
                         <div className={styles.cardHeader}>
                             <h2>Ranked Match</h2>
                             <p className={styles.subtitle}>Compete to climb the leaderboard.</p>
@@ -140,7 +140,7 @@ function MatchmakingPage() {
                                 </button>
                             </div>
                         )}
-                    </div>
+                    </div>)}
 
                     {/* vs AI */}
                     <div className={styles.card}>

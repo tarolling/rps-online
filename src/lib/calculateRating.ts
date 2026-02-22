@@ -29,8 +29,5 @@ export default function calculateRating(playerRating: number, oppRating: number,
     let winInc = Math.round(config.K * (1 - expectedWin));
     let loseInc = Math.round(config.K * (0 - expectedLoss));
 
-    winInc = Math.max(config.minInc, Math.min(config.maxInc, winInc));
-    loseInc = Math.max(-config.maxInc, Math.min(-config.minInc, loseInc));
-
     return won ? playerRating + winInc : playerRating + loseInc;
 }

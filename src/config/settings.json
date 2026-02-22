@@ -1,9 +1,7 @@
 {
     "K": 30,
-    "minInc": 10,
-    "maxInc": 20,
     "distributionFactor": 750,
+    "matchmakingRatingRange": 300,
     "defaultRating": 1000,
-    "defaultRank": "Veteran",
     "roundTimeout": 30
 }

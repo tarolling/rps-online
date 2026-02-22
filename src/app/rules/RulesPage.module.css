@@ -1,0 +1,185 @@
+/* RulesPage.module.css */
+
+.main {
+    flex: 1;
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 2.5rem 1.5rem 4rem;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.pageTitle {
+    font-size: 2rem;
+    text-align: left;
+    margin: 0;
+}
+
+/* ── Cards ── */
+
+.card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 1.75rem 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.sectionTitle {
+    font-size: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--color-text-muted);
+    text-align: left;
+    margin: 0;
+}
+
+/* ── Game rules list ── */
+
+.rulesList {
+    margin: 0;
+    padding-left: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    color: var(--color-text);
+    font-size: 1rem;
+    line-height: 1.6;
+}
+
+/* ── Rank intro text ── */
+
+.rankIntro {
+    color: var(--color-text-muted);
+    font-size: 0.9rem;
+    line-height: 1.6;
+    margin: 0;
+}
+
+.rankIntro strong {
+    color: var(--color-text);
+}
+
+/* ── Table ── */
+
+.tableWrapper {
+    overflow-x: auto;
+    border-radius: calc(var(--radius) - 2px);
+    border: 1px solid var(--color-border);
+}
+
+.rankTable {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+
+.rankTable thead tr {
+    background: var(--color-primary);
+    color: #fff;
+    text-transform: uppercase;
+    font-size: 0.7rem;
+    letter-spacing: 0.08em;
+}
+
+.rankTable thead th {
+    padding: 0.7rem 1.1rem;
+    font-weight: 600;
+    text-align: left;
+}
+
+.rankRow {
+    border-bottom: 1px solid var(--color-border);
+    transition: background 0.15s;
+}
+
+.rankRow:last-child {
+    border-bottom: none;
+}
+
+.rankRow:hover {
+    background: var(--color-bg-secondary);
+}
+
+.rankRow td {
+    padding: 0.75rem 1.1rem;
+    vertical-align: middle;
+}
+
+/* Rank name column */
+
+.rankName {
+    font-weight: 700;
+    font-size: 0.95rem;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+}
+
+.rankRow td:first-child {
+    white-space: nowrap;
+}
+
+/* Rating pill inside each division cell */
+
+.divisionCell {
+    text-align: left;
+}
+
+.ratingPill {
+    display: inline-block;
+    padding: 0.2rem 0.55rem;
+    border-radius: 99px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    background: color-mix(in srgb, var(--rank-color) 12%, transparent);
+    color: var(--rank-color);
+    border: 1px solid color-mix(in srgb, var(--rank-color) 30%, transparent);
+}
+
+/* Infinity row */
+
+.infinityCell {
+    text-align: left;
+}
+
+/* Animated rainbow text for Infinity */
+
+.rainbowText {
+    font-weight: 700;
+    font-size: 0.95rem;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    background: linear-gradient(90deg, #ff4e50, #f9d423, #4caf75, #3498db, #9b59b6);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: rainbowText 2.5s linear infinite;
+}
+
+@keyframes rainbowText {
+    0% {
+        background-position: 0% center;
+    }
+
+    100% {
+        background-position: 200% center;
+    }
+}
+
+@media (max-width: 520px) {
+    .card {
+        padding: 1.25rem;
+    }
+
+    .rankTable thead th,
+    .rankRow td {
+        padding: 0.6rem 0.75rem;
+    }
+}

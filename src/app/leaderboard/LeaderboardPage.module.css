@@ -99,6 +99,12 @@
 }
 
 /* Username */
+.username {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+
 .username a {
     color: var(--color-text);
     text-decoration: none;

@@ -12,6 +12,7 @@ import Header from '@/components/Header';
 import styles from '@/styles/game.module.css';
 import config from "@/config/settings.json";
 import { Tournament } from '@/types/tournament';
+import RankBadge from '@/components/RankBadge';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -289,6 +290,7 @@ function GamePage() {
                         <PlayerPanel
                             label="You"
                             name={playerData?.username ?? 'Player'}
+                            rating={playerData?.rating ?? 0}
                             score={playerData?.score ?? 0}
                             choice={choice}
                         />
@@ -304,6 +306,7 @@ function GamePage() {
                         <PlayerPanel
                             label="Opponent"
                             name={opponentData?.username ?? 'Opponent'}
+                            rating={opponentData?.rating ?? 0}
                             score={opponentData?.score ?? 0}
                             choice={roundOver ? game[opponentKey].choice : null}
                             reveal={roundOver}
@@ -363,6 +366,7 @@ function GamePage() {
 type PlayerPanelProps = {
     label: string;
     name: string;
+    rating: number;
     score: number;
     choice: Choice | null;
     reveal?: boolean;
@@ -370,13 +374,14 @@ type PlayerPanelProps = {
     disconnected?: boolean;
 };
 
-function PlayerPanel({ label, name, score, choice, reveal = true, hasChosen = false, disconnected = false }: PlayerPanelProps) {
+function PlayerPanel({ label, name, rating, score, choice, reveal = true, hasChosen = false, disconnected = false }: PlayerPanelProps) {
     return (
         <div className={styles.playerPanel}>
             <span className={styles.playerLabel}>{label}</span>
             <span className={styles.playerName}>
                 {name} {disconnected && <span className={styles.disconnectedBadge}>● Disconnected</span>}
             </span>
+            <RankBadge rating={rating} variant='compact' />
             <span className={styles.playerScore}>{score}</span>
             <div className={`${styles.choiceDisplay} ${(choice && reveal) || hasChosen ? styles.choiceVisible : ''}`}>
                 {choice && reveal ? CHOICE_EMOJI[choice] : hasChosen ? '✔️' : ''}

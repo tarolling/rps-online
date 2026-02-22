@@ -107,7 +107,7 @@ export async function findMatch(uid: string, username: string, userRating: numbe
         await remove(ref(db, `matchmaking_queue/${uid}`));
 
         for (const [playerId, playerData] of Object.entries(queue) as [string, any][]) {
-            const ratingClose = Math.abs(playerData.rating - userRating) <= 200;
+            const ratingClose = Math.abs(playerData.rating - userRating) <= config.matchmakingRatingRange;
             if (playerId !== uid && ratingClose) {
                 const opponentInGame = await checkExistingGame(playerId);
                 if (!opponentInGame) {

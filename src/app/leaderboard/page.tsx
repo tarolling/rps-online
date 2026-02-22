@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
 import styles from "./LeaderboardPage.module.css";
+import RankBadge from "@/components/RankBadge";
 
 type Player = {
     uid: string;
@@ -70,6 +71,7 @@ function LeaderboardPage() {
                                             >
                                                 {player.username}
                                             </Link>
+                                            <RankBadge rating={player.rating} variant="compact" />
                                         </td>
                                         <td className={styles.rating}>{player.rating}</td>
                                     </tr>
