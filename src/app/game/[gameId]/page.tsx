@@ -1,11 +1,11 @@
 "use client";
 
-import { get, getDatabase, onValue, ref, set, update } from 'firebase/database';
+import { get, getDatabase, onValue, ref, remove, set, update } from 'firebase/database';
 import { onDisconnect } from 'firebase/database';
 import { useCallback, useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { Choice, GameState } from '@/lib/common';
+import { Choice, DISCONNECT_TIMEOUT, GameState, WAITING_TIMEOUT } from '@/lib/common';
 import { RoundData, Game, resolveRound, awardWinByDisconnect } from '@/lib/matchmaking';
 import Footer from '@/components/Footer';
 import Header from '@/components/Header';
@@ -25,7 +25,7 @@ const PLAYABLE_CHOICES = [Choice.Rock, Choice.Paper, Choice.Scissors];
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-const GamePage = () => {
+function GamePage() {
     const { gameId } = useParams<{ gameId: string }>();
     const { user } = useAuth();
     const router = useRouter();
@@ -37,6 +37,7 @@ const GamePage = () => {
     const [choice, setChoice] = useState<Choice | null>(null);
     const [roundOver, setRoundOver] = useState(false);
     const [timeLeft, setTimeLeft] = useState(config.roundTimeout);
+    const [opponentConnected, setOpponentConnected] = useState(true);
 
     const playerId = user?.uid;
     const isPlayer1 = game?.player1.id === playerId;
@@ -46,19 +47,19 @@ const GamePage = () => {
 
     // Server-anchored round timer — auto-submits when it hits zero
     useEffect(() => {
-        if (game?.state !== GameState.InProgress || !game.roundStartTimestamp || choice) return;
+        if (game?.state !== GameState.InProgress || !game.roundStartTimestamp) return;
 
         const tick = () => {
-            const elapsed = Math.floor((Date.now() - game.roundStartTimestamp) / 1000);
+            const elapsed = Math.floor((Date.now() - game.roundStartTimestamp!) / 1000);
             const remaining = Math.max(0, config.roundTimeout - elapsed);
             setTimeLeft(remaining);
-            if (remaining === 0) makeChoice(null);
+            if (remaining === 0) resolveRound(gameId, playerId!);
         };
 
         tick();
         const timer = setInterval(tick, 1000);
         return () => clearInterval(timer);
-    }, [game?.roundStartTimestamp, game?.state, choice]);
+    }, [game?.roundStartTimestamp, game?.state]);
 
     // Subscribe to game state
     useEffect(() => {
@@ -69,6 +70,12 @@ const GamePage = () => {
             const data: Game = snapshot.val();
             setLoading(false);
             if (!data) return;
+            if (!data.player1 || !data.player2) return;
+            if (data.state === GameState.Cancelled) {
+                setGame(data);
+                remove(ref(db, `games/${gameId}`));
+                return;
+            }
 
             setGame((prev) => {
                 if (data.currentRound !== prev?.currentRound) {
@@ -99,21 +106,65 @@ const GamePage = () => {
         return () => unsubscribe();
     }, [gameId, playerId]);
 
+    // Set presence + start game when both players arrive
+    useEffect(() => {
+        if (!gameId || !playerId || !game) return;
+
+        const presenceRef = ref(db, `games/${gameId}/presence/${playerId}`);
+        set(presenceRef, true).then(() => {
+            onDisconnect(presenceRef).remove();
+        });
+
+        const presenceRootRef = ref(db, `games/${gameId}/presence`);
+        const unsubPresence = onValue(presenceRootRef, async (snapshot) => {
+            const presence = snapshot.val() ?? {};
+            if (
+                game.state === GameState.Waiting &&
+                game.player1.id &&
+                game.player2.id &&
+                presence[game.player1.id] &&
+                presence[game.player2.id] &&
+                playerId === game.player1.id
+            ) {
+                await update(ref(db, `games/${gameId}`), {
+                    state: GameState.InProgress,
+                    roundStartTimestamp: Date.now(),
+                });
+            }
+        });
+
+        return () => {
+            unsubPresence();
+            remove(presenceRef);
+        };
+    }, [gameId, playerId, game?.state]);
+
+
     // watch opponent's presence for disconnects
     useEffect(() => {
-        if (!gameId || !playerId || !game || game.state !== GameState.InProgress) return;
+        if (!gameId || !playerId || !game) return;
+        if (game.state !== GameState.InProgress && game.state !== GameState.Waiting) return;
 
         const opponentId = isPlayer1 ? game.player2.id : game.player1.id;
         const opponentPresenceRef = ref(db, `games/${gameId}/presence/${opponentId}`);
         let disconnectTimer: ReturnType<typeof setTimeout> | null = null;
 
         const unsubscribe = onValue(opponentPresenceRef, (snapshot) => {
-            if (!snapshot.exists()) {
-                disconnectTimer = setTimeout(() => {
-                    awardWinByDisconnect(gameId, playerId);
-                }, 8000);
+            const connected = snapshot.exists();
+            setOpponentConnected(connected);
+            if (!connected) {
+                const timeout = game.state === GameState.Waiting ? WAITING_TIMEOUT * 1000 : DISCONNECT_TIMEOUT * 1000;
+                disconnectTimer = setTimeout(async () => {
+                    const myPresence = await get(ref(db, `games/${gameId}/presence/${playerId}`));
+                    if (!myPresence.exists()) {
+                        // both disconnected — cancel
+                        await update(ref(db, `games/${gameId}`), { state: GameState.Cancelled });
+                    } else {
+                        awardWinByDisconnect(gameId, playerId);
+                    }
+                }, timeout);
             } else {
-                // They reconnected in time — cancel the timer
+                // we reconnected in time - cancel the timer
                 if (disconnectTimer) {
                     clearTimeout(disconnectTimer);
                     disconnectTimer = null;
@@ -183,6 +234,39 @@ const GamePage = () => {
         </div>
     );
 
+    if (game.state === GameState.Waiting) return (
+        <div className="app">
+            <Header />
+            <main className={styles.main}>
+                <div className={styles.gameContainer}>
+                    <p className={styles.loading}>Waiting for opponent to connect…</p>
+                </div>
+            </main>
+            <Footer />
+        </div>
+    );
+
+    if (game.state === GameState.Cancelled) return (
+        <div className="app">
+            <Header />
+            <main className={styles.main}>
+                <div className={styles.gameContainer}>
+                    <div className={styles.result}>
+                        <p className={styles.resultLabel}>Game Cancelled</p>
+                        <p className={styles.hint}>Both players disconnected.</p>
+                        <button
+                            className={styles.playAgainButton}
+                            onClick={() => router.push(game.tournamentId ? `/tournament/${game.tournamentId}` : '/play')}
+                        >
+                            {game.tournamentId ? 'Return to Tournament' : 'Play Again'}
+                        </button>
+                    </div>
+                </div>
+            </main>
+            <Footer />
+        </div>
+    );
+
     const isFinished = game.state === GameState.Finished;
     const playerWon = game.winner === playerId;
 
@@ -224,6 +308,7 @@ const GamePage = () => {
                             choice={roundOver ? game[opponentKey].choice : null}
                             reveal={roundOver}
                             hasChosen={!!game[opponentKey].choice}
+                            disconnected={!opponentConnected}
                         />
                     </div>
 
@@ -256,7 +341,7 @@ const GamePage = () => {
                                 {playerWon ? 'Victory!' : 'Defeat'}
                             </p>
                             <p className={styles.finalScore}>
-                                {playerData?.score} — {opponentData?.score}
+                                {playerData?.score} - {opponentData?.score}
                             </p>
                             <button
                                 className={styles.playAgainButton}
@@ -282,13 +367,16 @@ type PlayerPanelProps = {
     choice: Choice | null;
     reveal?: boolean;
     hasChosen?: boolean;
+    disconnected?: boolean;
 };
 
-function PlayerPanel({ label, name, score, choice, reveal = true, hasChosen = false }: PlayerPanelProps) {
+function PlayerPanel({ label, name, score, choice, reveal = true, hasChosen = false, disconnected = false }: PlayerPanelProps) {
     return (
         <div className={styles.playerPanel}>
             <span className={styles.playerLabel}>{label}</span>
-            <span className={styles.playerName}>{name}</span>
+            <span className={styles.playerName}>
+                {name} {disconnected && <span className={styles.disconnectedBadge}>● Disconnected</span>}
+            </span>
             <span className={styles.playerScore}>{score}</span>
             <div className={`${styles.choiceDisplay} ${(choice && reveal) || hasChosen ? styles.choiceVisible : ''}`}>
                 {choice && reveal ? CHOICE_EMOJI[choice] : hasChosen ? '✔️' : ''}

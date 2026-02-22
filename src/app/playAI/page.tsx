@@ -4,7 +4,7 @@ import { useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Choice, GameState } from '@/lib/common';
 import setupAI from "@/lib/aiAlgorithm";
-import { FIRST_TO, determineRoundWinner } from "@/lib/matchmaking";
+import { FIRST_TO, RoundData, determineRoundWinner } from "@/lib/matchmaking";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
 import styles from "@/styles/game.module.css";
@@ -44,7 +44,6 @@ const PLAYABLE_CHOICES = [Choice.Rock, Choice.Paper, Choice.Scissors];
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export default function PlayAIPage() {
-    const router = useRouter();
     const [playerChoice, setPlayerChoice] = useState<Choice | null>(null);
     const [aiChoice, setAIChoice] = useState<Choice | null>(null);
     const [gameData, setGameData] = useState<GameData>({
@@ -53,6 +52,7 @@ export default function PlayAIPage() {
         currentRound: 1,
         state: GameState.InProgress,
     });
+    const [rounds, setRounds] = useState<Record<number, RoundData>>({});
 
     // AI instance is stable across renders
     const [aiAlgorithm] = useState(() => setupAI());
@@ -69,6 +69,15 @@ export default function PlayAIPage() {
             const state = playerScore >= FIRST_TO || aiScore >= FIRST_TO
                 ? GameState.Finished
                 : GameState.InProgress;
+
+            setRounds((prevRounds) => ({
+                ...prevRounds,
+                [prev.currentRound]: {
+                    player1Choice: selected,
+                    player2Choice: aiResponse,
+                    winner: roundWinner ?? 'draw',
+                },
+            }));
 
             return { playerScore, aiScore, currentRound: prev.currentRound + 1, state };
         });
@@ -88,6 +97,7 @@ export default function PlayAIPage() {
     const handlePlayAgain = () => {
         setPlayerChoice(null);
         setAIChoice(null);
+        setRounds({});
         setGameData({
             playerScore: 0,
             aiScore: 0,
@@ -146,6 +156,10 @@ export default function PlayAIPage() {
                         </div>
                     )}
 
+                    {Object.keys(rounds).length > 0 && (
+                        <RoundHistory rounds={rounds} isPlayer1={true} />
+                    )}
+
                     {/* ── Result ── */}
                     {isFinished && (
                         <div className={styles.result}>
@@ -153,7 +167,7 @@ export default function PlayAIPage() {
                                 {playerWon ? 'Victory!' : 'Defeat'}
                             </p>
                             <p className={styles.finalScore}>
-                                {gameData.playerScore} — {gameData.aiScore}
+                                {gameData.playerScore} - {gameData.aiScore}
                             </p>
                             <button className={styles.playAgainButton} onClick={handlePlayAgain}>
                                 Play Again
@@ -186,6 +200,34 @@ function PlayerPanel({ label, name, score, choice, reveal = true }: PlayerPanelP
             <div className={`${styles.choiceDisplay} ${choice && reveal ? styles.choiceVisible : ''}`}>
                 {choice && reveal ? CHOICE_EMOJI[choice] : ''}
             </div>
+        </div>
+    );
+}
+
+function RoundHistory({ rounds, isPlayer1 }: { rounds: Record<number, RoundData>; isPlayer1: boolean }) {
+    const entries = Object.entries(rounds).sort(([a], [b]) => Number(a) - Number(b));
+
+    return (
+        <div className={styles.roundHistory}>
+            <div className={styles.roundHistoryHeader}>
+                <span>You</span>
+                <span />
+                <span>Opponent</span>
+            </div>
+            {entries.map(([round, data]) => {
+                const myChoice = isPlayer1 ? data.player1Choice : data.player2Choice;
+                const theirChoice = isPlayer1 ? data.player2Choice : data.player1Choice;
+                const myKey = isPlayer1 ? 'player1' : 'player2';
+                const outcome = data.winner === myKey ? 'win' : data.winner === 'draw' ? 'draw' : 'loss';
+
+                return (
+                    <div key={round} className={`${styles.roundHistoryRow} ${styles[outcome]}`}>
+                        <span>{myChoice === null ? '⏱️' : CHOICE_EMOJI[myChoice]}</span>
+                        <span className={styles.roundHistoryLabel}>R{round}</span>
+                        <span>{theirChoice === null ? '⏱️' : CHOICE_EMOJI[theirChoice]}</span>
+                    </div>
+                );
+            })}
         </div>
     );
 }

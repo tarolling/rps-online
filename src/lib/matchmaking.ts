@@ -39,7 +39,7 @@ export interface Game {
     endTimestamp?: number;
     tournamentId?: string;
     matchId?: string;
-    roundStartTimestamp: number;
+    roundStartTimestamp?: number;
 }
 
 interface TournamentInfo {
@@ -72,7 +72,7 @@ async function checkExistingGame(uid: string): Promise<string | null> {
 
     for (const game of Object.values(games) as Game[]) {
         if (
-            game.state === GameState.InProgress &&
+            (game.state === GameState.InProgress || game.state === GameState.Waiting) &&
             (game.player1.id === uid || game.player2.id === uid)
         ) {
             return game.id;
@@ -188,13 +188,12 @@ export async function createGame(
 
     const game: Game = {
         id: gameId,
-        state: GameState.InProgress,
+        state: GameState.Waiting,
         player1: { id: playerOneId, username: playerOneUsername, score: 0, rating: playerOneRating, choice: null, submitted: false },
         player2: { id: playerTwoId, username: playerTwoUsername, score: 0, rating: playerTwoRating, choice: null, submitted: false },
         rounds: [],
         currentRound: 1,
         timestamp: Date.now(),
-        roundStartTimestamp: Date.now(),
         ...(tournamentInfo && {
             tournamentId: tournamentInfo.tournamentId,
             matchId: tournamentInfo.matchId,
@@ -226,14 +225,22 @@ export async function resolveRound(gameId: string, playerId: string) {
     const gameRef = ref(db, `games/${gameId}`);
     try {
         const snapshot = await get(gameRef);
-        if (!snapshot.exists()) throw new Error('Game not found');
+        if (!snapshot.exists()) return null;
         const game: Game = snapshot.val();
 
         // prevent duplicate writes
         if (playerId !== game.player1.id) return null;
 
-        const elapsed = Date.now() - game.roundStartTimestamp;
+        // roundStartTimestamp should never be undefined here
+        const elapsed = Date.now() - game.roundStartTimestamp!;
         const timeExpired = elapsed >= config.roundTimeout * 1000;
+        const neitherSubmitted = !game.player1.submitted && !game.player2.submitted;
+        if (neitherSubmitted) {
+            await update(gameRef, { state: GameState.Cancelled });
+            await endGame(gameId);
+            return null;
+        }
+
         const bothSubmitted = game.player1.submitted && game.player2.submitted;
         if (!bothSubmitted && !timeExpired) return null;
 
@@ -326,18 +333,27 @@ export const calculateGameStats = (game: Game): GameStats => {
  * - For tournament games: advances the winner to the next match.
  * - Removes the game from the database.
  */
-export async function endGame(gameID: string): Promise<void> {
-    const gameRef = ref(db, `games/${gameID}`);
+export async function endGame(gameId: string): Promise<void> {
+    const gameRef = ref(db, `games/${gameId}`);
 
     try {
         const snapshot = await get(gameRef);
         const game: Game = snapshot.val();
-        if (!game) throw new Error('Game not found');
+        if (!game) return;
 
-        if (!game.tournamentId) {
-            await recordRankedGame(game);
+        // if no winner, both players didn't respond or both dc'd
+        // don't record 
+        if (game.state !== GameState.Cancelled) {
+            if (!game.tournamentId) {
+                await recordRankedGame(game);
+            } else {
+                await advanceWinner(game.tournamentId, game.matchId!, game.winner!);
+            }
         } else {
-            await advanceWinner(game.tournamentId, game.matchId!, game.winner!);
+            // advance random player
+            if (game.tournamentId) {
+                await advanceWinner(game.tournamentId, game.matchId!, game.player1.id);
+            }
         }
 
         await remove(gameRef);
@@ -353,9 +369,10 @@ export async function endGame(gameID: string): Promise<void> {
  * which is player 1.
  */
 async function recordRankedGame(game: Game): Promise<void> {
-    const { player1: { id: playerOneId, rating: playerOneRating }, player2: { id: playerTwoId, rating: playerTwoRating } } = game;
-    const gameStats = calculateGameStats(game);
+    if (!game.player1 || !game.player2) return;
+    const { player1: { id: playerOneId, rating: playerOneRating }, player2: { id: playerTwoId, rating: playerTwoRating }, winner } = game;
 
+    const gameStats = calculateGameStats(game);
     try {
         await postJSON('/api/postGameStats', {
             playerOneId,
@@ -370,13 +387,13 @@ async function recordRankedGame(game: Game): Promise<void> {
             playerTwoRocks: gameStats.playerTwoChoices.ROCK,
             playerTwoPapers: gameStats.playerTwoChoices.PAPER,
             playerTwoScissors: gameStats.playerTwoChoices.SCISSORS,
-            winnerId: game.winner,
+            winnerId: winner,
             totalRounds: gameStats.totalRounds,
         });
 
         // adjust both players rating
-        const playerOneNewRating = calculateRating(playerOneRating, playerTwoRating, playerOneId === game.winner);
-        const playerTwoNewRating = calculateRating(playerTwoRating, playerOneRating, playerTwoId === game.winner);
+        const playerOneNewRating = calculateRating(playerOneRating, playerTwoRating, playerOneId === winner);
+        const playerTwoNewRating = calculateRating(playerTwoRating, playerOneRating, playerTwoId === winner);
 
         await postJSON('/api/adjustRating', { uid: playerOneId, newRating: playerOneNewRating });
         await postJSON('/api/adjustRating', { uid: playerTwoId, newRating: playerTwoNewRating });

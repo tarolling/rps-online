@@ -338,6 +338,14 @@
     transform: translateY(-2px);
 }
 
+/* Disconnected */
+
+.disconnectedBadge {
+    color: var(--color-danger);
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
 /* ── Misc ── */
 
 .loading {
