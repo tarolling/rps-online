@@ -8,15 +8,13 @@ import Footer from "@/components/Footer";
 import Header from "@/components/Header";
 import formatRelativeTime from "@/lib/time";
 import styles from "./ProfilePage.module.css";
-import { DateTime } from "neo4j-driver";
 import { getJSON, postJSON } from "@/lib/api";
+import { Match, ProfileData } from "@/types/common";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
-type ProfileData = { username: string; rating: number };
 type GameStats = { totalGames: number; winRate: string; currentStreak: number; bestStreak: number };
 type ClubData = { name: string; tag: string; memberRole: string; memberCount: number };
-type Match = { opponentID: string; opponentUsername: string; result: string; playerScore: number; opponentScore: number; date: DateTime };
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 

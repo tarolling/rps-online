@@ -68,28 +68,34 @@
 }
 
 /* Rank column */
-.rankCol,
+/* Top 3 row highlights */
+.row:nth-child(1) {
+    background: color-mix(in srgb, #f59e0b 8%, var(--color-surface));
+}
+
+.row:nth-child(2) {
+    background: color-mix(in srgb, #9ca3af 8%, var(--color-surface));
+}
+
+.row:nth-child(3) {
+    background: color-mix(in srgb, #b45309 8%, var(--color-surface));
+}
+
+/* Keep hover working over the tinted rows */
+.row:nth-child(1):hover,
+.row:nth-child(2):hover,
+.row:nth-child(3):hover {
+    background: color-mix(in srgb, var(--color-primary) 8%, var(--color-surface));
+}
+
+/* Remove the even-row zebra stripe for top 3 so it doesn't fight */
+.row:nth-child(2) {
+    background: color-mix(in srgb, #9ca3af 8%, var(--color-surface));
+}
+
+/* Rank icon sizing */
 .rank {
-    width: 3rem;
-    text-align: center;
-    color: var(--color-text-muted);
-    font-size: 0.85rem;
-}
-
-/* Top 3 rank highlights */
-.row:nth-child(1) .rank {
-    color: #f59e0b;
-    font-weight: 700;
-}
-
-.row:nth-child(2) .rank {
-    color: #9ca3af;
-    font-weight: 700;
-}
-
-.row:nth-child(3) .rank {
-    color: #b45309;
-    font-weight: 700;
+    font-size: 1.1rem;
 }
 
 /* Username */

@@ -9,6 +9,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import styles from "./LoginPage.module.css";
 import { EyeIcon, EyeOffIcon } from "@/components/icons";
+import { postJSON } from "@/lib/api";
 
 export default function LoginPage() {
     const [email, setEmail] = useState("");
@@ -33,22 +34,11 @@ export default function LoginPage() {
                 return;
             }
 
-            const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/initPlayer`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ uid: userInfo.user.uid }),
-            });
-
-            if (!response.ok) throw new Error("Unable to reach server; try again later.");
+            await postJSON('/api/initPlayer', { uid: userInfo.user.uid });
 
             // get session token
             const idToken = await userInfo.user.getIdToken();
-            const sessionRes = await fetch('/api/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ idToken }),
-            });
-            if (!sessionRes.ok) throw new Error('Failed to create session.');
+            await postJSON('/api/login', { idToken })
 
             router.push("/dashboard");
         } catch (err: any) {

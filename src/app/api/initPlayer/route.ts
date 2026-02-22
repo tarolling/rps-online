@@ -20,10 +20,10 @@ export async function POST(req: NextRequest) {
                 ON CREATE
                     SET p.username = $username,
                         p.rating = $defaultRating,
-                        p.created = timestamp(),
-                        p.lastSeen = timestamp()
+                        p.created = datetime(),
+                        p.lastSeen = datetime()
                 ON MATCH
-                    SET p.lastSeen = timestamp()
+                    SET p.lastSeen = datetime()
                 RETURN p.username AS username
                 `,
                 { uid, username, defaultRating: config.defaultRating }

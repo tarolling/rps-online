@@ -12,47 +12,52 @@ export async function GET(request: NextRequest) {
         const response = await session.executeRead(async tx => {
             if (playerId) {
                 const data = await tx.run(`
-                    MATCH (:Player {uid: $playerId})-[r:PLAYED]-(p2:Player)
+                    MATCH (p:Player {uid: $playerId})-[r:PLAYED]-(opp:Player)
                     ORDER BY r.timestamp DESC
                     LIMIT 3
-                    RETURN p2.uid AS uid,
-                        p2.username AS username,
-                        r.result AS result,
-                        r.playerScore AS playerScore,
-                        r.opponentScore AS opponentScore,
-                        r.timestamp AS date
+                    RETURN opp.uid AS uid,
+                        opp.username AS username,
+                        r.winnerId AS winnerId,
+                        r.playerOneScore AS playerOneScore,
+                        r.playerTwoScore AS playerTwoScore,
+                        r.timestamp AS date,
+                        CASE
+                            WHEN startNode(r) = p THEN 1
+                            ELSE 2
+                        END AS player
                 `, { playerId });
 
                 return data.records.map(record => ({
                     opponentID: record.get('uid'),
                     opponentUsername: record.get('username'),
-                    result: record.get('result') === 'W' ? 'Win' : 'Loss',
-                    playerScore: neo4j.integer.toNumber(record.get('playerScore')),
-                    opponentScore: neo4j.integer.toNumber(record.get('opponentScore')),
+                    result: record.get('winnerId') === playerId ? 'Win' : 'Loss',
+                    playerScore: neo4j.integer.toNumber(record.get('player')) === 1 ? neo4j.integer.toNumber(record.get('playerOneScore')) : neo4j.integer.toNumber(record.get('playerTwoScore')),
+                    opponentScore: neo4j.integer.toNumber(record.get('player')) === 2 ? neo4j.integer.toNumber(record.get('playerOneScore')) : neo4j.integer.toNumber(record.get('playerTwoScore')),
                     date: record.get('date'),
                 }));
             } else {
                 const data = await tx.run(`
                     MATCH (p1:Player)-[r:PLAYED]->(p2:Player)
-                    WHERE p1.username < p2.username
                     ORDER BY r.timestamp DESC
                     LIMIT 3
-                    RETURN p1.username AS player1,
-                        p2.username AS player2,
-                        r.result AS result,
-                        r.playerScore AS playerScore,
-                        r.opponentScore AS opponentScore,
+                    RETURN p1.id AS playerOneId,
+                        p1.username AS playerOneUsername,
+                        p2.id AS playerTwoId, 
+                        p2.username AS playerTwoUsername,
+                        r.winner AS winner,
+                        r.playerOneScore AS playerOneScore,
+                        r.playerTwoScore AS playerTwoScore,
                         r.timestamp AS timestamp
                 `);
 
                 return data.records.map(record => {
-                    const playerScore = neo4j.integer.toNumber(record.get('playerScore'));
-                    const opponentScore = neo4j.integer.toNumber(record.get('opponentScore'));
+                    const playerOneScore = neo4j.integer.toNumber(record.get('playerOneScore'));
+                    const playerTwoScore = neo4j.integer.toNumber(record.get('playerTwoScore'));
                     return {
-                        player1: record.get('player1'),
-                        player2: record.get('player2'),
-                        winner: record.get('result') === 'W' ? record.get('player1') : record.get('player2'),
-                        score: `${playerScore}-${opponentScore}`,
+                        player1: record.get('playerOneUsername'),
+                        player2: record.get('playerTwoUsername'),
+                        winner: record.get('winner') === record.get('playerOneId') ? record.get('playerOneUsername') : record.get('playerTwoUsername'),
+                        score: `${playerOneScore}-${playerTwoScore}`,
                         timestamp: record.get('timestamp'),
                     };
                 });

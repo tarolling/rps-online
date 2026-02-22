@@ -21,7 +21,7 @@ export interface PlayerState {
     submitted: boolean;
 }
 
-interface RoundData {
+export interface RoundData {
     player1Choice: Choice | null;
     player2Choice: Choice | null;
     winner: string | null;
@@ -48,8 +48,8 @@ interface TournamentInfo {
 }
 
 interface GameStats {
-    playerChoices: { ROCK: number; PAPER: number; SCISSORS: number };
-    opponentChoices: { ROCK: number; PAPER: number; SCISSORS: number };
+    playerOneChoices: { ROCK: number; PAPER: number; SCISSORS: number };
+    playerTwoChoices: { ROCK: number; PAPER: number; SCISSORS: number };
     totalRounds: number;
 }
 
@@ -229,6 +229,9 @@ export async function resolveRound(gameId: string, playerId: string) {
         if (!snapshot.exists()) throw new Error('Game not found');
         const game: Game = snapshot.val();
 
+        // prevent duplicate writes
+        if (playerId !== game.player1.id) return null;
+
         const elapsed = Date.now() - game.roundStartTimestamp;
         const timeExpired = elapsed >= config.roundTimeout * 1000;
         const bothSubmitted = game.player1.submitted && game.player2.submitted;
@@ -266,7 +269,7 @@ export async function resolveRound(gameId: string, playerId: string) {
         await update(gameRef, updates);
 
         if (updates.state === GameState.Finished) {
-            await endGame(gameId, playerId);
+            await endGame(gameId);
             return { winner: updates.winner };
         }
         return null;
@@ -303,7 +306,7 @@ export function determineRoundWinner(choice1: Choice | null, choice2: Choice | n
  *
  * @param mainPlayer - `'p1'` or `'p2'` — which side to treat as "the player".
  */
-export const calculateGameStats = (game: Game, mainPlayer: 'p1' | 'p2'): GameStats => {
+export const calculateGameStats = (game: Game): GameStats => {
     const p1Choices = { ROCK: 0, PAPER: 0, SCISSORS: 0 };
     const p2Choices = { ROCK: 0, PAPER: 0, SCISSORS: 0 };
 
@@ -312,9 +315,7 @@ export const calculateGameStats = (game: Game, mainPlayer: 'p1' | 'p2'): GameSta
         if (round.player2Choice) p2Choices[round.player2Choice]++;
     });
 
-    return mainPlayer === 'p1'
-        ? { playerChoices: p1Choices, opponentChoices: p2Choices, totalRounds: game.currentRound }
-        : { playerChoices: p2Choices, opponentChoices: p1Choices, totalRounds: game.currentRound };
+    return { playerOneChoices: p1Choices, playerTwoChoices: p2Choices, totalRounds: game.currentRound };
 };
 
 // ── End game ──────────────────────────────────────────────────────────────────
@@ -325,7 +326,7 @@ export const calculateGameStats = (game: Game, mainPlayer: 'p1' | 'p2'): GameSta
  * - For tournament games: advances the winner to the next match.
  * - Removes the game from the database.
  */
-export async function endGame(gameID: string, playerID: string): Promise<void> {
+export async function endGame(gameID: string): Promise<void> {
     const gameRef = ref(db, `games/${gameID}`);
 
     try {
@@ -334,7 +335,7 @@ export async function endGame(gameID: string, playerID: string): Promise<void> {
         if (!game) throw new Error('Game not found');
 
         if (!game.tournamentId) {
-            await recordRankedGame(game, playerID);
+            await recordRankedGame(game);
         } else {
             await advanceWinner(game.tournamentId, game.matchId!, game.winner!);
         }
@@ -348,32 +349,65 @@ export async function endGame(gameID: string, playerID: string): Promise<void> {
 
 /**
  * Records stats and adjusts ratings for a completed ranked game.
- * Always called from the perspective of the player who triggered `endGame`.
+ * Always called from the perspective of the player who triggered `endGame`,
+ * which is player 1.
  */
-async function recordRankedGame(game: Game, playerID: string): Promise<void> {
-    const isPlayer1 = playerID === game.player1.id;
-    const [self, opponent] = isPlayer1
-        ? [game.player1, game.player2]
-        : [game.player2, game.player1];
-
-    const result = playerID === game.winner ? GameResults.WIN : GameResults.LOSS;
-    const gameStats = calculateGameStats(game, isPlayer1 ? 'p1' : 'p2');
+async function recordRankedGame(game: Game): Promise<void> {
+    const { player1: { id: playerOneId, rating: playerOneRating }, player2: { id: playerTwoId, rating: playerTwoRating } } = game;
+    const gameStats = calculateGameStats(game);
 
     try {
         await postJSON('/api/postGameStats', {
-            playerID: self.id,
-            opponentID: opponent.id,
-            playerRating: self.rating,
-            opponentRating: opponent.rating,
-            playerScore: self.score,
-            opponentScore: opponent.score,
-            result,
-            gameStats,
+            playerOneId,
+            playerTwoId,
+            playerOneScore: game.player1.score,
+            playerOneRating,
+            playerOneRocks: gameStats.playerOneChoices.ROCK,
+            playerOnePapers: gameStats.playerOneChoices.PAPER,
+            playerOneScissors: gameStats.playerOneChoices.SCISSORS,
+            playerTwoScore: game.player2.score,
+            playerTwoRating,
+            playerTwoRocks: gameStats.playerTwoChoices.ROCK,
+            playerTwoPapers: gameStats.playerTwoChoices.PAPER,
+            playerTwoScissors: gameStats.playerTwoChoices.SCISSORS,
+            winnerId: game.winner,
+            totalRounds: gameStats.totalRounds,
         });
 
-        const newRating = calculateRating(self.rating, opponent.rating, playerID === game.winner);
-        await postJSON('/api/adjustRating', { uid: playerID, newRating });
+        // adjust both players rating
+        const playerOneNewRating = calculateRating(playerOneRating, playerTwoRating, playerOneId === game.winner);
+        const playerTwoNewRating = calculateRating(playerTwoRating, playerOneRating, playerTwoId === game.winner);
+
+        await postJSON('/api/adjustRating', { uid: playerOneId, newRating: playerOneNewRating });
+        await postJSON('/api/adjustRating', { uid: playerTwoId, newRating: playerTwoNewRating });
+
     } catch (error) {
         console.error('Error recording ranked game:', error);
     }
+}
+
+/**
+ * Award one player a win if the other disconnects
+ * @param gameId The game ID as it exists in Firebase
+ * @param winnerId The winner's user ID
+ * @returns 
+ */
+export async function awardWinByDisconnect(gameId: string, winnerId: string): Promise<void> {
+    const gameRef = ref(db, `games/${gameId}`);
+    const snapshot = await get(gameRef);
+    if (!snapshot.exists()) return;
+
+    const game: Game = snapshot.val();
+    if (game.state !== GameState.InProgress) return; // already resolved
+
+    const winnerKey = game.player1.id === winnerId ? 'player1' : 'player2';
+
+    await update(gameRef, {
+        state: GameState.Finished,
+        winner: winnerId,
+        endTimestamp: Date.now(),
+        disconnectWin: true,
+    });
+
+    await endGame(gameId);
 }

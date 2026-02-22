@@ -8,6 +8,7 @@ import Footer from "@/components/Footer";
 import Header from "@/components/Header";
 import styles from "./RegisterPage.module.css";
 import { EyeIcon, EyeOffIcon } from "@/components/icons";
+import { postJSON } from "@/lib/api";
 
 // Username: 3–20 chars, letters/numbers/underscores only
 const USERNAME_REGEX = /^[a-zA-Z0-9_]{3,20}$/;
@@ -64,21 +65,11 @@ export default function RegisterPage() {
             const userInfo = await createUserWithEmailAndPassword(auth, email, password);
             await sendEmailVerification(userInfo.user);
 
-            response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/initPlayer`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ uid: userInfo.user.uid, username }),
-            });
-            if (!response.ok) throw new Error("Unable to initialize player; contact support.");
+            await postJSON('/api/initPlayer', { uid: userInfo.user.uid, username });
 
             // get session token
             const idToken = await userInfo.user.getIdToken();
-            const sessionRes = await fetch('/api/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ idToken }),
-            });
-            if (!sessionRes.ok) throw new Error('Failed to create session.');
+            await postJSON('/api/login', { idToken })
 
             setMessage("Account created! Check your email to verify before logging in.");
         } catch (err: any) {

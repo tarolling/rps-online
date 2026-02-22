@@ -1,6 +1,7 @@
 import neo4j from "neo4j-driver";
 import { NextRequest, NextResponse } from "next/server";
 import { getDriver } from "@/lib/neo4j";
+import { Club } from "@/types/neo4j";
 
 export async function POST(req: NextRequest) {
     const body = await req.json();
@@ -18,17 +19,19 @@ export async function POST(req: NextRequest) {
 
         switch (methodType) {
             case "create": {
+                let club: Club = {
+                    name: body.name,
+                    tag: body.tag,
+                    availability: body.availability,
+                };
+
                 await session.executeWrite((tx) =>
                     tx.run(
                         `MATCH (p:Player {uid: $founderID})
-                         CREATE (p)-[:MEMBER {role: 'Founder'}]->(c:Club $props)`,
+                         CREATE (p)-[:MEMBER {role: 'Founder'}]->(c:Club $club)`,
                         {
                             founderID: body.founderID,
-                            props: {
-                                name: body.name,
-                                tag: body.tag,
-                                availability: body.availability,
-                            },
+                            club,
                         }
                     )
                 );

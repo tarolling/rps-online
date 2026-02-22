@@ -1,11 +1,12 @@
 "use client";
 
-import { get, getDatabase, onValue, ref, update } from 'firebase/database';
+import { get, getDatabase, onValue, ref, set, update } from 'firebase/database';
+import { onDisconnect } from 'firebase/database';
 import { useCallback, useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { Choice, GameState } from '@/lib/common';
-import { Game, resolveRound } from '@/lib/matchmaking';
+import { RoundData, Game, resolveRound, awardWinByDisconnect } from '@/lib/matchmaking';
 import Footer from '@/components/Footer';
 import Header from '@/components/Header';
 import styles from '@/styles/game.module.css';
@@ -37,8 +38,8 @@ const GamePage = () => {
     const [roundOver, setRoundOver] = useState(false);
     const [timeLeft, setTimeLeft] = useState(config.roundTimeout);
 
-    const playerID = user?.uid;
-    const isPlayer1 = game?.player1.id === playerID;
+    const playerId = user?.uid;
+    const isPlayer1 = game?.player1.id === playerId;
     const playerData = isPlayer1 ? game?.player1 : game?.player2;
     const opponentData = isPlayer1 ? game?.player2 : game?.player1;
     const opponentKey = isPlayer1 ? 'player2' : 'player1';
@@ -61,7 +62,7 @@ const GamePage = () => {
 
     // Subscribe to game state
     useEffect(() => {
-        if (!gameId || !playerID) return;
+        if (!gameId || !playerId) return;
 
         const gameRef = ref(db, `games/${gameId}`);
         const unsubscribe = onValue(gameRef, (snapshot) => {
@@ -85,12 +86,46 @@ const GamePage = () => {
                 data.state === GameState.InProgress
             ) {
                 setRoundOver(true);
-                setTimeout(() => resolveRound(gameId, playerID), 1000);
+                setTimeout(() => resolveRound(gameId, playerId), 1000);
             }
         });
 
+        // Register disconnect handler
+        const presenceRef = ref(db, `games/${gameId}/presence/${playerId}`);
+        set(presenceRef, true).then(() => {
+            onDisconnect(presenceRef).remove();
+        });
+
         return () => unsubscribe();
-    }, [gameId, playerID]);
+    }, [gameId, playerId]);
+
+    // watch opponent's presence for disconnects
+    useEffect(() => {
+        if (!gameId || !playerId || !game || game.state !== GameState.InProgress) return;
+
+        const opponentId = isPlayer1 ? game.player2.id : game.player1.id;
+        const opponentPresenceRef = ref(db, `games/${gameId}/presence/${opponentId}`);
+        let disconnectTimer: ReturnType<typeof setTimeout> | null = null;
+
+        const unsubscribe = onValue(opponentPresenceRef, (snapshot) => {
+            if (!snapshot.exists()) {
+                disconnectTimer = setTimeout(() => {
+                    awardWinByDisconnect(gameId, playerId);
+                }, 8000);
+            } else {
+                // They reconnected in time — cancel the timer
+                if (disconnectTimer) {
+                    clearTimeout(disconnectTimer);
+                    disconnectTimer = null;
+                }
+            }
+        });
+
+        return () => {
+            unsubscribe();
+            if (disconnectTimer) clearTimeout(disconnectTimer);
+        };
+    }, [gameId, playerId, game?.state]);
 
     // Fetch tournament info if this is a tournament game
     useEffect(() => {
@@ -149,7 +184,7 @@ const GamePage = () => {
     );
 
     const isFinished = game.state === GameState.Finished;
-    const playerWon = game.winner === playerID;
+    const playerWon = game.winner === playerId;
 
     return (
         <div className="app">
@@ -209,6 +244,11 @@ const GamePage = () => {
                         </div>
                     )}
 
+                    {/* Round History */}
+                    {game.rounds && Object.keys(game.rounds).length > 0 && (
+                        <RoundHistory rounds={game.rounds} isPlayer1={isPlayer1} />
+                    )}
+
                     {/* Result */}
                     {isFinished && (
                         <div className={styles.result}>
@@ -253,6 +293,34 @@ function PlayerPanel({ label, name, score, choice, reveal = true, hasChosen = fa
             <div className={`${styles.choiceDisplay} ${(choice && reveal) || hasChosen ? styles.choiceVisible : ''}`}>
                 {choice && reveal ? CHOICE_EMOJI[choice] : hasChosen ? '✔️' : ''}
             </div>
+        </div>
+    );
+}
+
+function RoundHistory({ rounds, isPlayer1 }: { rounds: Record<number, RoundData>; isPlayer1: boolean }) {
+    const entries = Object.entries(rounds).sort(([a], [b]) => Number(a) - Number(b));
+
+    return (
+        <div className={styles.roundHistory}>
+            <div className={styles.roundHistoryHeader}>
+                <span>You</span>
+                <span />
+                <span>Opponent</span>
+            </div>
+            {entries.map(([round, data]) => {
+                const myChoice = isPlayer1 ? data.player1Choice : data.player2Choice;
+                const theirChoice = isPlayer1 ? data.player2Choice : data.player1Choice;
+                const myKey = isPlayer1 ? 'player1' : 'player2';
+                const outcome = data.winner === myKey ? 'win' : data.winner === 'draw' ? 'draw' : 'loss';
+
+                return (
+                    <div key={round} className={`${styles.roundHistoryRow} ${styles[outcome]}`}>
+                        <span>{myChoice === null ? '⏱️' : CHOICE_EMOJI[myChoice]}</span>
+                        <span className={styles.roundHistoryLabel}>R{round}</span>
+                        <span>{theirChoice === null ? '⏱️' : CHOICE_EMOJI[theirChoice]}</span>
+                    </div>
+                );
+            })}
         </div>
     );
 }

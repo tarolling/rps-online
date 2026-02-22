@@ -15,18 +15,18 @@ export async function POST(req: NextRequest) {
     try {
         const response = await session.executeRead(async tx => {
             const data = await tx.run(`
-                MATCH (p:Player {uid: $playerId})-[r:PLAYED]->(:Player)
+                MATCH (p:Player {uid: $playerId})-[r:PLAYED]-(:Player)
                 WITH 
                     p, 
                     collect(r) AS games,
-                    size([r IN collect(r) WHERE r.result = "W"]) AS totalWins,
+                    size([r IN collect(r) WHERE r.winnerId = $playerId]) AS totalWins,
                     size(collect(r)) AS totalGames
                 WITH 
                     p, 
                     totalGames, 
                     totalWins,
                     toFloat(totalWins) / totalGames * 100 AS winPercentage,
-                    [r IN games | {result: r.result, timestamp: r.timestamp}] AS gameData
+                    [r IN games | {winnerId: r.winnerId, timestamp: r.timestamp}] AS gameData
                 WITH 
                     p, 
                     totalGames, 
@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
                     winPercentage, 
                     reduce(streaks = {current: 0, best: 0}, g IN sortedByTimeDesc | 
                         CASE 
-                            WHEN g.result = "W" THEN 
+                            WHEN g.winnerId = $playerId THEN 
                                 {
                                     current: streaks.current + 1, 
                                     best: CASE WHEN streaks.current + 1 > streaks.best THEN streaks.current + 1 ELSE streaks.best END

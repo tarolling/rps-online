@@ -6,7 +6,7 @@ import { postJSON } from '@/lib/api';
 import Footer from '@/components/Footer';
 import Header from '@/components/Header';
 import styles from './ClubsPage.module.css';
-import { Club, ClubAvailability, UserClub, ClubRole } from '@/types/club';
+import { Club, ClubAvailability, UserClub } from '@/types/club';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -79,7 +79,7 @@ const ClubsPage = () => {
         }
     };
 
-    const handleCreateClub = async (e: React.FormEvent) => {
+    const handleCreateClub = async (e: React.SubmitEvent) => {
         e.preventDefault();
         if (!user) return;
         if (userClub) {
@@ -221,9 +221,9 @@ const ClubsPage = () => {
                                     value={createForm.availability}
                                     onChange={(e) => setCreateForm((p) => ({ ...p, availability: e.target.value as ClubAvailability }))}
                                 >
-                                    <option value="open">Open</option>
-                                    <option value="invite">Invite Only</option>
-                                    <option value="closed">Closed</option>
+                                    <option value="Open">Open</option>
+                                    <option value="Invite">Invite Only</option>
+                                    <option value="Closed">Closed</option>
                                 </select>
                             </div>
                             <div className={styles.modalActions}>

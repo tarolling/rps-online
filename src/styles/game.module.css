@@ -214,6 +214,61 @@
     color: var(--color-text);
 }
 
+/* ── Round History ── */
+
+.roundHistory {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    width: 100%;
+}
+
+.roundHistoryHeader {
+    display: grid;
+    grid-template-columns: 1fr 2rem 1fr;
+    text-align: center;
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-text-muted);
+    padding: 0 0.5rem;
+}
+
+.roundHistoryRow {
+    display: grid;
+    grid-template-columns: 1fr 2rem 1fr;
+    align-items: center;
+    text-align: center;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-left: 3px solid var(--color-border);
+    border-radius: var(--radius);
+    padding: 0.4rem 0.5rem;
+    font-size: 1.3rem;
+    animation: fadeUp 0.2s ease both;
+}
+
+.roundHistoryRow.win {
+    border-left-color: var(--color-success);
+}
+
+.roundHistoryRow.loss {
+    border-left-color: var(--color-danger);
+}
+
+.roundHistoryRow.draw {
+    border-left-color: var(--color-text-muted);
+}
+
+.roundHistoryLabel {
+    font-size: 0.6rem;
+    font-weight: 700;
+    color: var(--color-text-muted);
+    opacity: 0.5;
+    line-height: 1;
+}
+
 /* ── Result ── */
 
 .result {

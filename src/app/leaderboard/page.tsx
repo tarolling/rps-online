@@ -13,6 +13,8 @@ type Player = {
     rating: number;
 };
 
+const RANK_ICON = ['👑', '🥈', '🥉'];
+
 function LeaderboardPage() {
     const [playerData, setPlayerData] = useState<Player[] | null>(null);
     const router = useRouter();
@@ -57,7 +59,10 @@ function LeaderboardPage() {
                                         className={styles.row}
                                         onClick={() => router.push(`/profile/${player.uid}`)}
                                     >
-                                        <td className={styles.rank}>{index + 1}</td>
+
+                                        <td className={styles.rank}>
+                                            {index < 3 ? RANK_ICON[index] : index + 1}
+                                        </td>
                                         <td className={styles.username}>
                                             <Link
                                                 href={`/profile/${player.uid}`}
