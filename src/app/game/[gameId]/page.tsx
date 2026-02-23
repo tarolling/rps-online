@@ -13,6 +13,9 @@ import styles from '@/styles/game.module.css';
 import config from "@/config/settings.json";
 import { Tournament } from '@/types/tournament';
 import RankBadge from '@/components/RankBadge';
+import Avatar from '@/components/Avatar';
+import { getAvatarUrl } from '@/lib/avatar';
+import { postJSON } from '@/lib/api';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -39,12 +42,44 @@ function GamePage() {
     const [roundOver, setRoundOver] = useState(false);
     const [timeLeft, setTimeLeft] = useState(config.roundTimeout);
     const [opponentConnected, setOpponentConnected] = useState(true);
+    const [playerAvatarUrl, setPlayerAvatarUrl] = useState<string | null>(null);
+    const [opponentAvatarUrl, setOpponentAvatarUrl] = useState<string | null>(null);
+    const [clubTags, setClubTags] = useState<Record<string, string | null>>({});
 
     const playerId = user?.uid;
     const isPlayer1 = game?.player1.id === playerId;
     const playerData = isPlayer1 ? game?.player1 : game?.player2;
     const opponentData = isPlayer1 ? game?.player2 : game?.player1;
     const opponentKey = isPlayer1 ? 'player2' : 'player1';
+
+    // Fetch avatars once we know both player IDs
+    useEffect(() => {
+        if (!playerId || !game) return;
+        const opponentId = isPlayer1 ? game.player2.id : game.player1.id;
+        getAvatarUrl(playerId).then(setPlayerAvatarUrl);
+        getAvatarUrl(opponentId).then(setOpponentAvatarUrl);
+
+        // fetch their club tags
+        if (!clubTags[game.player1.id] && !clubTags[game.player2.id]) {
+            Promise.all([
+                postJSON('/api/clubs', { methodType: 'user', uid: game.player1.id }).catch(() => null),
+                postJSON('/api/clubs', { methodType: 'user', uid: game.player2.id }).catch(() => null),
+            ]).then(([p1Club, p2Club]) => {
+                setClubTags({
+                    [game.player1.id]: p1Club?.tag ?? null,
+                    [game.player2.id]: p2Club?.tag ?? null,
+                });
+            });
+        }
+    }, [playerId, game?.player1.id, game?.player2.id]);
+
+    // Fetch clubs once we know both player IDs
+    useEffect(() => {
+        if (!playerId || !game) return;
+        const opponentId = isPlayer1 ? game.player2.id : game.player1.id;
+
+
+    }, [playerId, game?.player1.id, game?.player2.id]);
 
     // Server-anchored round timer — auto-submits when it hits zero
     useEffect(() => {
@@ -290,9 +325,11 @@ function GamePage() {
                         <PlayerPanel
                             label="You"
                             name={playerData?.username ?? 'Player'}
+                            clubTag={playerData ? clubTags[playerData.id] : null}
                             rating={playerData?.rating ?? 0}
                             score={playerData?.score ?? 0}
                             choice={choice}
+                            avatarUrl={playerAvatarUrl}
                         />
 
                         <div className={styles.vsBlock}>
@@ -306,12 +343,14 @@ function GamePage() {
                         <PlayerPanel
                             label="Opponent"
                             name={opponentData?.username ?? 'Opponent'}
+                            clubTag={opponentData ? clubTags[opponentData.id] : null}
                             rating={opponentData?.rating ?? 0}
                             score={opponentData?.score ?? 0}
                             choice={roundOver ? game[opponentKey].choice : null}
                             reveal={roundOver}
                             hasChosen={!!game[opponentKey].choice}
                             disconnected={!opponentConnected}
+                            avatarUrl={opponentAvatarUrl}
                         />
                     </div>
 
@@ -369,17 +408,20 @@ type PlayerPanelProps = {
     rating: number;
     score: number;
     choice: Choice | null;
+    clubTag?: string | null;
+    avatarUrl?: string | null;
     reveal?: boolean;
     hasChosen?: boolean;
     disconnected?: boolean;
 };
 
-function PlayerPanel({ label, name, rating, score, choice, reveal = true, hasChosen = false, disconnected = false }: PlayerPanelProps) {
+function PlayerPanel({ label, name, rating, score, choice, avatarUrl, clubTag, reveal = true, hasChosen = false, disconnected = false }: PlayerPanelProps) {
     return (
         <div className={styles.playerPanel}>
             <span className={styles.playerLabel}>{label}</span>
+            <Avatar src={avatarUrl} username={name} size="md" />
             <span className={styles.playerName}>
-                {name} {disconnected && <span className={styles.disconnectedBadge}>● Disconnected</span>}
+                {clubTag && <span className={styles.playerClubTag}>[{clubTag}]</span>} {name} {disconnected && <span className={styles.disconnectedBadge}>● Disconnected</span>}
             </span>
             <RankBadge rating={rating} variant='compact' />
             <span className={styles.playerScore}>{score}</span>

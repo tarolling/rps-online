@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
@@ -11,22 +11,18 @@ import styles from "./ProfilePage.module.css";
 import { getJSON, postJSON } from "@/lib/api";
 import { Match, ProfileData } from "@/types/common";
 import { getRankTier } from "@/lib/ranks";
-
-// ── Types ────────────────────────────────────────────────────────────────────
+import Avatar from "@/components/Avatar";
+import { getAvatarUrl, uploadAvatar } from "@/lib/avatar";
 
 type GameStats = { totalGames: number; winRate: string; currentStreak: number; bestStreak: number };
 type ClubData = { name: string; tag: string; memberRole: string; memberCount: number };
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
-
 const USERNAME_REGEX = /^[a-zA-Z0-9_]{3,20}$/;
-
-// ── Component ─────────────────────────────────────────────────────────────────
 
 function ProfilePage() {
     const { userId } = useParams<{ userId: string }>();
     const router = useRouter();
-    const { user } = useAuth();
+    const { user, avatarUrl: contextAvatarUrl, setAvatarUrl: setContextAvatarUrl } = useAuth();
 
     const [profileData, setProfileData] = useState<ProfileData | null>(null);
     const [gameStats, setGameStats] = useState<GameStats | null>(null);
@@ -37,12 +33,22 @@ function ProfilePage() {
     const [isEditing, setIsEditing] = useState(false);
     const [newUsername, setNewUsername] = useState("");
     const [usernameError, setUsernameError] = useState("");
+    const [otherAvatarUrl, setOtherAvatarUrl] = useState<string | null>(null);
+    const [avatarUploading, setAvatarUploading] = useState(false);
+    const [avatarError, setAvatarError] = useState("");
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     const isOwnProfile = user?.uid === userId;
+    // Own profile: use the shared context so header stays in sync.
+    // Other profile: use local state fetched independently.
+    const avatarUrl = isOwnProfile ? contextAvatarUrl : otherAvatarUrl;
 
     useEffect(() => {
         fetchProfileData();
         fetchStats();
+        if (!isOwnProfile) {
+            getAvatarUrl(userId).then(setOtherAvatarUrl);
+        }
     }, [userId]);
 
     const fetchProfileData = async () => {
@@ -69,17 +75,12 @@ function ProfilePage() {
                 getJSON("/api/fetchRecentGames", { playerId: userId }),
                 postJSON("/api/clubs", { methodType: "user", uid: userId }),
             ]);
-
             if (stats.status === "fulfilled" && !stats.value.error) {
                 const d = stats.value;
                 setGameStats({ totalGames: d.totalGames, winRate: `${d.winRate.toFixed(1)}%`, currentStreak: d.currentStreak, bestStreak: d.bestStreak });
             }
-            if (games.status === "fulfilled" && !games.value.error) {
-                setRecentMatches(games.value);
-            }
-            if (club.status === "fulfilled" && !club.value.error) {
-                setUserClub(club.value);
-            }
+            if (games.status === "fulfilled" && !games.value.error) setRecentMatches(games.value);
+            if (club.status === "fulfilled" && !club.value.error) setUserClub(club.value);
         } catch (err) {
             console.error("Error fetching stats:", err);
         }
@@ -113,6 +114,22 @@ function ProfilePage() {
         }
     };
 
+    const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file || !user) return;
+        setAvatarError("");
+        setAvatarUploading(true);
+        try {
+            const url = await uploadAvatar(user.uid, file);
+            setContextAvatarUrl(url); // updates header + this page simultaneously
+        } catch (err: any) {
+            setAvatarError(err.message);
+        } finally {
+            setAvatarUploading(false);
+            if (fileInputRef.current) fileInputRef.current.value = "";
+        }
+    };
+
     if (loading) return <LoadingState />;
     if (error) return <ErrorState error={error} onRetry={fetchProfileData} />;
 
@@ -120,9 +137,29 @@ function ProfilePage() {
         <div className="app">
             <Header />
             <main className={styles.container}>
-
-                {/* ── Header ── */}
                 <section className={styles.profileHeader}>
+                    <div className={styles.avatarWrapper}>
+                        <Avatar src={avatarUrl} username={profileData?.username} size="lg" />
+                        {isOwnProfile && (
+                            <>
+                                <button
+                                    className={styles.avatarEditButton}
+                                    onClick={() => fileInputRef.current?.click()}
+                                    disabled={avatarUploading}
+                                    title="Change profile picture"
+                                >
+                                    {avatarUploading ? '...' : '✏️'}
+                                </button>
+                                <input
+                                    ref={fileInputRef}
+                                    type="file"
+                                    accept="image/*"
+                                    className={styles.hiddenInput}
+                                    onChange={handleAvatarChange}
+                                />
+                            </>
+                        )}
+                    </div>
                     <div className={styles.profileInfo}>
                         {isEditing ? (
                             <div className={styles.usernameEdit}>
@@ -142,7 +179,7 @@ function ProfilePage() {
                         ) : (
                             <h1>{profileData?.username || "Player"}</h1>
                         )}
-
+                        {avatarError && <span className={styles.fieldError}>{avatarError}</span>}
                         {isOwnProfile && (
                             <div className={styles.actions}>
                                 {!isEditing && (
@@ -154,10 +191,7 @@ function ProfilePage() {
                     </div>
                 </section>
 
-                {/* ── Grid ── */}
                 <div className={styles.grid}>
-
-                    {/* Stats */}
                     <section className={styles.card}>
                         <h2>Statistics</h2>
                         {gameStats ? (
@@ -174,7 +208,6 @@ function ProfilePage() {
                         )}
                     </section>
 
-                    {/* Recent Matches */}
                     <section className={styles.card}>
                         <h2>Recent Matches</h2>
                         {recentMatches.length === 0 ? (
@@ -197,7 +230,6 @@ function ProfilePage() {
                         )}
                     </section>
 
-                    {/* Club */}
                     <section className={styles.card}>
                         <h2>Club</h2>
                         {userClub ? (
@@ -211,15 +243,12 @@ function ProfilePage() {
                             <p className={styles.emptyState}>This player is not in a club.</p>
                         )}
                     </section>
-
                 </div>
             </main>
             <Footer />
         </div>
     );
 }
-
-// ── Sub-components ────────────────────────────────────────────────────────────
 
 const StatItem = ({ value, label }: { value: string | number; label: string }) => (
     <div className={styles.statItem}>
@@ -229,26 +258,11 @@ const StatItem = ({ value, label }: { value: string | number; label: string }) =
 );
 
 const LoadingState = () => (
-    <div className="app">
-        <Header />
-        <main className={styles.container}>
-            <p className={styles.emptyState} style={{ marginTop: "4rem" }}>Loading...</p>
-        </main>
-        <Footer />
-    </div>
+    <div className="app"><Header /><main className={styles.container}><p className={styles.emptyState} style={{ marginTop: "4rem" }}>Loading...</p></main><Footer /></div>
 );
 
 const ErrorState = ({ error, onRetry }: { error: string; onRetry: () => void }) => (
-    <div className="app">
-        <Header />
-        <main className={styles.container}>
-            <div className={styles.errorCard}>
-                <p>Error: {error}</p>
-                <button onClick={onRetry}>Retry</button>
-            </div>
-        </main>
-        <Footer />
-    </div>
+    <div className="app"><Header /><main className={styles.container}><div className={styles.errorCard}><p>Error: {error}</p><button onClick={onRetry}>Retry</button></div></main><Footer /></div>
 );
 
 export default ProfilePage;
