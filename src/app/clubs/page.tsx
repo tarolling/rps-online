@@ -7,6 +7,7 @@ import Footer from '@/components/Footer';
 import Header from '@/components/Header';
 import styles from './ClubsPage.module.css';
 import { Club, ClubAvailability, UserClub } from '@/types/club';
+import Link from 'next/link';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -64,7 +65,7 @@ const ClubsPage = () => {
             await postJSON('/api/clubs', { methodType: 'join', uid: user.uid, clubName });
             await Promise.all([fetchUserClub(), fetchClubs()]);
         } catch {
-            setError('Failed to join club.');
+            setError('Failed to join club. Try refreshing.');
         }
     };
 
@@ -117,7 +118,9 @@ const ClubsPage = () => {
                         {userClub ? (
                             <div className={styles.userClub}>
                                 <div className={styles.clubRow}>
-                                    <span className={styles.clubName}>{userClub.name}</span>
+                                    <Link href={`/clubs/${encodeURIComponent(userClub.name)}`} className={styles.clubName}>
+                                        {userClub.name}
+                                    </Link>
                                     <span className={styles.clubTag}>[{userClub.tag}]</span>
                                     <span className={styles.clubRole}>{userClub.memberRole}</span>
                                 </div>
@@ -144,7 +147,7 @@ const ClubsPage = () => {
                         <div className={styles.searchRow}>
                             <input
                                 type="text"
-                                placeholder="Search clubs…"
+                                placeholder="Search clubs..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                                 onKeyDown={(e) => e.key === 'Enter' && fetchClubs()}
@@ -163,7 +166,9 @@ const ClubsPage = () => {
                                 {clubs.map((club) => (
                                     <div key={club.name} className={styles.clubItem}>
                                         <div className={styles.clubRow}>
-                                            <span className={styles.clubName}>{club.name}</span>
+                                            <Link href={`/clubs/${encodeURIComponent(club.name)}`} className={styles.clubName}>
+                                                {club.name}
+                                            </Link>
                                             <span className={styles.clubTag}>[{club.tag}]</span>
                                             <span className={styles.clubAvailability}>{club.availability}</span>
                                         </div>

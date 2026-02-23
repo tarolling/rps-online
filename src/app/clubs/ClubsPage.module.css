@@ -120,6 +120,7 @@
     font-weight: 600;
     font-size: 0.95rem;
     color: var(--color-text);
+    text-decoration: none;
 }
 
 .clubTag {

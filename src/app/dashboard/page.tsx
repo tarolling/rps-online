@@ -9,10 +9,13 @@ import formatRelativeTime from '@/lib/time';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Match, ProfileData } from '@/types/common';
+import config from '@/config/settings.json';
+import RankBadge from '@/components/RankBadge';
 
 export default function DashboardPage() {
     const { user } = useAuth();
     const [gameStats, setGameStats] = useState({
+        rating: config.defaultRating,
         totalGames: 0,
         winRate: "N/A",
         currentStreak: 0,
@@ -25,12 +28,13 @@ export default function DashboardPage() {
 
     useEffect(() => {
         const fetchStats = async () => {
-            const data = await postJSON<{ totalGames: number, winRate: number, currentStreak: number, bestStreak: number }>('/api/fetchDashboardStats', {
+            const data = await postJSON<{ rating: number, totalGames: number, winRate: number, currentStreak: number, bestStreak: number }>('/api/fetchDashboardStats', {
                 playerId: user?.uid
             })
 
             setGameStats((prevState) => ({
                 ...prevState,
+                rating: data.rating,
                 totalGames: data.totalGames,
                 winRate: `${data.winRate.toFixed(1)}%`,
                 currentStreak: data.currentStreak,
@@ -85,6 +89,14 @@ export default function DashboardPage() {
                     <section className={styles.statsCard}>
                         <h2>Your Statistics</h2>
                         <div className={styles.statsGrid}>
+                            <div className={styles.statItem}>
+                                <span className={styles.statValue}><RankBadge rating={gameStats.rating} /></span>
+                                <span className={styles.statLabel}>Rank</span>
+                            </div>
+                            <div className={styles.statItem}>
+                                <span className={styles.statValue}>{gameStats.rating}</span>
+                                <span className={styles.statLabel}>Skill Rating</span>
+                            </div>
                             <div className={styles.statItem}>
                                 <span className={styles.statValue}>{gameStats.totalGames}</span>
                                 <span className={styles.statLabel}>Games Played</span>

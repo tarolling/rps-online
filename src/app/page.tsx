@@ -76,7 +76,7 @@ export default async function Home() {
         </div>
 
         <Link href="/leaderboard" className={styles.viewMoreButton}>
-          View All Matches
+          View Leaderboard
         </Link>
       </section>
 

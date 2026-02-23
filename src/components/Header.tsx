@@ -1,23 +1,24 @@
 'use client'
 
 import { useState } from 'react';
-import styles from '../styles/header.module.css'
+import styles from './header.module.css'
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { signOut } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
+import Avatar from '@/components/Avatar';
 
 export default function Header() {
     const router = useRouter();
-    const { user } = useAuth();
+    const { user, username, avatarUrl } = useAuth();
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
     const handleLogout = async () => {
         await signOut(auth);
-        await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/logout`, { method: 'POST' }); // clear session cookie
+        await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/logout`, { method: 'POST' });
         router.push('/login');
     }
 
@@ -25,7 +26,7 @@ export default function Header() {
         <div className={styles.header}>
             <div className={styles["header-logo"]}>
                 <Link href="/">
-                    <Image src="/logo.png" alt="RPS logo" className={styles.logo} width={60} height={60}></Image>
+                    <Image src="/logo.png" alt="RPS logo" className={styles.logo} width={60} height={60} />
                 </Link>
             </div>
 
@@ -51,19 +52,13 @@ export default function Header() {
                 <div className={styles['mobile-auth']}>
                     {user ? (
                         <>
-                            <Link href={`/profile/${user.uid}`} className={styles.navLink}>
-                                <button>Profile</button>
-                            </Link>
+                            <Link href={`/profile/${user.uid}`} className={styles.navLink}>Profile</Link>
                             <button onClick={handleLogout} className={styles.navLink}>Logout</button>
                         </>
                     ) : (
                         <>
-                            <Link href="/login" className={styles.navLink}>
-                                <button>Log In</button>
-                            </Link>
-                            <Link href="/register" className={styles.navLink}>
-                                <button>Register</button>
-                            </Link>
+                            <Link href="/login" className={styles.navLink}>Log In</Link>
+                            <Link href="/register" className={styles.navLink}>Register</Link>
                         </>
                     )}
                 </div>
@@ -73,12 +68,9 @@ export default function Header() {
             <div className={styles.headerUser}>
                 {user ? (
                     <div className={styles['profile-dropdown']} onClick={() => setIsDropdownOpen(!isDropdownOpen)}>
-                        <Image
-                            src={user.photoURL ?? '/logo.png'}
-                            alt="Profile"
-                            className={styles['profile-pic']}
-                            width={40} height={40}
-                        />
+                        <div className={styles['profile-pic']}>
+                            <Avatar src={avatarUrl} username={username ?? user.email ?? '?'} size="sm" />
+                        </div>
                         <div className={`${styles['dropdown-content']} ${isDropdownOpen ? styles.show : ''}`}>
                             <Link href={`/profile/${user.uid}`} className={styles['dropdown-item']}>Profile</Link>
                             <button onClick={handleLogout} className={styles['dropdown-item']}>Log Out</button>
@@ -86,12 +78,8 @@ export default function Header() {
                     </div>
                 ) : (
                     <div className={styles['auth-buttons']}>
-                        <Link href="/login">
-                            <button>Log In</button>
-                        </Link>
-                        <Link href="/register">
-                            <button>Register</button>
-                        </Link>
+                        <Link href="/login"><button>Log In</button></Link>
+                        <Link href="/register"><button>Register</button></Link>
                     </div>
                 )}
             </div>

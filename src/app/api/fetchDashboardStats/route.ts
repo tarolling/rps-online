@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import neo4j from 'neo4j-driver';
 import { getDriver } from "@/lib/neo4j";
+import config from "@/config/settings.json";
 
 export async function POST(req: NextRequest) {
     const { playerId } = await req.json();
@@ -51,7 +52,8 @@ export async function POST(req: NextRequest) {
                                 }
                         END
                     ) AS streakStats
-                RETURN totalGames,
+                RETURN p.rating AS rating,
+                    totalGames,
                     winPercentage AS winRate,
                     streakStats.current AS currentStreak,
                     streakStats.best AS bestStreak
@@ -61,6 +63,7 @@ export async function POST(req: NextRequest) {
 
             if (data.records.length === 0) {
                 return {
+                    rating: config.defaultRating,
                     totalGames: 0,
                     winRate: 0,
                     currentStreak: 0,
@@ -69,8 +72,9 @@ export async function POST(req: NextRequest) {
             }
 
             return {
+                rating: neo4j.integer.toNumber(data.records[0].get("rating")),
                 totalGames: neo4j.integer.toNumber(data.records[0].get("totalGames")),
-                winRate: data.records[0].get("winRate"),
+                winRate: neo4j.integer.toNumber(data.records[0].get("winRate")),
                 currentStreak: neo4j.integer.toNumber(data.records[0].get("currentStreak")),
                 bestStreak: neo4j.integer.toNumber(data.records[0].get("bestStreak"))
             };
