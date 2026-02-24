@@ -1,6 +1,6 @@
 "use client";
 
-import { onAuthStateChanged, sendEmailVerification, sendPasswordResetEmail, signInWithEmailAndPassword } from "firebase/auth";
+import { sendEmailVerification, sendPasswordResetEmail, signInWithEmailAndPassword } from "firebase/auth";
 import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -41,8 +41,8 @@ export default function LoginPage() {
 
             router.refresh();
             router.push("/dashboard");
-        } catch (err: any) {
-            setError(err.message);
+        } catch (e: unknown) {
+            setError((e as Error).message);
         } finally {
             setLoading(false);
         }
@@ -57,8 +57,8 @@ export default function LoginPage() {
         try {
             await sendPasswordResetEmail(auth, email);
             setMessage("Password reset email sent! Check your inbox.");
-        } catch (err: any) {
-            setError(err.message);
+        } catch (e: unknown) {
+            setError((e as Error).message);
         }
     };
 
@@ -123,7 +123,7 @@ export default function LoginPage() {
                     </form>
 
                     <p className={styles.registerLink}>
-                        Don't have an account? <Link href="/register">Sign up</Link>
+                        Don&#39;t have an account? <Link href="/register">Sign up</Link>
                     </p>
                 </div>
             </main>

@@ -137,7 +137,7 @@ const ClubsPage = () => {
                                 </div>
                             </div>
                         ) : (
-                            <p className={styles.emptyState}>You haven't joined any clubs yet.</p>
+                            <p className={styles.emptyState}>You haven&#39;t joined any clubs yet.</p>
                         )}
                     </section>
 

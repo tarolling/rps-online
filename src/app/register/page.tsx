@@ -65,8 +65,8 @@ export default function RegisterPage() {
             await postJSON('/api/login', { idToken });
 
             setMessage("Account created! Check your email to verify before logging in.");
-        } catch (err: any) {
-            setError(err.message);
+        } catch (e: unknown) {
+            setError((e as Error).message);
         } finally {
             setLoading(false);
         }
