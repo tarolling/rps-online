@@ -9,7 +9,7 @@ export async function POST(req: Request) {
     }
 
     const db = getDatabase();
-    const scheduledStartTime = Date.now() + 55 * 60 * 1000; // start in 55 minutes
+    const scheduledStartTime = Date.now() + 50 * 60 * 1000; // start in 50 minutes
 
     const newRef = push(ref(db, 'tournaments'));
     await set(newRef, {

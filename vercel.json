@@ -3,7 +3,7 @@
     "crons": [
         {
             "path": "/api/cron/create-hourly-tournament",
-            "schedule": "5 0/1 * * *"
+            "schedule": "10 0/1 * * *"
         },
         {
             "path": "/api/cron/start-scheduled-tournaments",
