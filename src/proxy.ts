@@ -2,7 +2,7 @@ import { adminAuth } from '@/lib/firebaseAdmin';
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-const protectedRoutes = ["/dashboard", "/friends", "/clubs"];
+const protectedRoutes = ["/dashboard", "/friends", "/clubs", "/tournaments"];
 
 export async function proxy(request: NextRequest) {
     const session = request.cookies.get("session")?.value;
