@@ -52,15 +52,8 @@ export default function RegisterPage() {
 
         setLoading(true);
         try {
-            let response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/checkUsername`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ username }),
-            });
-            if (!response.ok) throw new Error("Unable to check username; try again later.");
-
-            const data = await response.json();
-            if (data.usernameExists) throw new Error("Username is already taken.");
+            const data = await postJSON<{ usernameExists: boolean }>('/api/checkUsername', { username });
+            if (data.usernameExists) return setError("Username is already taken.");
 
             const userInfo = await createUserWithEmailAndPassword(auth, email, password);
             await sendEmailVerification(userInfo.user);
@@ -69,7 +62,7 @@ export default function RegisterPage() {
 
             // get session token
             const idToken = await userInfo.user.getIdToken();
-            await postJSON('/api/login', { idToken })
+            await postJSON('/api/login', { idToken });
 
             setMessage("Account created! Check your email to verify before logging in.");
         } catch (err: any) {

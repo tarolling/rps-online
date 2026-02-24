@@ -9,6 +9,7 @@ import { useAuth } from '@/context/AuthContext';
 import { signOut } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import Avatar from '@/components/Avatar';
+import { postJSON } from '@/lib/api';
 
 export default function Header() {
     const router = useRouter();
@@ -18,7 +19,8 @@ export default function Header() {
 
     const handleLogout = async () => {
         await signOut(auth);
-        await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/logout`, { method: 'POST' });
+        await postJSON('/api/logout', {});
+        router.refresh();
         router.push('/login');
     }
 

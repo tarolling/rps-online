@@ -1,6 +1,6 @@
 "use client";
 
-import { sendEmailVerification, sendPasswordResetEmail, signInWithEmailAndPassword } from "firebase/auth";
+import { onAuthStateChanged, sendEmailVerification, sendPasswordResetEmail, signInWithEmailAndPassword } from "firebase/auth";
 import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -35,11 +35,11 @@ export default function LoginPage() {
             }
 
             await postJSON('/api/initPlayer', { uid: userInfo.user.uid });
-
             // get session token
             const idToken = await userInfo.user.getIdToken();
-            await postJSON('/api/login', { idToken })
+            await postJSON('/api/login', { idToken });
 
+            router.refresh();
             router.push("/dashboard");
         } catch (err: any) {
             setError(err.message);

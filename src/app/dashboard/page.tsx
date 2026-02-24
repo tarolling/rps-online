@@ -30,7 +30,7 @@ export default function DashboardPage() {
         const fetchStats = async () => {
             const data = await postJSON<{ rating: number, totalGames: number, winRate: number, currentStreak: number, bestStreak: number }>('/api/fetchDashboardStats', {
                 playerId: user?.uid
-            })
+            });
 
             setGameStats((prevState) => ({
                 ...prevState,
