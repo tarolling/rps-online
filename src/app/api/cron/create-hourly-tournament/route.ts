@@ -1,21 +1,18 @@
-import { getDatabase, push, ref, set } from 'firebase/database';
+import { adminDb } from '@/lib/firebaseAdmin';
 import { NextResponse } from 'next/server';
 
-const CRON_SECRET = process.env.CRON_SECRET;
 
 export async function POST(req: Request) {
-    if (req.headers.get('x-cron-secret') !== CRON_SECRET) {
+    if (req.headers.get('x-cron-secret') !== process.env.CRON_SECRET) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const db = getDatabase();
-    const scheduledStartTime = Date.now() + 30 * 60 * 1000; // start in 50 minutes
+    const scheduledStartTime = Date.now() + 60 * 60 * 1000; // start in 30 minutes
 
-    const newRef = push(ref(db, 'tournaments'));
-    await set(newRef, {
+    await adminDb.ref('tournaments').push({
         id: crypto.randomUUID(),
-        name: `Daily Tournament - ${new Date().toLocaleDateString()}`,
-        description: 'Automatically scheduled daily tournament.',
+        name: `Hourly Tournament - ${new Date().toLocaleDateString()}`,
+        description: 'Automatically scheduled hourly tournament.',
         playerCap: 8,
         status: 'registration',
         createdAt: Date.now(),
