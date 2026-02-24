@@ -26,8 +26,9 @@ export interface Tournament {
     participants: Record<string, Participant>;
     bracket?: Match[];
     matchGames?: Record<string, string>;
-    createdAt: number;
-    startTime?: number;
-    endTime?: number;
+    createdAt: number; // unix ms
+    startTime?: number; // unix ms
+    endTime?: number; // unix ms
     winner?: Participant;
+    scheduledStartTime?: number; // unix ms
 }
