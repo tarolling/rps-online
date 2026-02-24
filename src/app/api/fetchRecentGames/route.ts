@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
                         p1.username AS playerOneUsername,
                         p2.id AS playerTwoId, 
                         p2.username AS playerTwoUsername,
-                        r.winner AS winner,
+                        r.winnerId AS winner,
                         r.playerOneScore AS playerOneScore,
                         r.playerTwoScore AS playerTwoScore,
                         r.timestamp AS timestamp
