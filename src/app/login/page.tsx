@@ -39,15 +39,7 @@ export default function LoginPage() {
             const idToken = await userInfo.user.getIdToken();
             await postJSON('/api/login', { idToken });
 
-            await new Promise<void>((resolve) => {
-                const unsubscribe = onAuthStateChanged(auth, (user) => {
-                    if (user) {
-                        unsubscribe();
-                        resolve();
-                    }
-                });
-            });
-
+            router.refresh();
             router.push("/dashboard");
         } catch (err: any) {
             setError(err.message);
