@@ -1,6 +1,6 @@
-import { createGame } from './matchmaking';
 import { Tournament, Participant, Match, PlayerCap } from '../types/tournament';
 import { adminDb } from './firebaseAdmin';
+import { createGame } from './matchmaking.server';
 
 
 // ── Seeding ───────────────────────────────────────────────────────────────────
