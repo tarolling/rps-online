@@ -1,4 +1,4 @@
-import { createTournament } from '@/lib/tournaments';
+import { createTournament } from '@/lib/tournaments.server';
 import { NextResponse } from 'next/server';
 
 const CRON_SECRET = process.env.CRON_SECRET;
