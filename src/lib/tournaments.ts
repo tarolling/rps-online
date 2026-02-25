@@ -2,6 +2,7 @@ import { get, getDatabase, push, ref, set } from 'firebase/database';
 import { createGame } from './matchmaking';
 import { Tournament, Participant, Match, PlayerCap } from '../types/tournament';
 
+const db = getDatabase();
 
 // ── Seeding ───────────────────────────────────────────────────────────────────
 
@@ -117,7 +118,7 @@ export async function createTournament(name: string, description: string, player
  *
  * @returns The generated bracket.
  */
-export const startTournament = async (tournamentId: string): Promise<Match[]> => {
+export async function startTournament(tournamentId: string): Promise<Match[]> {
     try {
         const tournamentRef = ref(db, `tournaments/${tournamentId}`);
         const snapshot = await get(tournamentRef);
@@ -273,5 +274,3 @@ export const getMatchGame = async (tournamentId: string, matchId: string) => {
         throw error;
     }
 };
-
-const db = getDatabase();
