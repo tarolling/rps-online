@@ -1,20 +1,21 @@
 "use client";
 
-import { getDatabase, onValue, push, ref, set } from 'firebase/database';
+import { getDatabase, onValue, ref } from 'firebase/database';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import Footer from '@/components/Footer';
 import Header from '@/components/Header';
 import styles from './TournamentsPage.module.css';
-import { Tournament } from '@/types/tournament';
+import { PlayerCap, Tournament } from '@/types/tournament';
 import { postJSON } from '@/lib/api';
+import { createTournament } from '@/lib/tournaments';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 type NewTournamentForm = {
     name: string;
-    playerCap: number;
+    playerCap: PlayerCap;
     description: string;
 };
 
@@ -59,17 +60,7 @@ const TournamentsPage = () => {
         setError(null);
 
         try {
-            const newRef = push(ref(db, 'tournaments'));
-            await set(newRef, {
-                id: crypto.randomUUID(),
-                name: form.name,
-                description: form.description,
-                playerCap: Number(form.playerCap),
-                status: 'registration',
-                createdAt: Date.now(),
-                createdBy: user.uid,
-                participants: {},
-            });
+            await createTournament(form.name, form.description, form.playerCap);
             setForm({ name: '', playerCap: 8, description: '' });
         } catch (err) {
             console.error('Error creating tournament:', err);
@@ -118,7 +109,7 @@ const TournamentsPage = () => {
                                     id="t-cap"
                                     className={styles.select}
                                     value={form.playerCap}
-                                    onChange={(e) => setForm({ ...form, playerCap: Number(e.target.value) })}
+                                    onChange={(e) => setForm({ ...form, playerCap: Number(e.target.value) as PlayerCap })}
                                 >
                                     {[4, 8, 16, 32, 64].map((n) => (
                                         <option key={n} value={n}>{n} Players</option>

@@ -1,6 +1,6 @@
-import { get, getDatabase, ref, set } from 'firebase/database';
+import { get, getDatabase, push, ref, set } from 'firebase/database';
 import { createGame } from './matchmaking';
-import { Tournament, Participant, Match } from '../types/tournament';
+import { Tournament, Participant, Match, PlayerCap } from '../types/tournament';
 
 
 // ── Seeding ───────────────────────────────────────────────────────────────────
@@ -95,6 +95,19 @@ function generateBracket(seededParticipants: (Participant | null)[]): Match[] {
 }
 
 // ── Tournament lifecycle ──────────────────────────────────────────────────────
+
+export async function createTournament(name: string, description: string, playerCap: PlayerCap) {
+    const newRef = push(ref(db, 'tournaments'));
+    await set(newRef, {
+        id: crypto.randomUUID(),
+        name,
+        description,
+        status: 'registration',
+        playerCap: playerCap,
+        participants: {},
+        createdAt: Date.now(),
+    });
+}
 
 /**
  * Starts a tournament: seeds participants, generates the bracket, creates
