@@ -110,6 +110,21 @@ export async function createTournament(name: string, description: string, player
     });
 }
 
+export async function startScheduledTournaments() {
+    const snapshot = await adminDb.ref('tournaments').get();
+    const tournaments: Record<string, Tournament> = snapshot.val() ?? {};
+    const now = Date.now();
+
+    const toStart = Object.entries(tournaments).filter(([, t]) =>
+        t.status === 'registration' &&
+        t.scheduledStartTime &&
+        t.scheduledStartTime <= now &&
+        Object.keys(t.participants ?? {}).length >= 2
+    );
+
+    await Promise.all(toStart.map(([id]) => startTournament(id)));
+}
+
 /**
  * Starts a tournament: seeds participants, generates the bracket, creates
  * Firebase Realtime Database game entries for all round-1 matches, and
