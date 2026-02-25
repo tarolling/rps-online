@@ -7,6 +7,7 @@ export interface Participant {
 }
 
 export type MatchStatus = 'pending' | 'bye' | 'completed';
+export type PlayerCap = 8 | 16 | 32 | 64;
 
 export interface Match {
     matchId: string;
@@ -19,15 +20,17 @@ export interface Match {
 }
 
 export interface Tournament {
+    id: string;
     name: string;
     description: string;
     status: 'registration' | 'in_progress' | 'completed';
-    playerCap: number;
+    playerCap: PlayerCap;
     participants: Record<string, Participant>;
     bracket?: Match[];
     matchGames?: Record<string, string>;
-    createdAt: number;
-    startTime?: number;
-    endTime?: number;
+    createdAt: number; // unix ms
+    startTime?: number; // unix ms
+    endTime?: number; // unix ms
     winner?: Participant;
+    scheduledStartTime?: number; // unix ms
 }

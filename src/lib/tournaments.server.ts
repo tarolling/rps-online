@@ -1,8 +1,7 @@
-import { get, getDatabase, push, ref, set } from 'firebase/database';
-import { createGame } from './matchmaking';
 import { Tournament, Participant, Match, PlayerCap } from '../types/tournament';
+import { adminDb } from './firebaseAdmin';
+import { createGame } from './matchmaking.server';
 
-const db = getDatabase();
 
 // ── Seeding ───────────────────────────────────────────────────────────────────
 
@@ -98,8 +97,8 @@ function generateBracket(seededParticipants: (Participant | null)[]): Match[] {
 // ── Tournament lifecycle ──────────────────────────────────────────────────────
 
 export async function createTournament(name: string, description: string, playerCap: PlayerCap, scheduledStartTime: number | undefined = undefined) {
-    const newRef = push(ref(db, 'tournaments'));
-    await set(newRef, {
+    const newRef = adminDb.ref('tournaments').push();
+    await newRef.set({
         id: crypto.randomUUID(),
         name,
         description,
@@ -111,6 +110,21 @@ export async function createTournament(name: string, description: string, player
     });
 }
 
+export async function startScheduledTournaments() {
+    const snapshot = await adminDb.ref('tournaments').get();
+    const tournaments: Record<string, Tournament> = snapshot.val() ?? {};
+    const now = Date.now();
+
+    const toStart = Object.entries(tournaments).filter(([, t]) =>
+        t.status === 'registration' &&
+        t.scheduledStartTime &&
+        t.scheduledStartTime <= now &&
+        Object.keys(t.participants ?? {}).length >= 2
+    );
+
+    await Promise.all(toStart.map(([id]) => startTournament(id)));
+}
+
 /**
  * Starts a tournament: seeds participants, generates the bracket, creates
  * Firebase Realtime Database game entries for all round-1 matches, and
@@ -120,8 +134,8 @@ export async function createTournament(name: string, description: string, player
  */
 export async function startTournament(tournamentId: string): Promise<Match[]> {
     try {
-        const tournamentRef = ref(db, `tournaments/${tournamentId}`);
-        const snapshot = await get(tournamentRef);
+        const tournamentRef = adminDb.ref(`tournaments/${tournamentId}`);
+        const snapshot = await tournamentRef.get();
         const tournament: Tournament = snapshot.val();
 
         if (!tournament?.participants) {
@@ -146,7 +160,7 @@ export async function startTournament(tournamentId: string): Promise<Match[]> {
                 })
         );
 
-        await set(tournamentRef, {
+        await tournamentRef.set({
             ...tournament,
             status: 'in_progress',
             bracket,
@@ -168,14 +182,14 @@ export async function startTournament(tournamentId: string): Promise<Match[]> {
  *
  * @returns The updated tournament state.
  */
-export const advanceWinner = async (
+export async function advanceWinner(
     tournamentId: string,
     matchId: string,
     winnerId: string
-): Promise<Tournament> => {
+): Promise<Tournament> {
     try {
-        const tournamentRef = ref(db, `tournaments/${tournamentId}`);
-        const snapshot = await get(tournamentRef);
+        const tournamentRef = adminDb.ref(`tournaments/${tournamentId}`);
+        const snapshot = await tournamentRef.get();
         const tournament: Tournament = snapshot.val();
 
         if (!tournament?.bracket) throw new Error('Tournament or bracket not found.');
@@ -201,7 +215,7 @@ export const advanceWinner = async (
             tournament.endTime = Date.now();
         }
 
-        await set(tournamentRef, tournament);
+        await tournamentRef.set(tournament);
         return tournament;
     } catch (error) {
         console.error('Error advancing winner:', error);
@@ -246,7 +260,7 @@ async function assignToNextMatch(
  * Returns the current pending match for a player in a tournament, or null
  * if the player has no active match.
  */
-export const getCurrentMatch = (tournament: Tournament | null, playerId: string): Match | null => {
+export function getCurrentMatch(tournament: Tournament | null, playerId: string): Match | null {
     if (!tournament?.bracket || !playerId) return null;
     return tournament.bracket.find(
         (match) =>
@@ -259,15 +273,15 @@ export const getCurrentMatch = (tournament: Tournament | null, playerId: string)
  * Fetches the game data associated with a specific tournament match.
  * Returns null if no game exists for the match yet.
  */
-export const getMatchGame = async (tournamentId: string, matchId: string) => {
+export async function getMatchGame(tournamentId: string, matchId: string) {
     try {
-        const snapshot = await get(ref(db, `tournaments/${tournamentId}`));
+        const snapshot = await adminDb.ref(`tournaments/${tournamentId}`).get();
         const tournament: Tournament = snapshot.val();
 
         const gameId = tournament?.matchGames?.[matchId];
         if (!gameId) return null;
 
-        const gameSnapshot = await get(ref(db, `tournament_games/${gameId}`));
+        const gameSnapshot = await adminDb.ref(`tournament_games/${gameId}`).get();
         return gameSnapshot.val();
     } catch (error) {
         console.error('Error getting match game:', error);

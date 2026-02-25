@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { useRouter } from "next/navigation";
 import { Choice, GameState } from '@/lib/common';
 import setupAI from "@/lib/aiAlgorithm";
 import { FIRST_TO, RoundData, determineRoundWinner } from "@/lib/matchmaking";

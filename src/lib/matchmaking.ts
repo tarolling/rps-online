@@ -1,16 +1,11 @@
 import { getDatabase, ref, set, get, update, remove, onValue, off } from 'firebase/database';
-import { GameState, Choice, GameResults } from './common';
+import { GameState, Choice } from './common';
 import calculateRating from './calculateRating';
 import { advanceWinner } from './tournaments';
 import config from "@/config/settings.json";
 import { postJSON } from './api';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
-
-interface Player {
-    id: string;
-    rating: number;
-}
 
 export interface PlayerState {
     id: string;
@@ -416,8 +411,6 @@ export async function awardWinByDisconnect(gameId: string, winnerId: string): Pr
 
     const game: Game = snapshot.val();
     if (game.state !== GameState.InProgress) return; // already resolved
-
-    const winnerKey = game.player1.id === winnerId ? 'player1' : 'player2';
 
     await update(gameRef, {
         state: GameState.Finished,
