@@ -40,9 +40,9 @@ export async function GET(request: NextRequest) {
                     MATCH (p1:Player)-[r:PLAYED]->(p2:Player)
                     ORDER BY r.timestamp DESC
                     LIMIT 3
-                    RETURN p1.id AS playerOneId,
+                    RETURN p1.uid AS playerOneId,
                         p1.username AS playerOneUsername,
-                        p2.id AS playerTwoId, 
+                        p2.uid AS playerTwoId, 
                         p2.username AS playerTwoUsername,
                         r.winnerId AS winner,
                         r.playerOneScore AS playerOneScore,
