@@ -97,7 +97,7 @@ function generateBracket(seededParticipants: (Participant | null)[]): Match[] {
 
 // ── Tournament lifecycle ──────────────────────────────────────────────────────
 
-export async function createTournament(name: string, description: string, playerCap: PlayerCap, scheduledStartTime: number | undefined = undefined) {
+export async function createTournament(name: string, description: string, playerCap: PlayerCap, scheduledStartTime: number) {
     const newRef = push(ref(db, 'tournaments'));
     await set(newRef, {
         id: crypto.randomUUID(),

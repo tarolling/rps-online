@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { startScheduledTournaments } from '@/lib/tournaments.server';
+import { clearExpiredTournaments, startScheduledTournaments } from '@/lib/tournaments.server';
 
 const CRON_SECRET = process.env.CRON_SECRET;
 
@@ -9,5 +9,6 @@ export async function POST(req: Request) {
     }
 
     await startScheduledTournaments();
+    await clearExpiredTournaments();
     return NextResponse.json({ success: true });
 }

@@ -108,6 +108,14 @@ const TournamentPage = () => {
                     {tournament.description && (
                         <p className={styles.description}>{tournament.description}</p>
                     )}
+                    {tournament.scheduledStartTime && (
+                        <p className={styles.scheduledStartTime}>
+                            🕐 Starts {new Date(tournament.scheduledStartTime).toLocaleString(undefined, {
+                                dateStyle: 'medium',
+                                timeStyle: 'short',
+                            })}
+                        </p>
+                    )}
                 </div>
 
                 {error && <p className={styles.errorBanner}>{error}</p>}
@@ -138,7 +146,7 @@ const TournamentPage = () => {
                         </div>
 
                         {userRegistered ? (
-                            <p className={styles.registeredMsg}>✓ You're registered!</p>
+                            <p className={styles.registeredMsg}>✓ You&#39;re registered!</p>
                         ) : (
                             <button
                                 className={styles.registerButton}

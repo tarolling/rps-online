@@ -202,6 +202,12 @@
     background: var(--color-primary-hover);
 }
 
+.cardStartTime {
+    font-size: 0.85rem;
+    color: var(--color-muted, #888);
+    margin: 0.25rem 0;
+}
+
 /* ── Responsive ── */
 
 @media (max-width: 480px) {

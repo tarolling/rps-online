@@ -17,6 +17,7 @@ type NewTournamentForm = {
     name: string;
     playerCap: PlayerCap;
     description: string;
+    startTime: number;
 };
 
 type TournamentEntry = Tournament & { firebaseKey: string };
@@ -29,7 +30,7 @@ const TournamentsPage = () => {
 
     const [tournaments, setTournaments] = useState<TournamentEntry[]>([]);
     const [isAdmin, setIsAdmin] = useState(false);
-    const [form, setForm] = useState<NewTournamentForm>({ name: '', playerCap: 8, description: '' });
+    const [form, setForm] = useState<NewTournamentForm>({ name: '', playerCap: 8, description: '', startTime: 0 });
     const [error, setError] = useState<string | null>(null);
 
     // Subscribe to all tournaments
@@ -60,8 +61,8 @@ const TournamentsPage = () => {
         setError(null);
 
         try {
-            await createTournament(form.name, form.description, form.playerCap);
-            setForm({ name: '', playerCap: 8, description: '' });
+            await createTournament(form.name, form.description, form.playerCap, form.startTime);
+            setForm({ name: '', playerCap: 8, description: '', startTime: 0 });
         } catch (err) {
             console.error('Error creating tournament:', err);
             setError('Failed to create tournament. Please try again.');
@@ -124,6 +125,16 @@ const TournamentsPage = () => {
                                     value={form.description}
                                     onChange={(e) => setForm({ ...form, description: e.target.value })}
                                     placeholder="Brief description"
+                                    required
+                                />
+                            </div>
+                            <div className={styles.field}>
+                                <label className={styles.label} htmlFor="t-time">Start Time</label>
+                                <input
+                                    id="t-time"
+                                    type='datetime-local'
+                                    value={form.startTime ? new Date(form.startTime).toISOString().slice(0, 16) : ''}
+                                    onChange={(e) => setForm({ ...form, startTime: new Date(e.target.value).getTime() })}
                                     required
                                 />
                             </div>
@@ -193,8 +204,14 @@ function TournamentCard({ tournament, firebaseKey, statusLabel, linkLabel, compl
             {tournament.description && (
                 <p className={styles.cardDescription}>{tournament.description}</p>
             )}
+            <p className={styles.cardStartTime}>
+                🕐 {new Date(tournament.scheduledStartTime).toLocaleString(undefined, {
+                    dateStyle: 'medium',
+                    timeStyle: 'short',
+                })}
+            </p>
             <p className={styles.cardStatus}>{statusLabel}</p>
-            <Link href={`/tournament/${firebaseKey}`} className={styles.viewButton}>
+            <Link href={`/tournaments/${firebaseKey}`} className={styles.viewButton}>
                 {linkLabel}
             </Link>
         </div>

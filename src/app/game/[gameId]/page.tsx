@@ -292,7 +292,7 @@ function GamePage() {
                         <p className={styles.hint}>Both players disconnected.</p>
                         <button
                             className={styles.playAgainButton}
-                            onClick={() => router.push(game.tournamentId ? `/tournament/${game.tournamentId}` : '/play')}
+                            onClick={() => router.push(game.tournamentId ? `/tournaments/${game.tournamentId}` : '/play')}
                         >
                             {game.tournamentId ? 'Return to Tournament' : 'Play Again'}
                         </button>
@@ -387,7 +387,7 @@ function GamePage() {
                             </p>
                             <button
                                 className={styles.playAgainButton}
-                                onClick={() => router.push(game.tournamentId ? `/tournament/${game.tournamentId}` : '/play')}
+                                onClick={() => router.push(game.tournamentId ? `/tournaments/${game.tournamentId}` : '/play')}
                             >
                                 {game.tournamentId ? 'Return to Tournament' : 'Play Again'}
                             </button>
