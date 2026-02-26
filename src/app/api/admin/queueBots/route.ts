@@ -1,11 +1,10 @@
 import { NextResponse } from 'next/server';
 import { getDriver } from '@/lib/neo4j';
-import { getDatabase } from 'firebase-admin/database';
+import { adminDb } from '@/lib/firebaseAdmin';
 
 export async function POST() {
     const driver = getDriver();
     const session = driver.session({ database: 'neo4j' });
-    const db = getDatabase();
 
     // Fetch some bots from Neo4j
     const result = await session.executeRead(tx =>
@@ -13,13 +12,13 @@ export async function POST() {
     );
     await session.close();
 
-    const queueSnap = await db.ref('matchmaking_queue').get();
+    const queueSnap = await adminDb.ref('matchmaking_queue').get();
     const queue = queueSnap.val() || {};
 
     for (const record of result.records) {
         const uid = record.get('uid');
         if (!queue[uid]) { // don't double-add
-            await db.ref(`matchmaking_queue/${uid}`).set({
+            await adminDb.ref(`matchmaking_queue/${uid}`).set({
                 username: record.get('username'),
                 rating: record.get('rating'),
                 timestamp: Date.now(),
