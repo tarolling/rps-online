@@ -12,6 +12,7 @@ export async function POST(req: NextRequest) {
     const ai = setupAI();
 
     const gameRef = db.ref(`games/${gameId}`);
+    await db.ref(`games/${gameId}/presence/${botId}`).set(true);
     let round = 1;
 
     // Poll for the bot's turn each round
