@@ -76,20 +76,20 @@ function GamePage() {
     // Server-anchored round timer — auto-submits when it hits zero
     useEffect(() => {
         if (game?.state !== GameState.InProgress || !game.roundStartTimestamp) return;
+        const player1IsBot = game.player1.id.startsWith('bot_'); // ✅ captured at effect setup time
+        const shouldResolve = isPlayer1 || player1IsBot;
 
         const tick = () => {
             const elapsed = Math.floor((Date.now() - game.roundStartTimestamp!) / 1000);
             const remaining = Math.max(0, config.roundTimeout - elapsed);
             setTimeLeft(remaining);
-            const player1IsBot = game?.player1.id.startsWith('bot_');
-            const shouldResolve = isPlayer1 || player1IsBot;
             if (remaining === 0 && shouldResolve) resolveRound(gameId, playerId!);
         };
 
         tick();
         const timer = setInterval(tick, 1000);
         return () => clearInterval(timer);
-    }, [game?.roundStartTimestamp, game?.state]);
+    }, [game?.roundStartTimestamp, game?.state, game?.player1.id]);
 
     // Subscribe to game state
     useEffect(() => {
@@ -123,7 +123,7 @@ function GamePage() {
                 data.state === GameState.InProgress
             ) {
                 setRoundOver(true);
-                const player1IsBot = game?.player1.id.startsWith('bot_');
+                const player1IsBot = data.player1.id.startsWith('bot_');
                 const shouldResolve = isPlayer1 || player1IsBot;
                 if (shouldResolve) setTimeout(() => resolveRound(gameId, playerId), 1000);
             }
