@@ -73,14 +73,6 @@ function GamePage() {
         }
     }, [playerId, game?.player1.id, game?.player2.id]);
 
-    // Fetch clubs once we know both player IDs
-    useEffect(() => {
-        if (!playerId || !game) return;
-        const opponentId = isPlayer1 ? game.player2.id : game.player1.id;
-
-
-    }, [playerId, game?.player1.id, game?.player2.id]);
-
     // Server-anchored round timer — auto-submits when it hits zero
     useEffect(() => {
         if (game?.state !== GameState.InProgress || !game.roundStartTimestamp) return;
@@ -159,13 +151,19 @@ function GamePage() {
                 game.player1.id &&
                 game.player2.id &&
                 presence[game.player1.id] &&
-                presence[game.player2.id] &&
-                playerId === game.player1.id
+                presence[game.player2.id]
             ) {
-                await update(ref(db, `games/${gameId}`), {
-                    state: GameState.InProgress,
-                    roundStartTimestamp: Date.now(),
-                });
+                // Use player1 as the canonical "starter" to avoid double-writes,
+                // but fall back to player2 if player1 never shows (e.g. it's a bot)
+                const iAmPlayer1 = playerId === game.player1.id;
+                const player1IsBot = game.player1.id.startsWith('bot_');
+
+                if (iAmPlayer1 || player1IsBot) {
+                    await update(ref(db, `games/${gameId}`), {
+                        state: GameState.InProgress,
+                        roundStartTimestamp: Date.now(),
+                    });
+                }
             }
         });
 
@@ -275,7 +273,7 @@ function GamePage() {
             <Header />
             <main className={styles.main}>
                 <div className={styles.gameContainer}>
-                    <p className={styles.loading}>Waiting for opponent to connect…</p>
+                    <p className={styles.loading}>Waiting for opponent to connect...</p>
                 </div>
             </main>
             <Footer />
