@@ -110,6 +110,10 @@ export async function findMatch(uid: string, username: string, userRating: numbe
                         playerId, playerData.username, playerData.rating,
                         uid, username, userRating
                     );
+                    if (playerData.isBot) {
+                        // Fire-and-forget: bot plays the game server-side
+                        await postJSON('/api/botPlay', { gameId: gameID, botId: playerId });
+                    }
                     return { gameID, opponent: playerData };
                 }
             }
