@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDatabase } from 'firebase-admin/database';
+import { adminDb } from '@/lib/firebaseAdmin';
 import { Choice } from '@/lib/common';
 import setupAI from '@/lib/aiAlgorithm';
 
@@ -8,11 +8,10 @@ const FROM_AI: Record<string, Choice> = { R: Choice.Rock, P: Choice.Paper, S: Ch
 
 export async function POST(req: NextRequest) {
     const { gameId, botId } = await req.json();
-    const db = getDatabase();
     const ai = setupAI();
 
-    const gameRef = db.ref(`games/${gameId}`);
-    await db.ref(`games/${gameId}/presence/${botId}`).set(true);
+    const gameRef = adminDb.ref(`games/${gameId}`);
+    await adminDb.ref(`games/${gameId}/presence/${botId}`).set(true);
     let round = 1;
 
     // Poll for the bot's turn each round
@@ -46,7 +45,7 @@ export async function POST(req: NextRequest) {
             if (!game || game.state !== 'in_progress') {
                 gameRef.off('value');
                 // Clean up bot from queue
-                db.ref(`matchmaking_queue/${botId}`).remove();
+                adminDb.ref(`matchmaking_queue/${botId}`).remove();
                 resolve(NextResponse.json({ done: true }));
                 return;
             }
