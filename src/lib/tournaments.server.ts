@@ -96,7 +96,14 @@ function generateBracket(seededParticipants: (Participant | null)[]): Match[] {
 
 // ── Tournament lifecycle ──────────────────────────────────────────────────────
 
-export async function createTournament(name: string, description: string, playerCap: PlayerCap, scheduledStartTime: number | undefined = undefined) {
+/**
+ * Creates a new tournament.
+ * @param name 
+ * @param description 
+ * @param playerCap 
+ * @param scheduledStartTime 
+ */
+export async function createTournament(name: string, description: string, playerCap: PlayerCap, scheduledStartTime: number) {
     const newRef = adminDb.ref('tournaments').push();
     await newRef.set({
         id: crypto.randomUUID(),
@@ -110,6 +117,14 @@ export async function createTournament(name: string, description: string, player
     });
 }
 
+/**
+ * Deletes a tournament.
+ * @param id The tournament's Firebase ID
+ */
+export async function deleteTournament(id: string) {
+    await adminDb.ref(`tournaments/${id}`).remove();
+}
+
 export async function startScheduledTournaments() {
     const snapshot = await adminDb.ref('tournaments').get();
     const tournaments: Record<string, Tournament> = snapshot.val() ?? {};
@@ -117,12 +132,28 @@ export async function startScheduledTournaments() {
 
     const toStart = Object.entries(tournaments).filter(([, t]) =>
         t.status === 'registration' &&
-        t.scheduledStartTime &&
         t.scheduledStartTime <= now &&
         Object.keys(t.participants ?? {}).length >= 2
     );
 
     await Promise.all(toStart.map(([id]) => startTournament(id)));
+}
+
+/**
+ * Deleted any tournaments that were scheduled to start but didn't have sufficient players
+ */
+export async function clearExpiredTournaments() {
+    const snapshot = await adminDb.ref('tournaments').get();
+    const tournaments: Record<string, Tournament> = snapshot.val() ?? {};
+    const now = Date.now();
+
+    const toStart = Object.entries(tournaments).filter(([, t]) =>
+        t.status === 'registration' &&
+        t.scheduledStartTime <= now &&
+        Object.keys(t.participants ?? {}).length < 2
+    );
+
+    await Promise.all(toStart.map(([id]) => deleteTournament(id)));
 }
 
 /**
