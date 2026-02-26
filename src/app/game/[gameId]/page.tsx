@@ -124,7 +124,7 @@ function GamePage() {
             ) {
                 setRoundOver(true);
                 const player1IsBot = data.player1.id.startsWith('bot_');
-                const shouldResolve = isPlayer1 || player1IsBot;
+                const shouldResolve = data.player1.id === playerId || player1IsBot;
                 if (shouldResolve) setTimeout(() => resolveRound(gameId, playerId), 1000);
             }
         });
