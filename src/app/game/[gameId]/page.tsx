@@ -81,7 +81,9 @@ function GamePage() {
             const elapsed = Math.floor((Date.now() - game.roundStartTimestamp!) / 1000);
             const remaining = Math.max(0, config.roundTimeout - elapsed);
             setTimeLeft(remaining);
-            if (remaining === 0) resolveRound(gameId, playerId!);
+            const player1IsBot = game?.player1.id.startsWith('bot_');
+            const shouldResolve = isPlayer1 || player1IsBot;
+            if (remaining === 0 && shouldResolve) resolveRound(gameId, playerId!);
         };
 
         tick();
@@ -121,7 +123,9 @@ function GamePage() {
                 data.state === GameState.InProgress
             ) {
                 setRoundOver(true);
-                setTimeout(() => resolveRound(gameId, playerId), 1000);
+                const player1IsBot = game?.player1.id.startsWith('bot_');
+                const shouldResolve = isPlayer1 || player1IsBot;
+                if (shouldResolve) setTimeout(() => resolveRound(gameId, playerId), 1000);
             }
         });
 
