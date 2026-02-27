@@ -161,7 +161,7 @@ function GamePage() {
         set(presenceRef, true).then(() => {
             onDisconnect(presenceRef).remove();
         });
-        return () => remove(presenceRef); // only runs on true unmount
+        return () => { remove(presenceRef) }; // only runs on true unmount
     }, [gameId, playerId]);
 
     // Separate effect just for starting the game — re-runs on state change is fine here
