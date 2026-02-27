@@ -1,41 +1,11 @@
 import { getDatabase, ref, set, get, update, remove, onValue, off } from 'firebase/database';
-import { GameState, Choice } from './common';
+import { GameState, Choice, Game } from '../types';
 import calculateRating from './calculateRating';
 import { advanceWinner } from './tournaments';
 import config from "@/config/settings.json";
 import { postJSON } from './api';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
-
-export interface PlayerState {
-    id: string;
-    username: string;
-    score: number;
-    rating: number;
-    choice: Choice | null;
-    submitted: boolean;
-}
-
-export interface RoundData {
-    player1Choice: Choice | null;
-    player2Choice: Choice | null;
-    winner: string | null;
-}
-
-export interface Game {
-    id: string;
-    state: GameState;
-    player1: PlayerState;
-    player2: PlayerState;
-    rounds: RoundData[];
-    currentRound: number;
-    timestamp: number;
-    winner?: string;
-    endTimestamp?: number;
-    tournamentId?: string;
-    matchId?: string;
-    roundStartTimestamp?: number;
-}
 
 interface TournamentInfo {
     tournamentId: string;

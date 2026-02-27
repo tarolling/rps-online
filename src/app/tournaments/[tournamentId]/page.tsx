@@ -6,11 +6,11 @@ import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { startTournament, getCurrentMatch } from '@/lib/tournaments';
-import type { Tournament, Match, Participant } from '@/types/tournament';
 import { postJSON } from '@/lib/api';
 import Footer from '@/components/Footer';
 import Header from '@/components/Header';
 import styles from './TournamentPage.module.css';
+import { Participant, Tournament, TournamentMatch } from '@/types';
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
@@ -221,7 +221,7 @@ const TournamentPage = () => {
 
 // ── Sub-components ────────────────────────────────────────────────────────────
 
-function MatchCard({ match, gameID, userUID }: { match: Match; gameID?: string; userUID?: string }) {
+function MatchCard({ match, gameID, userUID }: { match: TournamentMatch; gameID?: string; userUID?: string }) {
     const isPlayer1 = match.player1?.id === userUID;
     return (
         <div className={styles.matchCard}>
@@ -243,8 +243,8 @@ function MatchCard({ match, gameID, userUID }: { match: Match; gameID?: string; 
     );
 }
 
-function Bracket({ bracket }: { bracket: Match[] }) {
-    const rounds = bracket.reduce<Record<number, Match[]>>((acc, match) => {
+function Bracket({ bracket }: { bracket: TournamentMatch[] }) {
+    const rounds = bracket.reduce<Record<number, TournamentMatch[]>>((acc, match) => {
         (acc[match.round] ??= []).push(match);
         return acc;
     }, {});

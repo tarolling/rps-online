@@ -1,6 +1,6 @@
 import { get, getDatabase, push, ref, set } from 'firebase/database';
 import { createGame } from './matchmaking';
-import { Tournament, Participant, Match, PlayerCap } from '../types/tournament';
+import { Participant, PlayerCap, Tournament, TournamentMatch } from '@/types';
 
 const db = getDatabase();
 
@@ -50,8 +50,8 @@ function seedParticipants(participants: Participant[], numPlayers: number): (Par
  * Handles byes for any slots without an opponent.
  * Currently supports up to a 2-round bracket (4–8 players); extend as needed.
  */
-function generateBracket(seededParticipants: (Participant | null)[]): Match[] {
-    const bracket: Match[] = [];
+function generateBracket(seededParticipants: (Participant | null)[]): TournamentMatch[] {
+    const bracket: TournamentMatch[] = [];
     const byeAdvancers: (Participant | null)[] = [];
     const totalFirstRoundMatches = seededParticipants.length / 2;
 
@@ -118,7 +118,7 @@ export async function createTournament(name: string, description: string, player
  *
  * @returns The generated bracket.
  */
-export async function startTournament(tournamentId: string): Promise<Match[]> {
+export async function startTournament(tournamentId: string): Promise<TournamentMatch[]> {
     try {
         const tournamentRef = ref(db, `tournaments/${tournamentId}`);
         const snapshot = await get(tournamentRef);
@@ -215,7 +215,7 @@ export const advanceWinner = async (
  */
 async function assignToNextMatch(
     tournament: Tournament,
-    currentMatch: Match,
+    currentMatch: TournamentMatch,
     winner: Participant,
     tournamentId: string,
 ): Promise<void> {
@@ -246,7 +246,7 @@ async function assignToNextMatch(
  * Returns the current pending match for a player in a tournament, or null
  * if the player has no active match.
  */
-export const getCurrentMatch = (tournament: Tournament | null, playerId: string): Match | null => {
+export const getCurrentMatch = (tournament: Tournament | null, playerId: string): TournamentMatch | null => {
     if (!tournament?.bracket || !playerId) return null;
     return tournament.bracket.find(
         (match) =>

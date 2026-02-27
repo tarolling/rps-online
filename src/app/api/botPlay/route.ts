@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebaseAdmin';
-import { Choice } from '@/lib/common';
 import setupAI from '@/lib/aiAlgorithm';
-import { Game } from '@/lib/matchmaking.server';
+import { Choice, Game } from '@/types';
 
 const TO_AI: Record<Choice, string> = { [Choice.Rock]: 'R', [Choice.Paper]: 'P', [Choice.Scissors]: 'S' };
 const FROM_AI: Record<string, Choice> = { R: Choice.Rock, P: Choice.Paper, S: Choice.Scissors };

@@ -1,9 +1,9 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { Choice, GameState } from '@/lib/common';
+import { Choice, GameState, RoundData } from '@/types';
 import setupAI from "@/lib/aiAlgorithm";
-import { FIRST_TO, RoundData, determineRoundWinner } from "@/lib/matchmaking";
+import { FIRST_TO, determineRoundWinner } from "@/lib/matchmaking";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
 import styles from "@/styles/game.module.css";

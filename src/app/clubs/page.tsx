@@ -6,7 +6,7 @@ import { postJSON } from '@/lib/api';
 import Footer from '@/components/Footer';
 import Header from '@/components/Header';
 import styles from './ClubsPage.module.css';
-import { Club, ClubAvailability, UserClub } from '@/types/club';
+import { Club, ClubAvailability, UserClub } from '@/types';
 import Link from 'next/link';
 
 // ── Types ─────────────────────────────────────────────────────────────────────

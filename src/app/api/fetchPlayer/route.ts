@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
 
     try {
         const read = await session.executeRead(async tx => {
-            let result = await tx.run(`
+            const result = await tx.run(`
             MATCH (p:Player {uid: $uid})
             RETURN p.username AS username, p.rating AS rating
             `, { uid });

@@ -9,10 +9,11 @@ import Header from "@/components/Header";
 import formatRelativeTime from "@/lib/time";
 import styles from "./ProfilePage.module.css";
 import { getJSON, postJSON } from "@/lib/api";
-import { Match, ProfileData } from "@/types/common";
+import { Match } from "@/types/common";
 import { getRankTier } from "@/lib/ranks";
 import Avatar from "@/components/Avatar";
 import { getAvatarUrl, uploadAvatar } from "@/lib/avatar";
+import { ProfileData } from "@/types";
 
 type GameStats = { totalGames: number; winRate: string; currentStreak: number; bestStreak: number };
 type ClubData = { name: string; tag: string; memberRole: string; memberCount: number };
@@ -58,8 +59,8 @@ function ProfilePage() {
             const data = await postJSON<ProfileData>("/api/fetchPlayer", { uid: userId });
             setProfileData(data);
             setNewUsername(data.username);
-        } catch (err: any) {
-            setError(err.message);
+        } catch (err: unknown) {
+            setError((err as Error).message);
         } finally {
             setLoading(false);
         }
@@ -98,8 +99,8 @@ function ProfilePage() {
             await postJSON("/api/updateUsername", { uid: userId, newUsername });
             setProfileData((prev) => prev ? { ...prev, username: newUsername } : prev);
             setIsEditing(false);
-        } catch (err: any) {
-            setUsernameError(err.message);
+        } catch (err: unknown) {
+            setUsernameError((err as Error).message);
         }
     };
 
@@ -109,8 +110,8 @@ function ProfilePage() {
             await user!.delete();
             await postJSON("/api/deleteAccount", { uid: userId });
             router.replace("/login");
-        } catch (err: any) {
-            setError(err.message);
+        } catch (err: unknown) {
+            setError((err as Error).message);
         }
     };
 
@@ -122,8 +123,8 @@ function ProfilePage() {
         try {
             const url = await uploadAvatar(user.uid, file);
             setContextAvatarUrl(url); // updates header + this page simultaneously
-        } catch (err: any) {
-            setAvatarError(err.message);
+        } catch (err: unknown) {
+            setAvatarError((err as Error).message);
         } finally {
             setAvatarUploading(false);
             if (fileInputRef.current) fileInputRef.current.value = "";
@@ -196,7 +197,10 @@ function ProfilePage() {
                         <h2>Statistics</h2>
                         {gameStats ? (
                             <div className={styles.statsGrid}>
-                                <StatItem value={`${getRankTier(profileData?.rating!).rank} ${getRankTier(profileData?.rating!).division}`} label="Rank" />
+                                {profileData ?
+                                    <StatItem value={`${getRankTier(profileData.rating).rank} ${getRankTier(profileData.rating).division}`} label="Rank" /> :
+                                    <StatItem value="N/A" label="Rank" />
+                                }
                                 <StatItem value={profileData?.rating ?? "N/A"} label="Skill Rating" />
                                 <StatItem value={gameStats.totalGames} label="Games Played" />
                                 <StatItem value={gameStats.winRate} label="Win Rate" />

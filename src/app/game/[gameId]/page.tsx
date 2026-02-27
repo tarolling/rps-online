@@ -5,17 +5,17 @@ import { onDisconnect } from 'firebase/database';
 import { useCallback, useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { Choice, DISCONNECT_TIMEOUT, GameState, WAITING_TIMEOUT } from '@/lib/common';
-import { RoundData, Game, resolveRound, awardWinByDisconnect } from '@/lib/matchmaking';
+import { DISCONNECT_TIMEOUT, WAITING_TIMEOUT } from '@/lib/common';
+import { resolveRound, awardWinByDisconnect } from '@/lib/matchmaking';
 import Footer from '@/components/Footer';
 import Header from '@/components/Header';
 import styles from '@/styles/game.module.css';
 import config from "@/config/settings.json";
-import { Tournament } from '@/types/tournament';
 import RankBadge from '@/components/RankBadge';
 import Avatar from '@/components/Avatar';
 import { getAvatarUrl } from '@/lib/avatar';
 import { postJSON } from '@/lib/api';
+import { Choice, Game, GameState, RoundData, Tournament, UserClub } from '@/types';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -62,8 +62,8 @@ function GamePage() {
         // fetch their club tags
         if (!clubTags[game.player1.id] && !clubTags[game.player2.id]) {
             Promise.all([
-                postJSON('/api/clubs', { methodType: 'user', uid: game.player1.id }).catch(() => null),
-                postJSON('/api/clubs', { methodType: 'user', uid: game.player2.id }).catch(() => null),
+                postJSON<UserClub>('/api/clubs', { methodType: 'user', uid: game.player1.id }).catch(() => null),
+                postJSON<UserClub>('/api/clubs', { methodType: 'user', uid: game.player2.id }).catch(() => null),
             ]).then(([p1Club, p2Club]) => {
                 setClubTags({
                     [game.player1.id]: p1Club?.tag ?? null,

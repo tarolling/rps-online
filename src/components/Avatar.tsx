@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import styles from './Avatar.module.css';
 
 type AvatarProps = {
@@ -12,7 +13,7 @@ export default function Avatar({ src, username = '?', size = 'md' }: AvatarProps
     return (
         <div className={`${styles.avatar} ${styles[size]}`}>
             {src
-                ? <img src={src} alt={username} className={styles.img} />
+                ? <Image src={src} alt={username} className={styles.img} />
                 : <span className={styles.initial}>{initial}</span>
             }
         </div>

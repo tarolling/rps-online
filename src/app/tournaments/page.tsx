@@ -7,9 +7,9 @@ import { useAuth } from '@/context/AuthContext';
 import Footer from '@/components/Footer';
 import Header from '@/components/Header';
 import styles from './TournamentsPage.module.css';
-import { PlayerCap, Tournament } from '@/types/tournament';
 import { postJSON } from '@/lib/api';
 import { createTournament } from '@/lib/tournaments';
+import { PlayerCap, Tournament } from '@/types';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
