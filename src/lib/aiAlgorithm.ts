@@ -16,17 +16,17 @@ export default function setupAI() {
     let myHist = "";
     let oppHist = "";
 
-    let bothPatterns: any = {};
-    let oppPatterns: any = {};
-    let myPatterns: any = {};
+    const bothPatterns: any = {};
+    const oppPatterns: any = {};
+    const myPatterns: any = {};
 
-    let both2Patterns: any = {};
-    let opp2Patterns: any = {};
-    let my2Patterns: any = {};
+    const both2Patterns: any = {};
+    const opp2Patterns: any = {};
+    const my2Patterns: any = {};
 
     let output = randomChoice(["R", "P", "S"]);
-    let candidates = Array(36).fill(output);
-    let performance = Array(36).fill([0, 0]);
+    const candidates = Array(36).fill(output);
+    const performance = Array(36).fill([0, 0]);
 
     return function (input: any) {
         if (input === "") {

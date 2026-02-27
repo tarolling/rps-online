@@ -9,3 +9,6 @@
 4. The system shall be able to provide the option to join clubs.
 
 5. The system shall be able to provide the option to participate in tournaments.
+
+6. When a player leaves a game, either by navigating away from the page or by closing the website, the system shall
+start a timer. Once the timer expires, the game is won by the other player.

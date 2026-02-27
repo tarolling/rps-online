@@ -2,20 +2,20 @@
 
 import { get, getDatabase, onValue, ref, remove, set, update } from 'firebase/database';
 import { onDisconnect } from 'firebase/database';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { Choice, DISCONNECT_TIMEOUT, GameState, WAITING_TIMEOUT } from '@/lib/common';
-import { RoundData, Game, resolveRound, awardWinByDisconnect } from '@/lib/matchmaking';
+import { DISCONNECT_TIMEOUT, WAITING_TIMEOUT } from '@/lib/common';
+import { resolveRound, awardWinByDisconnect } from '@/lib/matchmaking';
 import Footer from '@/components/Footer';
 import Header from '@/components/Header';
 import styles from '@/styles/game.module.css';
 import config from "@/config/settings.json";
-import { Tournament } from '@/types/tournament';
 import RankBadge from '@/components/RankBadge';
 import Avatar from '@/components/Avatar';
 import { getAvatarUrl } from '@/lib/avatar';
 import { postJSON } from '@/lib/api';
+import { Choice, Game, GameState, RoundData, Tournament, UserClub } from '@/types';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -52,6 +52,8 @@ function GamePage() {
     const opponentData = isPlayer1 ? game?.player2 : game?.player1;
     const opponentKey = isPlayer1 ? 'player2' : 'player1';
 
+    const botRequestInFlight = useRef<Set<number>>(new Set());
+
     // Fetch avatars once we know both player IDs
     useEffect(() => {
         if (!playerId || !game) return;
@@ -62,8 +64,8 @@ function GamePage() {
         // fetch their club tags
         if (!clubTags[game.player1.id] && !clubTags[game.player2.id]) {
             Promise.all([
-                postJSON('/api/clubs', { methodType: 'user', uid: game.player1.id }).catch(() => null),
-                postJSON('/api/clubs', { methodType: 'user', uid: game.player2.id }).catch(() => null),
+                postJSON<UserClub>('/api/clubs', { methodType: 'user', uid: game.player1.id }).catch(() => null),
+                postJSON<UserClub>('/api/clubs', { methodType: 'user', uid: game.player2.id }).catch(() => null),
             ]).then(([p1Club, p2Club]) => {
                 setClubTags({
                     [game.player1.id]: p1Club?.tag ?? null,
@@ -76,14 +78,15 @@ function GamePage() {
     // Server-anchored round timer — auto-submits when it hits zero
     useEffect(() => {
         if (game?.state !== GameState.InProgress || !game.roundStartTimestamp) return;
-        const player1IsBot = game.player1.id.startsWith('bot_'); // ✅ captured at effect setup time
-        const shouldResolve = isPlayer1 || player1IsBot;
+        const botIsPlayer1 = game.player1.id.startsWith('bot_');
+        const resolverPlayerId = game.player1.id;
+        const iAmResolver = isPlayer1 || botIsPlayer1;
 
         const tick = () => {
             const elapsed = Math.floor((Date.now() - game.roundStartTimestamp!) / 1000);
             const remaining = Math.max(0, config.roundTimeout - elapsed);
             setTimeLeft(remaining);
-            if (remaining === 0 && shouldResolve) resolveRound(gameId, playerId!);
+            if (remaining === 0 && iAmResolver) resolveRound(gameId, resolverPlayerId);
         };
 
         tick();
@@ -112,56 +115,77 @@ function GamePage() {
                     setChoice(null);
                     setTimeLeft(config.roundTimeout);
                     setRoundOver(false);
+                    botRequestInFlight.current.clear();
                 }
                 return data;
             });
 
-            // Both players have submitted (choice may be null if they timed out)
+            // check for bot game
+            const isABotGame = data.player1.id.startsWith('bot_') || data.player2.id.startsWith('bot_');
+            const botId = data.player1.id.startsWith('bot_') ? data.player1.id : data.player2.id;
+            const botIsPlayer1 = data.player1.id.startsWith('bot_');
+            // Always use player1's ID for resolveRound, whether that's us or the bot
+            const resolverPlayerId = data.player1.id;
+            const iAmResolver = playerId === resolverPlayerId || botIsPlayer1;
+
+            if (isABotGame && data.state === GameState.InProgress) {
+                const botKey = botIsPlayer1 ? 'player1' : 'player2';
+                const currentRound = data.currentRound;
+                if (!data[botKey].submitted && !botRequestInFlight.current.has(currentRound)) {
+                    botRequestInFlight.current.add(currentRound);
+                    fetch('/api/botPlay', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ gameId, botId }),
+                    });
+                }
+            }
+
             if (
                 data.player1.submitted &&
                 data.player2.submitted &&
                 data.state === GameState.InProgress
             ) {
                 setRoundOver(true);
-                const player1IsBot = data.player1.id.startsWith('bot_');
-                const shouldResolve = data.player1.id === playerId || player1IsBot;
-                if (shouldResolve) setTimeout(() => resolveRound(gameId, playerId), 1000);
+                if (iAmResolver) setTimeout(() => resolveRound(gameId, resolverPlayerId), 1000);
             }
-        });
-
-        // Register disconnect handler
-        const presenceRef = ref(db, `games/${gameId}/presence/${playerId}`);
-        set(presenceRef, true).then(() => {
-            onDisconnect(presenceRef).remove();
         });
 
         return () => unsubscribe();
     }, [gameId, playerId]);
 
-    // Set presence + start game when both players arrive
+    // Set presence once on mount, never clean it up early
     useEffect(() => {
-        if (!gameId || !playerId || !game) return;
-
+        if (!gameId || !playerId) return;
         const presenceRef = ref(db, `games/${gameId}/presence/${playerId}`);
         set(presenceRef, true).then(() => {
             onDisconnect(presenceRef).remove();
         });
+        return () => { remove(presenceRef) }; // only runs on true unmount
+    }, [gameId, playerId]);
+
+    // Separate effect just for starting the game — re-runs on state change is fine here
+    useEffect(() => {
+        if (!gameId || !playerId) return;
 
         const presenceRootRef = ref(db, `games/${gameId}/presence`);
         const unsubPresence = onValue(presenceRootRef, async (snapshot) => {
             const presence = snapshot.val() ?? {};
-            if (
-                game.state === GameState.Waiting &&
-                game.player1.id &&
-                game.player2.id &&
-                presence[game.player1.id] &&
-                presence[game.player2.id]
-            ) {
-                // Use player1 as the canonical "starter" to avoid double-writes,
-                // but fall back to player2 if player1 never shows (e.g. it's a bot)
-                const iAmPlayer1 = playerId === game.player1.id;
-                const player1IsBot = game.player1.id.startsWith('bot_');
 
+            // get fresh game state from firebase
+            const gameSnap = await get(ref(db, `games/${gameId}`));
+            const currentGame = gameSnap.val();
+
+            if (!currentGame || currentGame.state !== GameState.Waiting) return;
+
+            if (
+                currentGame.player1.id &&
+                currentGame.player2.id &&
+                presence[currentGame.player1.id] &&
+                presence[currentGame.player2.id]
+            ) {
+                const iAmPlayer1 = playerId === currentGame.player1.id;
+                const player1IsBot = currentGame.player1.id.startsWith('bot_');
                 if (iAmPlayer1 || player1IsBot) {
                     await update(ref(db, `games/${gameId}`), {
                         state: GameState.InProgress,
@@ -171,11 +195,8 @@ function GamePage() {
             }
         });
 
-        return () => {
-            unsubPresence();
-            remove(presenceRef);
-        };
-    }, [gameId, playerId, game?.state]);
+        return () => unsubPresence();
+    }, [gameId, playerId]);
 
 
     // watch opponent's presence for disconnects

@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
                 break;
             }
             case "create": {
-                let club: Club = {
+                const club: Club = {
                     name: body.name,
                     tag: body.tag,
                     availability: body.availability,
@@ -156,9 +156,9 @@ export async function POST(req: NextRequest) {
                 const result = await session.executeRead((tx) =>
                     tx.run(
                         `MATCH (p:Player {uid: $uid})-[r:MEMBER]->(c:Club)
-                         WITH c.name AS name, c.tag AS tag, r.role AS memberRole
+                         WITH c.name AS name, c.tag AS tag, c.availability AS availability, r.role AS memberRole
                          MATCH (:Player)-[:MEMBER]->(:Club {name: name})
-                         RETURN name, tag, memberRole, count(*) AS memberCount`,
+                         RETURN name, tag, availability, memberRole, count(*) AS memberCount`,
                         { uid: body.uid }
                     )
                 );
@@ -169,6 +169,7 @@ export async function POST(req: NextRequest) {
                 resultBody = {
                     name: r.get("name"),
                     tag: r.get("tag"),
+                    availability: r.get("availability"),
                     memberRole: r.get("memberRole"),
                     memberCount: neo4j.integer.toNumber(r.get("memberCount")),
                 };

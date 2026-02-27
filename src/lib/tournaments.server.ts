@@ -1,4 +1,4 @@
-import { Tournament, Participant, Match, PlayerCap } from '../types/tournament';
+import { Participant, PlayerCap, Tournament, TournamentMatch } from '@/types';
 import { adminDb } from './firebaseAdmin';
 import { createGame } from './matchmaking.server';
 
@@ -49,8 +49,8 @@ function seedParticipants(participants: Participant[], numPlayers: number): (Par
  * Handles byes for any slots without an opponent.
  * Currently supports up to a 2-round bracket (4–8 players); extend as needed.
  */
-function generateBracket(seededParticipants: (Participant | null)[]): Match[] {
-    const bracket: Match[] = [];
+function generateBracket(seededParticipants: (Participant | null)[]): TournamentMatch[] {
+    const bracket: TournamentMatch[] = [];
     const byeAdvancers: (Participant | null)[] = [];
     const totalFirstRoundMatches = seededParticipants.length / 2;
 
@@ -163,7 +163,7 @@ export async function clearExpiredTournaments() {
  *
  * @returns The generated bracket.
  */
-export async function startTournament(tournamentId: string): Promise<Match[]> {
+export async function startTournament(tournamentId: string): Promise<TournamentMatch[]> {
     try {
         const tournamentRef = adminDb.ref(`tournaments/${tournamentId}`);
         const snapshot = await tournamentRef.get();
@@ -260,7 +260,7 @@ export async function advanceWinner(
  */
 async function assignToNextMatch(
     tournament: Tournament,
-    currentMatch: Match,
+    currentMatch: TournamentMatch,
     winner: Participant,
     tournamentId: string,
 ): Promise<void> {
@@ -291,7 +291,7 @@ async function assignToNextMatch(
  * Returns the current pending match for a player in a tournament, or null
  * if the player has no active match.
  */
-export function getCurrentMatch(tournament: Tournament | null, playerId: string): Match | null {
+export function getCurrentMatch(tournament: Tournament | null, playerId: string): TournamentMatch | null {
     if (!tournament?.bracket || !playerId) return null;
     return tournament.bracket.find(
         (match) =>

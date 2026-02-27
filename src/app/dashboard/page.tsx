@@ -8,9 +8,10 @@ import Link from 'next/link';
 import formatRelativeTime from '@/lib/time';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import { Match, ProfileData } from '@/types/common';
+import { Match } from '@/types/common';
 import config from '@/config/settings.json';
 import RankBadge from '@/components/RankBadge';
+import { ProfileData } from '@/types';
 
 export default function DashboardPage() {
     const { user } = useAuth();
@@ -24,7 +25,7 @@ export default function DashboardPage() {
     const [recentMatches, setRecentMatches] = useState<Match[]>([]);
     const [playerData, setPlayerData] = useState<ProfileData | null>(null);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         const fetchStats = async () => {
@@ -41,7 +42,7 @@ export default function DashboardPage() {
                 bestStreak: data.bestStreak
             }));
 
-            const recentGames = await getJSON('/api/fetchRecentGames', {
+            const recentGames = await getJSON<Match[]>('/api/fetchRecentGames', {
                 playerId: user?.uid
             });
 
@@ -61,9 +62,9 @@ export default function DashboardPage() {
 
                 const data = await postJSON<ProfileData>('/api/fetchPlayer', { uid: user.uid });
                 setPlayerData(data);
-            } catch (err: any) {
-                console.error('Error fetching player:', err);
-                setError(err.message);
+            } catch (err: unknown) {
+                console.error('Error fetching player:', err as Error);
+                setError((err as Error).message);
             } finally {
                 setLoading(false);
             }
@@ -150,7 +151,7 @@ const LoadingState = () => (
     </div>
 );
 
-const ErrorState = ({ error, onRetry }: { error: string, onRetry: any }) => (
+const ErrorState = ({ error, onRetry }: { error: string, onRetry: () => void }) => (
     <div className={styles.dashboard}>
         <Header />
         <div className={styles.dashboardContainer}>

@@ -8,23 +8,9 @@ import { postJSON } from "@/lib/api";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import styles from "./ClubPage.module.css";
-import { ClubAvailability } from "@/types/club";
+import { ClubAvailability, ClubDetail } from "@/types";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
-
-type ClubMember = {
-    uid: string;
-    username: string;
-    rating: number;
-    role: "Member" | "Founder";
-};
-
-type ClubDetail = {
-    name: string;
-    tag: string;
-    availability: ClubAvailability;
-    members: ClubMember[];
-};
 
 type EditForm = {
     newName: string;
