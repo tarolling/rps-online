@@ -81,8 +81,9 @@ export async function findMatch(uid: string, username: string, userRating: numbe
                         uid, username, userRating
                     );
                     if (playerData.isBot) {
-                        // Fire-and-forget: bot plays the game server-side
-                        await postJSON('/api/botPlay', { gameId: gameID, botId: playerId });
+                        await set(ref(db, `games/${gameID}/presence/${playerId}`), true);
+                        // bot plays the game server-side
+                        postJSON('/api/botPlay', { gameId: gameID, botId: playerId });
                     }
                     return { gameID, opponent: playerData };
                 }

@@ -8,6 +8,8 @@ import { findMatch } from '@/lib/matchmaking';
 import Footer from '@/components/Footer';
 import Header from '@/components/Header';
 import styles from './MatchmakingPage.module.css';
+import { postJSON } from '@/lib/api';
+import { ProfileData } from '@/types';
 
 type MatchStatus = 'idle' | 'searching' | 'matched' | 'error';
 
@@ -37,12 +39,12 @@ function MatchmakingPage() {
         const redirectIfInGame = async () => {
             const snapshot = await get(gamesRef);
             const games = snapshot.val() || {};
-            for (const [gameID, game] of Object.entries(games) as [string, any][]) {
+            for (const [gameId, game] of Object.entries(games) as [string, any][]) {
                 if (
                     game.state === 'in_progress' &&
                     (game.player1.id === user.uid || game.player2.id === user.uid)
                 ) {
-                    router.push(`/game/${gameID}`);
+                    router.push(`/game/${gameId}`);
                     return;
                 }
             }
@@ -62,14 +64,7 @@ function MatchmakingPage() {
         if (!user) return;
         setMatchStatus('searching');
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/fetchPlayer`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ uid: user?.uid }),
-            });
-            if (!res.ok) throw new Error('Could not fetch player information.');
-
-            const playerInfo = await res.json();
+            const playerInfo = await postJSON<ProfileData>('/api/fetchPlayer', { uid: user?.uid });
             const result = await findMatch(user?.uid, playerInfo.username, playerInfo.rating);
 
             if ('gameID' in result) {
