@@ -52,8 +52,8 @@ function GamePage() {
     const opponentData = isPlayer1 ? game?.player2 : game?.player1;
     const opponentKey = isPlayer1 ? 'player2' : 'player1';
 
-    // Single ref to track per-round handling — mutations are synchronous so no stale closure issues
-    const handledRound = useRef<{ round: number; botFired: boolean; resolveFired: boolean } | null>(null);
+    // Single ref to track per-round handling - mutations are synchronous so no stale closure issues
+    const handledRound = useRef<{ round: number; resolveFired: boolean } | null>(null);
 
     // Fetch avatars once we know both player IDs
     useEffect(() => {
@@ -76,7 +76,7 @@ function GamePage() {
         }
     }, [playerId, game?.player1.id, game?.player2.id]);
 
-    // Server-anchored round timer — auto-submits when it hits zero
+    // Server-anchored round timer - auto-submits when it hits zero
     useEffect(() => {
         if (game?.state !== GameState.InProgress || !game.roundStartTimestamp) return;
         const botIsPlayer1 = game.player1.id.startsWith('bot_');
@@ -117,40 +117,25 @@ function GamePage() {
                     setTimeLeft(config.roundTimeout);
                     setRoundOver(false);
                     // Reset handled tracking for the new round
-                    handledRound.current = { round: data.currentRound, botFired: false, resolveFired: false };
+                    handledRound.current = { round: data.currentRound, resolveFired: false };
                 }
                 return data;
             });
 
             // Initialize on first load
             if (!handledRound.current) {
-                handledRound.current = { round: data.currentRound, botFired: false, resolveFired: false };
+                handledRound.current = { round: data.currentRound, resolveFired: false };
             }
 
             const handled = handledRound.current;
 
             // Check for bot game
-            const isABotGame = data.player1.id.startsWith('bot_') || data.player2.id.startsWith('bot_');
-            const botId = data.player1.id.startsWith('bot_') ? data.player1.id : data.player2.id;
             const botIsPlayer1 = data.player1.id.startsWith('bot_');
             // Always use player1's ID for resolveRound, whether that's us or the bot
             const resolverPlayerId = data.player1.id;
             const iAmResolver = playerId === resolverPlayerId || botIsPlayer1;
 
-            // Bot logic — fire at most once per round
-            if (isABotGame && data.state === GameState.InProgress) {
-                const botKey = botIsPlayer1 ? 'player1' : 'player2';
-                if (!data[botKey].submitted && !handled.botFired) {
-                    handled.botFired = true;
-                    fetch('/api/botPlay', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ gameId, botId }),
-                    });
-                }
-            }
-
-            // Resolve logic — fire at most once per round
+            // Resolve logic - fire at most once per round
             if (
                 data.player1.submitted &&
                 data.player2.submitted &&
@@ -165,6 +150,22 @@ function GamePage() {
 
         return () => unsubscribe();
     }, [gameId, playerId]);
+
+    // bot responses
+    useEffect(() => {
+        if (!game || game.state !== GameState.InProgress) return;
+
+        const isABotGame = game.player1.id.startsWith('bot_') || game.player2.id.startsWith('bot_');
+        if (!isABotGame) return;
+
+        const botId = game.player1.id.startsWith('bot_') ? game.player1.id : game.player2.id;
+        const botIsPlayer1 = game.player1.id.startsWith('bot_');
+        const botKey = botIsPlayer1 ? 'player1' : 'player2';
+
+        if (game[botKey].submitted) return; // already played this round
+
+        postJSON('/api/botPlay', { gameId, botId });
+    }, [game?.roundStartTimestamp]);
 
     // Set presence once on mount, never clean it up early
     useEffect(() => {
@@ -187,7 +188,7 @@ function GamePage() {
         };
     }, [gameId, playerId]);
 
-    // Separate effect just for starting the game — re-runs on state change is fine here
+    // Separate effect just for starting the game - re-runs on state change is fine here
     useEffect(() => {
         if (!gameId || !playerId) return;
 
@@ -228,7 +229,7 @@ function GamePage() {
 
         const opponentId = isPlayer1 ? game.player2.id : game.player1.id;
 
-        // Bots don't maintain presence — don't watch for their disconnect
+        // Bots don't maintain presence - don't watch for their disconnect
         if (opponentId.startsWith('bot_')) return;
 
         const opponentPresenceRef = ref(db, `games/${gameId}/presence/${opponentId}`);
@@ -242,7 +243,7 @@ function GamePage() {
                 disconnectTimer = setTimeout(async () => {
                     const myPresence = await get(ref(db, `games/${gameId}/presence/${playerId}`));
                     if (!myPresence.exists()) {
-                        // both disconnected — cancel
+                        // both disconnected - cancel
                         await update(ref(db, `games/${gameId}`), { state: GameState.Cancelled });
                     } else {
                         awardWinByDisconnect(gameId, playerId);
