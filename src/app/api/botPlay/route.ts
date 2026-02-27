@@ -22,6 +22,8 @@ export async function POST(req: NextRequest) {
 
     await new Promise(r => setTimeout(r, 1000 + Math.random() * 2000));
 
+    await adminDb.ref(`games/${gameId}/presence/${botId}`).set(true);
+
     const oppChoice = game[oppKey].choice ? TO_AI[game[oppKey].choice as Choice] : 'R';
     const botChoice = FROM_AI[ai(oppChoice)];
 

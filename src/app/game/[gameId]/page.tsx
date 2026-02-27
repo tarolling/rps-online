@@ -205,6 +205,10 @@ function GamePage() {
         if (game.state !== GameState.InProgress && game.state !== GameState.Waiting) return;
 
         const opponentId = isPlayer1 ? game.player2.id : game.player1.id;
+
+        // Bots don't maintain presence — don't watch for their disconnect
+        if (opponentId.startsWith('bot_')) return;
+
         const opponentPresenceRef = ref(db, `games/${gameId}/presence/${opponentId}`);
         let disconnectTimer: ReturnType<typeof setTimeout> | null = null;
 
