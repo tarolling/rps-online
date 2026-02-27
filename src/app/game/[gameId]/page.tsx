@@ -53,6 +53,7 @@ function GamePage() {
     const opponentKey = isPlayer1 ? 'player2' : 'player1';
 
     const botRequestInFlight = useRef<Set<number>>(new Set());
+    const resolveScheduled = useRef(false);
 
     // Fetch avatars once we know both player IDs
     useEffect(() => {
@@ -116,6 +117,7 @@ function GamePage() {
                     setTimeLeft(config.roundTimeout);
                     setRoundOver(false);
                     botRequestInFlight.current.clear();
+                    resolveScheduled.current = false;
                 }
                 return data;
             });
@@ -144,8 +146,10 @@ function GamePage() {
             if (
                 data.player1.submitted &&
                 data.player2.submitted &&
-                data.state === GameState.InProgress
+                data.state === GameState.InProgress &&
+                !resolveScheduled.current
             ) {
+                resolveScheduled.current = true;
                 setRoundOver(true);
                 if (iAmResolver) setTimeout(() => resolveRound(gameId, resolverPlayerId), 1000);
             }
