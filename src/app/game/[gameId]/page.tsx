@@ -158,10 +158,21 @@ function GamePage() {
     useEffect(() => {
         if (!gameId || !playerId) return;
         const presenceRef = ref(db, `games/${gameId}/presence/${playerId}`);
-        set(presenceRef, true).then(() => {
-            onDisconnect(presenceRef).remove();
+
+        const connectedRef = ref(db, '.info/connected');
+        const unsubConnected = onValue(connectedRef, (snap) => {
+            if (snap.val() === true) {
+                // Re-set presence and re-register onDisconnect every time we (re)connect
+                set(presenceRef, true).then(() => {
+                    onDisconnect(presenceRef).remove();
+                });
+            }
         });
-        return () => { remove(presenceRef) }; // only runs on true unmount
+
+        return () => {
+            unsubConnected();
+            remove(presenceRef);
+        };
     }, [gameId, playerId]);
 
     // Separate effect just for starting the game — re-runs on state change is fine here
