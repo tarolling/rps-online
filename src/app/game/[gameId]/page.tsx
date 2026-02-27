@@ -52,8 +52,8 @@ function GamePage() {
     const opponentData = isPlayer1 ? game?.player2 : game?.player1;
     const opponentKey = isPlayer1 ? 'player2' : 'player1';
 
-    const botRequestInFlight = useRef<Set<number>>(new Set());
-    const resolveScheduled = useRef(false);
+    // Single ref to track per-round handling — mutations are synchronous so no stale closure issues
+    const handledRound = useRef<{ round: number; botFired: boolean; resolveFired: boolean } | null>(null);
 
     // Fetch avatars once we know both player IDs
     useEffect(() => {
@@ -116,13 +116,20 @@ function GamePage() {
                     setChoice(null);
                     setTimeLeft(config.roundTimeout);
                     setRoundOver(false);
-                    botRequestInFlight.current.clear();
-                    resolveScheduled.current = false;
+                    // Reset handled tracking for the new round
+                    handledRound.current = { round: data.currentRound, botFired: false, resolveFired: false };
                 }
                 return data;
             });
 
-            // check for bot game
+            // Initialize on first load
+            if (!handledRound.current) {
+                handledRound.current = { round: data.currentRound, botFired: false, resolveFired: false };
+            }
+
+            const handled = handledRound.current;
+
+            // Check for bot game
             const isABotGame = data.player1.id.startsWith('bot_') || data.player2.id.startsWith('bot_');
             const botId = data.player1.id.startsWith('bot_') ? data.player1.id : data.player2.id;
             const botIsPlayer1 = data.player1.id.startsWith('bot_');
@@ -130,11 +137,11 @@ function GamePage() {
             const resolverPlayerId = data.player1.id;
             const iAmResolver = playerId === resolverPlayerId || botIsPlayer1;
 
+            // Bot logic — fire at most once per round
             if (isABotGame && data.state === GameState.InProgress) {
                 const botKey = botIsPlayer1 ? 'player1' : 'player2';
-                const currentRound = data.currentRound;
-                if (!data[botKey].submitted && !botRequestInFlight.current.has(currentRound)) {
-                    botRequestInFlight.current.add(currentRound);
+                if (!data[botKey].submitted && !handled.botFired) {
+                    handled.botFired = true;
                     fetch('/api/botPlay', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -143,13 +150,14 @@ function GamePage() {
                 }
             }
 
+            // Resolve logic — fire at most once per round
             if (
                 data.player1.submitted &&
                 data.player2.submitted &&
                 data.state === GameState.InProgress &&
-                !resolveScheduled.current
+                !handled.resolveFired
             ) {
-                resolveScheduled.current = true;
+                handled.resolveFired = true;
                 setRoundOver(true);
                 if (iAmResolver) setTimeout(() => resolveRound(gameId, resolverPlayerId), 1000);
             }
@@ -212,7 +220,6 @@ function GamePage() {
 
         return () => unsubPresence();
     }, [gameId, playerId]);
-
 
     // watch opponent's presence for disconnects
     useEffect(() => {
