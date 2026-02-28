@@ -210,6 +210,34 @@
   color: white;
 }
 
+.liveIndicator {
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  color: #fff;
+  background: var(--color-danger, #ef4444);
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.6;
+  }
+}
+
+.spectateHint {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
 @media (max-width: 768px) {
   .hero {
     padding: 60px 20px;

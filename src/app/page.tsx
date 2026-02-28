@@ -5,6 +5,7 @@ import styles from "./page.module.css";
 import { formatRelativeTime } from "@/lib/time";
 import MatchCard from "@/components/MatchCard";
 import HeroButtons from "@/components/HeroButtons";
+import LiveMatches from "@/components/LiveMatches";
 
 
 async function getRecentMatches() {
@@ -51,6 +52,8 @@ export default async function Home() {
           ))}
         </div>
       </section>
+
+      <LiveMatches />
 
       <section className={styles.liveMatches}>
         <h2>Recent Matches</h2>
