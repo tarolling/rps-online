@@ -125,6 +125,65 @@
     color: var(--color-primary);
 }
 
+/* Leaderboard type tabs */
+.tabs {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 1.5rem;
+}
+
+.tab {
+    padding: 0.45rem 1rem;
+    border-radius: var(--radius);
+    border: 1px solid var(--color-border);
+    background: var(--color-surface);
+    color: var(--color-text-muted);
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+}
+
+.tab:hover {
+    background: color-mix(in srgb, var(--color-primary) 8%, var(--color-surface));
+    color: var(--color-text);
+}
+
+.tabActive {
+    background: var(--color-primary);
+    color: #fff;
+    border-color: var(--color-primary);
+}
+
+/* Rank filter chips */
+.rankFilter {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-top: 0.75rem;
+}
+
+.rankChip {
+    padding: 0.3rem 0.75rem;
+    border-radius: 999px;
+    border: 1px solid var(--color-border);
+    background: var(--color-surface);
+    color: var(--color-text-muted);
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+}
+
+.rankChip:hover {
+    color: var(--color-text);
+    border-color: var(--color-primary);
+}
+
+.rankChipActive {
+    background: var(--color-primary);
+    color: #fff;
+    border-color: var(--color-primary);
+}
+
 @media (max-width: 480px) {
     .table {
         font-size: 0.9rem;
@@ -133,5 +192,9 @@
     .table thead th,
     .table tbody td {
         padding: 0.7rem 0.75rem;
+    }
+
+    .tabs {
+        flex-wrap: wrap;
     }
 }
