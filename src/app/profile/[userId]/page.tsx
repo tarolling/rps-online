@@ -6,7 +6,7 @@ import { useRouter, useParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
-import formatRelativeTime from "@/lib/time";
+import { formatRelativeTime } from "@/lib/time";
 import styles from "./ProfilePage.module.css";
 import { getJSON, postJSON } from "@/lib/api";
 import { Match } from "@/types/common";
@@ -227,7 +227,7 @@ function ProfilePage() {
               <div className={styles.matchList}>
                 {recentMatches.map((match, i) => (
                   <div key={i} className={`${styles.matchItem} ${styles[match.result.toLowerCase()]}`}>
-                    <Link href={`/profile/${match.opponentID}`} onClick={(e) => e.stopPropagation()} className={styles.matchOpponent}>
+                    <Link href={`/profile/${match.opponentId}`} onClick={(e) => e.stopPropagation()} className={styles.matchOpponent}>
                       {match.opponentUsername}
                     </Link>
                     <span className={styles.matchResult}>{match.result}</span>
