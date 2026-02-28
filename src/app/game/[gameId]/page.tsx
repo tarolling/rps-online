@@ -46,6 +46,7 @@ function GamePage() {
   const [playerAvatarUrl, setPlayerAvatarUrl] = useState<string | null>(null);
   const [opponentAvatarUrl, setOpponentAvatarUrl] = useState<string | null>(null);
   const [clubTags, setClubTags] = useState<Record<string, string | null>>({});
+  const [spectatorCount, setSpectatorCount] = useState(0);
 
   const playerId = user?.uid;
   const isPlayer1 = game?.player1.id === playerId;
@@ -224,6 +225,16 @@ function GamePage() {
     return () => unsubPresence();
   }, [gameId, playerId]);
 
+  /* Spectator Count */
+  useEffect(() => {
+    if (!gameId) return;
+    const spectatorRef = ref(db, `games/${gameId}/spectators`);
+    const unsub = onValue(spectatorRef, (snap) => {
+      setSpectatorCount(snap.exists() ? Object.keys(snap.val()).length : 0);
+    });
+    return () => unsub();
+  }, [gameId]);
+
   // watch opponent's presence for disconnects
   useEffect(() => {
     if (!gameId || !playerId || !game) return;
@@ -390,6 +401,11 @@ function GamePage() {
               <div className={`${styles.timer} ${timeLeft <= 10 ? styles.timerWarning : ""}`}>
                 {timeLeft}s
               </div>
+              {spectatorCount > 0 && (
+                <span className={styles.spectatorCount}>
+                  👁️ {spectatorCount}
+                </span>
+              )}
             </div>
 
             <PlayerPanel

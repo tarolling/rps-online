@@ -157,6 +157,15 @@
     }
 }
 
+.spectatorCount {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--color-text-muted);
+    background: var(--color-bg-secondary);
+    border-radius: var(--radius);
+    padding: 0.2rem 0.5rem;
+}
+
 /* ── Choice buttons ── */
 
 .choices {
@@ -336,6 +345,20 @@
 .playAgainButton:hover {
     background: var(--color-primary-hover);
     transform: translateY(-2px);
+}
+
+/* spectator banner */
+
+.spectatorBanner {
+    text-align: center;
+    padding: 0.6rem 1rem;
+    background: color-mix(in srgb, var(--color-primary) 12%, var(--color-surface));
+    border: 1px solid color-mix(in srgb, var(--color-primary) 30%, transparent);
+    border-radius: var(--radius);
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--color-primary);
+    letter-spacing: 0.04em;
 }
 
 /* player club tag */
