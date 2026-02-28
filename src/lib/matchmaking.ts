@@ -1,9 +1,10 @@
 import { getDatabase, ref, set, get, update, remove, onValue, off } from 'firebase/database';
-import { GameState, Choice, Game } from '../types';
+import { Game } from '../types';
 import calculateRating from './calculateRating';
 import { advanceWinner } from './tournaments';
 import config from "@/config/settings.json";
 import { postJSON } from './api';
+import { Choice, MatchStatus } from '@/types/neo4j';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -15,7 +16,6 @@ interface TournamentInfo {
 interface GameStats {
     playerOneChoices: { ROCK: number; PAPER: number; SCISSORS: number };
     playerTwoChoices: { ROCK: number; PAPER: number; SCISSORS: number };
-    totalRounds: number;
 }
 
 type MatchResult = { gameID: string } | { error: string } | { gameID: string, opponent: any };
@@ -37,7 +37,7 @@ async function checkExistingGame(uid: string): Promise<string | null> {
 
     for (const game of Object.values(games) as Game[]) {
         if (
-            (game.state === GameState.InProgress || game.state === GameState.Waiting) &&
+            (game.state === MatchStatus.InProgress || game.state === MatchStatus.Waiting) &&
             (game.player1.id === uid || game.player2.id === uid)
         ) {
             return game.id;
@@ -158,7 +158,7 @@ export async function createGame(
 
     const game: Game = {
         id: gameId,
-        state: GameState.Waiting,
+        state: MatchStatus.Waiting,
         player1: { id: playerOneId, username: playerOneUsername, score: 0, rating: playerOneRating, choice: null, submitted: false },
         player2: { id: playerTwoId, username: playerTwoUsername, score: 0, rating: playerTwoRating, choice: null, submitted: false },
         rounds: [],
@@ -206,7 +206,7 @@ export async function resolveRound(gameId: string, playerId: string) {
         const timeExpired = elapsed >= config.roundTimeout * 1000;
         const neitherSubmitted = !game.player1.submitted && !game.player2.submitted;
         if (neitherSubmitted) {
-            await update(gameRef, { state: GameState.Cancelled });
+            await update(gameRef, { state: MatchStatus.Cancelled });
             await endGame(gameId);
             return null;
         }
@@ -237,7 +237,7 @@ export async function resolveRound(gameId: string, playerId: string) {
             const newScore = game[winner].score + 1;
             updates[`${winner}/score`] = newScore;
             if (newScore >= FIRST_TO) {
-                updates.state = GameState.Finished;
+                updates.state = MatchStatus.Completed;
                 updates.winner = game[winner].id;
                 updates.endTimestamp = Date.now();
             }
@@ -245,7 +245,7 @@ export async function resolveRound(gameId: string, playerId: string) {
 
         await update(gameRef, updates);
 
-        if (updates.state === GameState.Finished) {
+        if (updates.state === MatchStatus.Completed) {
             await endGame(gameId);
             return { winner: updates.winner };
         }
@@ -292,7 +292,7 @@ export const calculateGameStats = (game: Game): GameStats => {
         if (round.player2Choice) p2Choices[round.player2Choice]++;
     });
 
-    return { playerOneChoices: p1Choices, playerTwoChoices: p2Choices, totalRounds: game.currentRound };
+    return { playerOneChoices: p1Choices, playerTwoChoices: p2Choices };
 };
 
 // ── End game ──────────────────────────────────────────────────────────────────
@@ -313,7 +313,7 @@ export async function endGame(gameId: string): Promise<void> {
 
         // if no winner, both players didn't respond or both dc'd
         // don't record 
-        if (game.state !== GameState.Cancelled) {
+        if (game.state !== MatchStatus.Cancelled) {
             if (!game.tournamentId) {
                 await recordRankedGame(game);
             } else {
@@ -343,31 +343,33 @@ async function recordRankedGame(game: Game): Promise<void> {
     const { player1: { id: playerOneId, rating: playerOneRating }, player2: { id: playerTwoId, rating: playerTwoRating }, winner } = game;
 
     const gameStats = calculateGameStats(game);
+
+    // calculate both players' new ratings
+    const playerOneNewRating = calculateRating(playerOneRating, playerTwoRating, playerOneId === winner);
+    const playerTwoNewRating = calculateRating(playerTwoRating, playerOneRating, playerTwoId === winner);
+
     try {
-        await postJSON('/api/postGameStats', {
-            playerOneId,
-            playerTwoId,
-            playerOneScore: game.player1.score,
-            playerOneRating,
-            playerOneRocks: gameStats.playerOneChoices.ROCK,
-            playerOnePapers: gameStats.playerOneChoices.PAPER,
-            playerOneScissors: gameStats.playerOneChoices.SCISSORS,
-            playerTwoScore: game.player2.score,
-            playerTwoRating,
-            playerTwoRocks: gameStats.playerTwoChoices.ROCK,
-            playerTwoPapers: gameStats.playerTwoChoices.PAPER,
-            playerTwoScissors: gameStats.playerTwoChoices.SCISSORS,
-            winnerId: winner,
-            totalRounds: gameStats.totalRounds,
-        });
-
-        // adjust both players rating
-        const playerOneNewRating = calculateRating(playerOneRating, playerTwoRating, playerOneId === winner);
-        const playerTwoNewRating = calculateRating(playerTwoRating, playerOneRating, playerTwoId === winner);
-
-        await postJSON('/api/adjustRating', { uid: playerOneId, newRating: playerOneNewRating });
-        await postJSON('/api/adjustRating', { uid: playerTwoId, newRating: playerTwoNewRating });
-
+        await Promise.all([
+            postJSON('/api/postGameStats', {
+                matchId: game.id,
+                playerOneId,
+                playerTwoId,
+                playerOneScore: game.player1.score,
+                playerOneRating,
+                playerOneRocks: gameStats.playerOneChoices.ROCK,
+                playerOnePapers: gameStats.playerOneChoices.PAPER,
+                playerOneScissors: gameStats.playerOneChoices.SCISSORS,
+                playerTwoScore: game.player2.score,
+                playerTwoRating,
+                playerTwoRocks: gameStats.playerTwoChoices.ROCK,
+                playerTwoPapers: gameStats.playerTwoChoices.PAPER,
+                playerTwoScissors: gameStats.playerTwoChoices.SCISSORS,
+                winnerId: winner,
+                totalRounds: game.rounds,
+            }),
+            postJSON('/api/adjustRating', { uid: playerOneId, newRating: playerOneNewRating }),
+            postJSON('/api/adjustRating', { uid: playerTwoId, newRating: playerTwoNewRating })
+        ])
     } catch (error) {
         console.error('Error recording ranked game:', error);
     }
@@ -385,10 +387,10 @@ export async function awardWinByDisconnect(gameId: string, winnerId: string): Pr
     if (!snapshot.exists()) return;
 
     const game: Game = snapshot.val();
-    if (game.state !== GameState.InProgress) return; // already resolved
+    if (game.state !== MatchStatus.InProgress) return; // already resolved
 
     await update(gameRef, {
-        state: GameState.Finished,
+        state: MatchStatus.Completed,
         winner: winnerId,
         endTimestamp: Date.now(),
         disconnectWin: true,

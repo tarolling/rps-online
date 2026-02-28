@@ -3,38 +3,8 @@
  */
 
 import { DateTime } from "neo4j-driver";
+import { Choice, ClubAvailability, ClubRole, Division, Match, MatchStatus, ParticipatedIn, Round, TournamentPlayerCap, TournamentStatus, type TournamentMatchStatus } from "./neo4j";
 
-export enum GameState {
-    Waiting = "WAITING",
-    InProgress = "IN_PROGRESS",
-    Finished = "FINISHED",
-    Cancelled = "CANCELLED",
-}
-
-export enum Choice {
-    Rock = "ROCK",
-    Paper = "PAPER",
-    Scissors = "SCISSORS",
-};
-
-export enum GameResult {
-    WIN = "W",
-    LOSS = 'L',
-    WIN_AFK = 'W_AFK',
-    LOSS_AFK = 'L_AFK',
-    DRAW_AFK = 'D_AFK'
-};
-
-/**
- * Unions
- */
-
-export type ClubAvailability = 'Open' | 'Invite' | 'Closed';
-export type ClubRole = 'Member' | 'Founder';
-export type MatchStatus = "pending" | "bye" | "completed";
-export type TournamentStatus = "registration" | "in_progress" | "completed";
-export type PlayerCap = 8 | 16 | 32 | 64;
-export type Division = 1 | 2 | 3 | null; // null = Infinity rank
 
 /**
  * Interfaces
@@ -77,12 +47,15 @@ export interface ClubDetail extends Omit<Club, "memberCount"> {
 
 // Match history (Neo4j PLAYED relationship)
 export interface MatchRecord {
+    matchId: string;
     opponentID: string;
     opponentUsername: string;
-    result: GameResult;
+    result: ParticipatedIn["result"];   // reuse, don't redefine
     playerScore: number;
     opponentScore: number;
+    mode: Match["mode"];                // free — you get this for no extra work
     date: DateTime;
+    rounds?: Round[];                   // optional detail view
 }
 
 // Live game (Firebase)
@@ -98,12 +71,13 @@ export interface PlayerState {
 export interface RoundData {
     player1Choice: Choice | null;
     player2Choice: Choice | null;
+    /* ID of the winner of this round */
     winner: string | null;
 }
 
 export interface Game {
     id: string;
-    state: GameState;
+    state: MatchStatus;
     player1: PlayerState;
     player2: PlayerState;
     rounds: RoundData[];
@@ -132,7 +106,7 @@ export interface TournamentMatch {
     player1: Participant | null;
     player2: Participant | null;
     nextMatchId: string | null;
-    status: MatchStatus;
+    status: TournamentMatchStatus;
     winner: Participant | null;
 }
 
@@ -141,7 +115,7 @@ export interface Tournament {
     name: string;
     description: string;
     status: TournamentStatus;
-    playerCap: PlayerCap;
+    playerCap: TournamentPlayerCap;
     participants: Record<string, Participant>;
     bracket?: TournamentMatch[];
     matchGames?: Record<string, string>;

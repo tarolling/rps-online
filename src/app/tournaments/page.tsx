@@ -1,21 +1,22 @@
 "use client";
 
-import { getDatabase, onValue, ref } from 'firebase/database';
-import { useEffect, useState } from 'react';
-import Link from 'next/link';
-import { useAuth } from '@/context/AuthContext';
-import Footer from '@/components/Footer';
-import Header from '@/components/Header';
-import styles from './TournamentsPage.module.css';
-import { postJSON } from '@/lib/api';
-import { createTournament } from '@/lib/tournaments';
-import { PlayerCap, Tournament } from '@/types';
+import { getDatabase, onValue, ref } from "firebase/database";
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { useAuth } from "@/context/AuthContext";
+import Footer from "@/components/Footer";
+import Header from "@/components/Header";
+import styles from "./TournamentsPage.module.css";
+import { postJSON } from "@/lib/api";
+import { createTournament } from "@/lib/tournaments";
+import { Tournament } from "@/types";
+import { TournamentStatus, type TournamentPlayerCap } from "@/types/neo4j";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 type NewTournamentForm = {
     name: string;
-    playerCap: PlayerCap;
+    playerCap: TournamentPlayerCap;
     description: string;
     startTime: number;
 };
@@ -25,168 +26,168 @@ type TournamentEntry = Tournament & { firebaseKey: string };
 // ── Component ─────────────────────────────────────────────────────────────────
 
 const TournamentsPage = () => {
-    const { user } = useAuth();
-    const db = getDatabase();
+  const { user } = useAuth();
+  const db = getDatabase();
 
-    const [tournaments, setTournaments] = useState<TournamentEntry[]>([]);
-    const [isAdmin, setIsAdmin] = useState(false);
-    const [form, setForm] = useState<NewTournamentForm>({ name: '', playerCap: 8, description: '', startTime: 0 });
-    const [error, setError] = useState<string | null>(null);
+  const [tournaments, setTournaments] = useState<TournamentEntry[]>([]);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [form, setForm] = useState<NewTournamentForm>({ name: "", playerCap: 8, description: "", startTime: 0 });
+  const [error, setError] = useState<string | null>(null);
 
-    // Subscribe to all tournaments
-    useEffect(() => {
-        const unsubscribe = onValue(ref(db, 'tournaments'), (snapshot) => {
-            const data = snapshot.val();
-            if (!data) return;
-            setTournaments(
-                Object.entries(data).map(([key, t]) => ({
-                    ...(t as Tournament),
-                    firebaseKey: key,
-                }))
-            );
-        });
-        return () => unsubscribe();
-    }, []);
+  // Subscribe to all tournaments
+  useEffect(() => {
+    const unsubscribe = onValue(ref(db, "tournaments"), (snapshot) => {
+      const data = snapshot.val();
+      if (!data) return;
+      setTournaments(
+        Object.entries(data).map(([key, t]) => ({
+          ...(t as Tournament),
+          firebaseKey: key,
+        })),
+      );
+    });
+    return () => unsubscribe();
+  }, []);
 
-    // Check admin claim from Firebase token
-    useEffect(() => {
-        if (!user) return;
-        postJSON('/api/admin/isAdmin', { uid: user.uid })
-            .then(({ isAdmin }) => setIsAdmin(isAdmin));
-    }, [user]);
+  // Check admin claim from Firebase token
+  useEffect(() => {
+    if (!user) return;
+    postJSON<{ isAdmin: boolean }>("/api/admin/isAdmin", { uid: user.uid })
+      .then(({ isAdmin }) => setIsAdmin(isAdmin));
+  }, [user]);
 
-    const handleCreate = async (e: React.SubmitEvent) => {
-        e.preventDefault();
-        if (!isAdmin || !user) return;
-        setError(null);
+  const handleCreate = async (e: React.SubmitEvent) => {
+    e.preventDefault();
+    if (!isAdmin || !user) return;
+    setError(null);
 
-        try {
-            await createTournament(form.name, form.description, form.playerCap, form.startTime);
-            setForm({ name: '', playerCap: 8, description: '', startTime: 0 });
-        } catch (err) {
-            console.error('Error creating tournament:', err);
-            setError('Failed to create tournament. Please try again.');
-        }
-    };
+    try {
+      await createTournament(form.name, form.description, form.playerCap, form.startTime);
+      setForm({ name: "", playerCap: 8, description: "", startTime: 0 });
+    } catch (err) {
+      console.error("Error creating tournament:", err);
+      setError("Failed to create tournament. Please try again.");
+    }
+  };
 
-    const getStatusLabel = (t: Tournament): string => {
-        if (t.status === 'completed') return 'Completed';
-        if (t.status === 'in_progress') return 'In Progress';
-        const count = Object.keys(t.participants ?? {}).length;
-        if (count >= t.playerCap) return 'Full';
-        return `${count}/${t.playerCap} Players`;
-    };
+  const getStatusLabel = (t: Tournament): string => {
+    if (t.status === TournamentStatus.Completed) return "Completed";
+    if (t.status === TournamentStatus.InProgress) return "In Progress";
+    const count = Object.keys(t.participants ?? {}).length;
+    if (count >= t.playerCap) return "Full";
+    return `${count}/${t.playerCap} Players`;
+  };
 
-    const active = tournaments.filter((t) => t.status !== 'completed').sort((a, b) => b.createdAt - a.createdAt);
-    const past = tournaments.filter((t) => t.status === 'completed').sort((a, b) => b.createdAt - a.createdAt);
+  const active = tournaments.filter((t) => t.status !== TournamentStatus.Completed).sort((a, b) => b.createdAt - a.createdAt);
+  const past = tournaments.filter((t) => t.status === TournamentStatus.Completed).sort((a, b) => b.createdAt - a.createdAt);
 
-    return (
-        <div className="app">
-            <Header />
-            <main className={styles.main}>
-                <h1>Tournaments</h1>
+  return (
+    <div className="app">
+      <Header />
+      <main className={styles.main}>
+        <h1>Tournaments</h1>
 
-                {error && <p className={styles.errorBanner}>{error}</p>}
+        {error && <p className={styles.errorBanner}>{error}</p>}
 
-                {/* Admin: create tournament */}
-                {isAdmin && (
-                    <section className={styles.card}>
-                        <h2>Create Tournament</h2>
-                        <form onSubmit={handleCreate} className={styles.form} noValidate>
-                            <div className={styles.field}>
-                                <label className={styles.label} htmlFor="t-name">Name</label>
-                                <input
-                                    id="t-name"
-                                    type="text"
-                                    value={form.name}
-                                    onChange={(e) => setForm({ ...form, name: e.target.value })}
-                                    placeholder="Tournament name"
-                                    required
-                                />
-                            </div>
-                            <div className={styles.field}>
-                                <label className={styles.label} htmlFor="t-cap">Player Cap</label>
-                                <select
-                                    id="t-cap"
-                                    className={styles.select}
-                                    value={form.playerCap}
-                                    onChange={(e) => setForm({ ...form, playerCap: Number(e.target.value) as PlayerCap })}
-                                >
-                                    {[4, 8, 16, 32, 64].map((n) => (
-                                        <option key={n} value={n}>{n} Players</option>
-                                    ))}
-                                </select>
-                            </div>
-                            <div className={styles.field}>
-                                <label className={styles.label} htmlFor="t-desc">Description</label>
-                                <textarea
-                                    id="t-desc"
-                                    className={styles.textarea}
-                                    value={form.description}
-                                    onChange={(e) => setForm({ ...form, description: e.target.value })}
-                                    placeholder="Brief description"
-                                    required
-                                />
-                            </div>
-                            <div className={styles.field}>
-                                <label className={styles.label} htmlFor="t-time">Start Time</label>
-                                <input
-                                    id="t-time"
-                                    type='datetime-local'
-                                    value={form.startTime ? new Date(form.startTime).toISOString().slice(0, 16) : ''}
-                                    onChange={(e) => setForm({ ...form, startTime: new Date(e.target.value).getTime() })}
-                                    required
-                                />
-                            </div>
-                            <button type="submit" className={styles.createButton}>
+        {/* Admin: create tournament */}
+        {isAdmin && (
+          <section className={styles.card}>
+            <h2>Create Tournament</h2>
+            <form onSubmit={handleCreate} className={styles.form} noValidate>
+              <div className={styles.field}>
+                <label className={styles.label} htmlFor="t-name">Name</label>
+                <input
+                  id="t-name"
+                  type="text"
+                  value={form.name}
+                  onChange={(e) => setForm({ ...form, name: e.target.value })}
+                  placeholder="Tournament name"
+                  required
+                />
+              </div>
+              <div className={styles.field}>
+                <label className={styles.label} htmlFor="t-cap">Player Cap</label>
+                <select
+                  id="t-cap"
+                  className={styles.select}
+                  value={form.playerCap}
+                  onChange={(e) => setForm({ ...form, playerCap: Number(e.target.value) as TournamentPlayerCap })}
+                >
+                  {[4, 8, 16, 32, 64].map((n) => (
+                    <option key={n} value={n}>{n} Players</option>
+                  ))}
+                </select>
+              </div>
+              <div className={styles.field}>
+                <label className={styles.label} htmlFor="t-desc">Description</label>
+                <textarea
+                  id="t-desc"
+                  className={styles.textarea}
+                  value={form.description}
+                  onChange={(e) => setForm({ ...form, description: e.target.value })}
+                  placeholder="Brief description"
+                  required
+                />
+              </div>
+              <div className={styles.field}>
+                <label className={styles.label} htmlFor="t-time">Start Time</label>
+                <input
+                  id="t-time"
+                  type='datetime-local'
+                  value={form.startTime ? new Date(form.startTime).toISOString().slice(0, 16) : ""}
+                  onChange={(e) => setForm({ ...form, startTime: new Date(e.target.value).getTime() })}
+                  required
+                />
+              </div>
+              <button type="submit" className={styles.createButton}>
                                 Create Tournament
-                            </button>
-                        </form>
-                    </section>
-                )}
+              </button>
+            </form>
+          </section>
+        )}
 
-                {/* Active tournaments */}
-                <section>
-                    <h2 className={styles.sectionTitle}>Active Tournaments</h2>
-                    {active.length === 0 ? (
-                        <p className={styles.empty}>No active tournaments right now.</p>
-                    ) : (
-                        <div className={styles.grid}>
-                            {active.map((t) => (
-                                <TournamentCard
-                                    key={t.firebaseKey}
-                                    tournament={t}
-                                    firebaseKey={t.firebaseKey}
-                                    statusLabel={getStatusLabel(t)}
-                                    linkLabel="View Tournament"
-                                />
-                            ))}
-                        </div>
-                    )}
-                </section>
+        {/* Active tournaments */}
+        <section>
+          <h2 className={styles.sectionTitle}>Active Tournaments</h2>
+          {active.length === 0 ? (
+            <p className={styles.empty}>No active tournaments right now.</p>
+          ) : (
+            <div className={styles.grid}>
+              {active.map((t) => (
+                <TournamentCard
+                  key={t.firebaseKey}
+                  tournament={t}
+                  firebaseKey={t.firebaseKey}
+                  statusLabel={getStatusLabel(t)}
+                  linkLabel="View Tournament"
+                />
+              ))}
+            </div>
+          )}
+        </section>
 
-                {/* Past tournaments */}
-                {past.length > 0 && (
-                    <section>
-                        <h2 className={styles.sectionTitle}>Past Tournaments</h2>
-                        <div className={styles.grid}>
-                            {past.map((t) => (
-                                <TournamentCard
-                                    key={t.firebaseKey}
-                                    tournament={t}
-                                    firebaseKey={t.firebaseKey}
-                                    statusLabel={`Winner: ${t.winner?.username ?? 'Unknown'}`}
-                                    linkLabel="View Results"
-                                    completed
-                                />
-                            ))}
-                        </div>
-                    </section>
-                )}
-            </main>
-            <Footer />
-        </div>
-    );
+        {/* Past tournaments */}
+        {past.length > 0 && (
+          <section>
+            <h2 className={styles.sectionTitle}>Past Tournaments</h2>
+            <div className={styles.grid}>
+              {past.map((t) => (
+                <TournamentCard
+                  key={t.firebaseKey}
+                  tournament={t}
+                  firebaseKey={t.firebaseKey}
+                  statusLabel={`Winner: ${t.winner?.username ?? "Unknown"}`}
+                  linkLabel="View Results"
+                  completed
+                />
+              ))}
+            </div>
+          </section>
+        )}
+      </main>
+      <Footer />
+    </div>
+  );
 };
 
 // ── Sub-components ────────────────────────────────────────────────────────────
@@ -198,24 +199,24 @@ function TournamentCard({ tournament, firebaseKey, statusLabel, linkLabel, compl
     linkLabel: string;
     completed?: boolean;
 }) {
-    return (
-        <div className={`${styles.tournamentCard} ${completed ? styles.completed : ''}`}>
-            <h3>{tournament.name}</h3>
-            {tournament.description && (
-                <p className={styles.cardDescription}>{tournament.description}</p>
-            )}
-            <p className={styles.cardStartTime}>
+  return (
+    <div className={`${styles.tournamentCard} ${completed ? styles.completed : ""}`}>
+      <h3>{tournament.name}</h3>
+      {tournament.description && (
+        <p className={styles.cardDescription}>{tournament.description}</p>
+      )}
+      <p className={styles.cardStartTime}>
                 🕐 {new Date(tournament.scheduledStartTime).toLocaleString(undefined, {
-                    dateStyle: 'medium',
-                    timeStyle: 'short',
-                })}
-            </p>
-            <p className={styles.cardStatus}>{statusLabel}</p>
-            <Link href={`/tournaments/${firebaseKey}`} className={styles.viewButton}>
-                {linkLabel}
-            </Link>
-        </div>
-    );
+          dateStyle: "medium",
+          timeStyle: "short",
+        })}
+      </p>
+      <p className={styles.cardStatus}>{statusLabel}</p>
+      <Link href={`/tournaments/${firebaseKey}`} className={styles.viewButton}>
+        {linkLabel}
+      </Link>
+    </div>
+  );
 }
 
 export default TournamentsPage;
