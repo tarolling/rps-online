@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import neo4j from "neo4j-driver";
 import { getDriver } from "@/lib/neo4j";
-import config from "@/config/settings.json";
 
 export async function POST(req: NextRequest) {
   const { playerId } = await req.json();
@@ -16,47 +15,48 @@ export async function POST(req: NextRequest) {
   try {
     const response = await session.executeRead(async (tx) => {
       const data = await tx.run(`
-        MATCH (p:Player {uid: $playerId})-[r:PLAYED]-(:Player)
+        MATCH (p:Player {uid: $playerId})-[r:PARTICIPATED_IN]->(m:Match)
         WITH 
-            p, 
-            collect(r) AS games,
-            size([r IN collect(r) WHERE r.winnerId = $playerId]) AS totalWins,
-            size(collect(r)) AS totalGames
-        WITH 
-            p, 
-            totalGames, 
-            totalWins,
-            toFloat(totalWins) / totalGames * 100 AS winPercentage,
-            [r IN games | {winnerId: r.winnerId, timestamp: r.timestamp}] AS gameData
-        WITH 
-            p, 
-            totalGames, 
-            winPercentage,
-            apoc.coll.sortMaps(gameData, "timestamp") AS sortedAscending,
-            reverse(apoc.coll.sortMaps(gameData, "timestamp")) AS sortedByTimeDesc
-        WITH 
-            p, 
-            totalGames, 
-            winPercentage, 
-            reduce(streaks = {current: 0, best: 0}, g IN sortedByTimeDesc | 
-                CASE 
-                    WHEN g.winnerId = $playerId THEN 
-                        {
-                            current: streaks.current + 1, 
-                            best: CASE WHEN streaks.current + 1 > streaks.best THEN streaks.current + 1 ELSE streaks.best END
-                        }
-                    ELSE 
-                        {
-                            current: 0, 
-                            best: streaks.best
-                        }
-                END
-            ) AS streakStats
-        RETURN p.rating AS rating,
-            totalGames,
-            winPercentage AS winRate,
-            streakStats.current AS currentStreak,
-            streakStats.best AS bestStreak
+          p,
+          collect({result: r.result, timestamp: m.timestamp}) AS games
+        WITH
+          p,
+          games,
+          size([g IN games WHERE g.result = 'W']) AS totalWins,
+          size(games) AS totalGames
+        WITH
+          p,
+          totalGames,
+          totalWins,
+          toFloat(totalWins) / totalGames * 100 AS winPercentage,
+          apoc.coll.sortMaps(games, "timestamp") AS sortedAsc
+        WITH
+          p,
+          totalGames,
+          winPercentage,
+          reverse(sortedAsc) AS sortedDesc
+        WITH
+          p,
+          totalGames,
+          winPercentage,
+          reduce(streaks = {current: 0, best: 0}, g IN sortedDesc |
+              CASE
+                  WHEN g.result = 'W' THEN {
+                      current: streaks.current + 1,
+                      best: CASE WHEN streaks.current + 1 > streaks.best THEN streaks.current + 1 ELSE streaks.best END
+                  }
+                  ELSE {
+                      current: 0,
+                      best: streaks.best
+                  }
+              END
+          ) AS streakStats
+        RETURN
+          p.rating AS rating,
+          totalGames,
+          winPercentage AS winRate,
+          streakStats.current AS currentStreak,
+          streakStats.best AS bestStreak
             `, {
         playerId,
       });

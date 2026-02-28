@@ -5,7 +5,7 @@ import styles from "./DashboardPage.module.css";
 import { useAuth } from "@/context/AuthContext";
 import { getJSON, postJSON } from "@/lib/api";
 import Link from "next/link";
-import formatRelativeTime from "@/lib/time";
+import { formatRelativeTime } from "@/lib/time";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Match } from "@/types/common";
@@ -33,14 +33,25 @@ export default function DashboardPage() {
         playerId: user?.uid,
       });
 
-      setGameStats((prevState) => ({
-        ...prevState,
-        rating: data.rating,
-        totalGames: data.totalGames,
-        winRate: `${data.winRate.toFixed(1)}%`,
-        currentStreak: data.currentStreak,
-        bestStreak: data.bestStreak,
-      }));
+      if (!data) {
+        setGameStats((prevState) => ({
+          ...prevState,
+          rating: config.defaultRating,
+          totalGames: 0,
+          winRate: "N/A",
+          currentStreak: 0,
+          bestStreak: 0,
+        }));
+      } else {
+        setGameStats((prevState) => ({
+          ...prevState,
+          rating: data.rating,
+          totalGames: data.totalGames,
+          winRate: `${data.winRate.toFixed(1)}%`,
+          currentStreak: data.currentStreak,
+          bestStreak: data.bestStreak,
+        }));
+      }
 
       const recentGames = await getJSON<Match[]>("/api/fetchRecentGames", {
         playerId: user?.uid,
@@ -122,7 +133,7 @@ export default function DashboardPage() {
             <div className={styles.matchesList}>
               {recentMatches.map((match, index) => (
                 <div key={index} className={`${styles.matchItem} ${styles[match.result.toLowerCase()]}`}>
-                  <Link href={`/profile/${match.opponentID}`} className={styles.matchOpponent}>
+                  <Link href={`/profile/${match.opponentId}`} className={styles.matchOpponent}>
                     {match.opponentUsername}
                   </Link>
                   <span className={styles.matchResult}>{match.result}</span>

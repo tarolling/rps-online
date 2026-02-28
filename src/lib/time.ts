@@ -1,7 +1,7 @@
 import neo4j, { DateTime } from "neo4j-driver";
 
-export default function formatRelativeTime(neoDateTime: DateTime) {
-  const date = new Date(
+function neo4j_datetime_to_date(neoDateTime: DateTime) {
+  return new Date(
     Date.UTC(
       neo4j.integer.toNumber(neoDateTime.year),
       neo4j.integer.toNumber(neoDateTime.month) - 1,
@@ -12,7 +12,10 @@ export default function formatRelativeTime(neoDateTime: DateTime) {
       neo4j.integer.toNumber(neoDateTime.nanosecond) / 1000000,
     ),
   );
+}
 
+export function formatRelativeTime(neoDateTime: DateTime) {
+  const date = neo4j_datetime_to_date(neoDateTime);
   const diffInSeconds = Math.floor((Date.now() - date.getTime()) / 1000);
 
   const intervals = {
@@ -43,4 +46,9 @@ export default function formatRelativeTime(neoDateTime: DateTime) {
   }
 
   return "just now";
+}
+
+export function formatTime(neoDateTime: DateTime) {
+  const date = neo4j_datetime_to_date(neoDateTime);
+  return date.toUTCString();
 }

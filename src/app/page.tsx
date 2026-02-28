@@ -2,7 +2,7 @@ import Link from "next/link";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import styles from "./page.module.css";
-import formatRelativeTime from "@/lib/time";
+import { formatRelativeTime } from "@/lib/time";
 import MatchCard from "@/components/MatchCard";
 import HeroButtons from "@/components/HeroButtons";
 
