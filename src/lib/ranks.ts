@@ -35,12 +35,12 @@ export const RANK_TIERS: RankTier[] = [
 ];
 
 export function getRankTier(rating: number): RankTier {
-    return [...RANK_TIERS]
-        .reverse()
-        .find((tier) => rating >= tier.minRating) ?? RANK_TIERS[0];
+  return [...RANK_TIERS]
+    .reverse()
+    .find((tier) => rating >= tier.minRating) ?? RANK_TIERS[0];
 }
 
 export function getDivisionLabel(division: 1 | 2 | 3 | null): string {
-    if (division === null) return "";
-    return ["I", "II", "III"][division - 1];
+  if (division === null) return "";
+  return ["I", "II", "III"][division - 1];
 }

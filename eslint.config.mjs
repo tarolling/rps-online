@@ -13,6 +13,25 @@ const eslintConfig = defineConfig([
     "build/**",
     "next-env.d.ts",
   ]),
+  {
+    rules: {
+      // Style
+      "quotes": ["error", "double"],
+      "semi": ["error", "always"],
+      "indent": ["error", 2],
+      "comma-dangle": ["error", "always-multiline"],
+      "object-curly-spacing": ["error", "always"],
+      "arrow-parens": ["error", "always"],
+
+      // Quality
+      "no-console": ["warn", { allow: ["warn", "error"] }],
+      "no-unused-vars": "off", // use TS version below
+      "@typescript-eslint/no-unused-vars": ["warn", { argsIgnorePattern: "^_" }],
+      "prefer-const": "error",
+      "eqeqeq": ["error", "always"],
+      "no-var": "error",
+    },
+  },
 ]);
 
 export default eslintConfig;

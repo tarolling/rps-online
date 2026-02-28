@@ -12,3 +12,8 @@
 
 6. When a player leaves a game, either by navigating away from the page or by closing the website, the system shall
 start a timer. Once the timer expires, the game is won by the other player.
+
+## Definitions
+
+Match - Consists of multiple Rounds
+Round - A single competition between two Players
