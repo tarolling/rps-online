@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
 
   if (game[botKey].submitted) return NextResponse.json({ done: true });
 
-  await new Promise((r) => setTimeout(r, 1000 + Math.random() * 2000));
+  await new Promise((r) => setTimeout(r, 1000 + Math.random() * 4000));
 
   await adminDb.ref(`games/${gameId}/presence/${botId}`).set(true);
 

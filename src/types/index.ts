@@ -164,3 +164,13 @@ export interface DashboardStats {
     currentStreak: number;
     bestStreak: number;
 }
+
+/**
+ * UI conversion
+ */
+
+export const CHOICE_EMOJI: Record<Choice, string> = {
+  [Choice.Rock]: "✊",
+  [Choice.Paper]: "✋",
+  [Choice.Scissors]: "✌️",
+};
