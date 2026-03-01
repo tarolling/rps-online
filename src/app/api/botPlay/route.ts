@@ -4,7 +4,7 @@ import { Choice, MatchStatus } from "@/types/neo4j";
 import type { Game } from "@/types";
 
 
-function getCyclicChoice(round: number, offset = 2, cycleLength = 5): Choice {
+function getCyclicChoice(round: number, offset = 2, cycleLength = 3): Choice {
   const cycle: Choice[] = [Choice.Rock, Choice.Paper, Choice.Scissors];
   return cycle[(round * offset) % cycleLength];
 }
