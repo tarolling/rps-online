@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import styles from "./FriendsPage.module.css";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
@@ -9,6 +8,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Avatar from "@/components/Avatar";
 import { postJSON } from "@/lib/api";
+import { getDatabase, onValue, ref } from "firebase/database";
 import {
   subscribeRequestsData,
   subscribeChallenges,
@@ -17,6 +17,7 @@ import {
   RequestsData,
   Challenge,
 } from "@/lib/friends";
+import styles from "./FriendsPage.module.css";
 
 export default function FriendsPage() {
   const { user, username } = useAuth();
@@ -230,6 +231,7 @@ function ChallengeButton({ friendId, myId, myUsername, disabled }: {
   myUsername: string;
   disabled: boolean;
 }) {
+  const router = useRouter();
   const [status, setStatus] = useState<"idle" | "pending" | "loading">("idle");
 
   const handleChallenge = async () => {
@@ -237,12 +239,28 @@ function ChallengeButton({ friendId, myId, myUsername, disabled }: {
     try {
       await postJSON("/api/challenges", { action: "send", fromId: myId, fromUsername: myUsername, toId: friendId });
       setStatus("pending");
+
+      // Watch for recipient to accept — gameId appears on the challenge entry
+      const db = getDatabase();
+      const challengeRef = ref(db, `challenges/${friendId}/${myId}`);
+      const unsub = onValue(challengeRef, (snap) => {
+        const val = snap.val();
+        if (val?.gameId) {
+          unsub();
+          router.push(`/game/${val.gameId}`);
+        }
+        // Entry removed means rejected
+        if (!snap.exists()) {
+          unsub();
+          setStatus("idle");
+        }
+      });
     } catch {
       setStatus("idle");
     }
   };
 
-  if (status === "pending") return <span className={styles.mutedLabel}>Challenge sent!</span>;
+  if (status === "pending") return <span className={styles.mutedLabel}>Waiting for response...</span>;
 
   return (
     <button className={styles.challengeBtn} onClick={handleChallenge} disabled={disabled || status === "loading"}>
