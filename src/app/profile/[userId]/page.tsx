@@ -15,6 +15,8 @@ import Avatar from "@/components/Avatar";
 import { getAvatarUrl, uploadAvatar } from "@/lib/avatar";
 import { ProfileData } from "@/types";
 import type { ClubAvailability } from "@/types/neo4j";
+import FriendButton from "@/components/FriendButton";
+import { fetchFriends, FriendEntry } from "@/lib/friends";
 
 type GameStats = { totalGames: number; winRate: string; currentStreak: number; bestStreak: number };
 type ClubData = { name: string; tag: string; availability: ClubAvailability, memberRole: string; memberCount: number };
@@ -38,6 +40,7 @@ function ProfilePage() {
   const [otherAvatarUrl, setOtherAvatarUrl] = useState<string | null>(null);
   const [avatarUploading, setAvatarUploading] = useState(false);
   const [avatarError, setAvatarError] = useState("");
+  const [friends, setFriends] = useState<FriendEntry[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const isOwnProfile = user?.uid === userId;
@@ -52,6 +55,12 @@ function ProfilePage() {
       getAvatarUrl(userId).then(setOtherAvatarUrl);
     }
   }, [userId]);
+
+  // friends
+  useEffect(() => {
+    if (!isOwnProfile || !user) return;
+    fetchFriends(user.uid).then(setFriends);
+  }, [isOwnProfile, user?.uid]);
 
   const fetchProfileData = async () => {
     try {
@@ -196,6 +205,9 @@ function ProfilePage() {
                 <button onClick={handleDeleteAccount} className={styles.deleteButton}>Delete Account</button>
               </div>
             )}
+            {!isOwnProfile && profileData && (
+              <FriendButton targetId={userId} targetUsername={profileData.username} />
+            )}
           </div>
         </section>
 
@@ -226,7 +238,7 @@ function ProfilePage() {
             ) : (
               <div className={styles.matchList}>
                 {recentMatches.map((match, i) => (
-                  <Link href={`/match/${match.id}`} key={i} className={`${styles.matchItem} ${styles[match.result.toLowerCase()]}`}>
+                  <div key={i} className={`${styles.matchItem} ${styles[match.result.toLowerCase()]}`} onClick={() => router.push(`/match/${match.id}`)}>
                     <Link href={`/profile/${match.opponentId}`} onClick={(e) => e.stopPropagation()} className={styles.matchOpponent}>
                       {match.opponentUsername}
                     </Link>
@@ -235,7 +247,7 @@ function ProfilePage() {
                       <span>{match.playerScore} - {match.opponentScore}</span>
                       <span className={styles.matchDate}>{formatRelativeTime(match.date)}</span>
                     </div>
-                  </Link>
+                  </div>
                 ))}
               </div>
             )}
@@ -254,6 +266,26 @@ function ProfilePage() {
               <p className={styles.emptyState}>This player is not in a club.</p>
             )}
           </section>
+
+          {isOwnProfile && (
+            <section className={styles.card}>
+              <h2>Friends ({friends.length})</h2>
+              {friends.length === 0 ? (
+                <p className={styles.emptyState}>You have no friends yet.</p>
+              ) : (
+                <div className={styles.matchList}>
+                  {friends.map((f) => (
+                    <div key={f.uid} className={styles.matchItem}>
+                      <Link href={`/profile/${f.uid}`} className={styles.matchOpponent}>{f.username}</Link>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <Link href="/friends" className={styles.friendsButton}>
+              Manage friends →
+              </Link>
+            </section>
+          )}
         </div>
       </main>
       <Footer />

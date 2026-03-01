@@ -47,14 +47,14 @@
     gap: 15px;
 }
 
-.profile-dropdown {
+.profileDropdown {
     position: relative;
     display: inline-block;
     cursor: pointer;
 }
 
 /* Wraps the Avatar component — keeps the circular border */
-.profile-pic {
+.profilePic {
     border-radius: 50%;
     border: 2px solid var(--color-text);
     transition: border-color 0.3s;
@@ -66,11 +66,11 @@
     justify-content: center;
 }
 
-.profile-pic:hover {
+.profilePic:hover {
     border-color: var(--color-primary);
 }
 
-.dropdown-content {
+.dropdownContent {
     display: none;
     position: absolute;
     top: calc(100% + 8px);
@@ -85,12 +85,12 @@
     /* clips items to border-radius */
 }
 
-.dropdown-content.show {
+.dropdownContent.show {
     display: block;
 }
 
 /* Single rule covers both <a> and <button> dropdown items */
-.dropdown-item {
+.dropdownItem {
     background: none;
     border: none;
     width: 100%;
@@ -109,21 +109,21 @@
     font-family: inherit;
 }
 
-.dropdown-item:hover {
+.dropdownItem:hover {
     background-color: var(--color-bg-secondary);
     color: var(--color-primary);
 }
 
-.auth-buttons {
+.authButtons {
     display: flex;
     gap: 10px;
 }
 
-.mobile-auth {
+.mobileAuth {
     display: none;
 }
 
-.hamburger-menu {
+.hamburgerMenu {
     display: none;
     flex-direction: column;
     justify-content: space-around;
@@ -136,7 +136,7 @@
     min-height: unset;
 }
 
-.hamburger-menu span {
+.hamburgerMenu span {
     width: 30px;
     height: 3px;
     background: var(--color-text);
@@ -144,21 +144,21 @@
     transition: transform 0.3s ease, opacity 0.3s ease;
 }
 
-.hamburger-menu.open span:nth-child(1) {
+.hamburgerMenu.open span:nth-child(1) {
     transform: translateY(8px) rotate(45deg);
 }
 
-.hamburger-menu.open span:nth-child(2) {
+.hamburgerMenu.open span:nth-child(2) {
     opacity: 0;
 }
 
-.hamburger-menu.open span:nth-child(3) {
+.hamburgerMenu.open span:nth-child(3) {
     transform: translateY(-8px) rotate(-45deg);
 }
 
 /* Mobile */
 @media (max-width: 768px) {
-    .hamburger-menu {
+    .hamburgerMenu {
         display: flex;
         order: 3;
     }
@@ -171,7 +171,7 @@
         height: 40px;
     }
 
-    .header-nav {
+    .headerNav {
         display: none;
         position: absolute;
         top: 100%;
@@ -186,7 +186,7 @@
         z-index: 1000;
     }
 
-    .header-nav.mobile-open {
+    .headerNav.mobileOpen {
         display: flex;
     }
 
@@ -197,21 +197,21 @@
         width: 100%;
     }
 
-    .mobile-auth {
+    .mobileAuth {
         display: flex;
         flex-direction: column;
         width: 100%;
     }
 
-    .auth-buttons {
+    .authButtons {
         flex-direction: column;
     }
 
-    .auth-buttons button {
+    .authButtons button {
         width: 100%;
     }
 }
 
-body.menu-open {
+body.menuOpen {
     overflow: hidden;
 }
