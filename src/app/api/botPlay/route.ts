@@ -3,10 +3,16 @@ import { adminDb } from "@/lib/firebaseAdmin";
 import { Choice, MatchStatus } from "@/types/neo4j";
 import type { Game } from "@/types";
 
+const COUNTER: Record<Choice, Choice> = {
+  [Choice.Rock]: Choice.Paper,
+  [Choice.Paper]: Choice.Scissors,
+  [Choice.Scissors]: Choice.Rock,
+};
 
-function getCyclicChoice(round: number, offset = 2, cycleLength = 3): Choice {
-  const cycle: Choice[] = [Choice.Rock, Choice.Paper, Choice.Scissors];
-  return cycle[(round * offset) % cycleLength];
+function getBotChoice(round: number, oppLastChoice?: Choice): Choice {
+  const rng = [Choice.Rock, Choice.Paper, Choice.Scissors];
+  if (round <= 6 || !oppLastChoice) return rng[Math.floor(Math.random() * 3)];
+  return COUNTER[oppLastChoice];
 }
 
 export async function POST(req: NextRequest) {
@@ -28,7 +34,8 @@ export async function POST(req: NextRequest) {
   await adminDb.ref(`games/${gameId}/presence/${botId}`).set(true);
   
   const round = game.currentRound;
-  const botChoice = getCyclicChoice(round, round === 1 ? Math.floor(Math.random() * 3) : round);
+  const oppLastChoice = round === 1 ? Choice.Paper : isPlayer1 ? game.rounds.at(round - 2)?.player2Choice : game.rounds.at(round - 2)?.player1Choice;
+  const botChoice = getBotChoice(round, oppLastChoice!);
 
   await adminDb.ref(`games/${gameId}`).update({
     [`${botKey}/choice`]: botChoice,
