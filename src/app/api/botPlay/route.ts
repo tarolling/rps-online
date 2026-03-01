@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
   await adminDb.ref(`games/${gameId}/presence/${botId}`).set(true);
   
   const round = game.currentRound;
-  const botChoice = getCyclicChoice(round, Math.floor(Math.random() * 3), round);
+  const botChoice = getCyclicChoice(round, round === 1 ? Math.floor(Math.random() * 3) : round, round);
 
   await adminDb.ref(`games/${gameId}`).update({
     [`${botKey}/choice`]: botChoice,
