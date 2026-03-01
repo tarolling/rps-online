@@ -304,6 +304,14 @@
     background: color-mix(in srgb, var(--color-danger) 80%, black);
 }
 
+/* misc */
+.friendsButton {
+    font-size: 0.85rem;
+    color: var(--color-primary);
+    margin-top: 0.5rem;
+    display: block;
+}
+
 /* ── Responsive ── */
 
 @media (max-width: 600px) {

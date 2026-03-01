@@ -12,6 +12,7 @@ import { PlayerMatch } from "@/types/common";
 import config from "@/config/settings.json";
 import RankBadge from "@/components/RankBadge";
 import { ProfileData } from "@/types";
+import { useRouter } from "next/navigation";
 
 export default function DashboardPage() {
   const { user } = useAuth();
@@ -26,6 +27,8 @@ export default function DashboardPage() {
   const [playerData, setPlayerData] = useState<ProfileData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const router = useRouter();
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -132,7 +135,9 @@ export default function DashboardPage() {
             <h2>Recent Matches</h2>
             <div className={styles.matchesList}>
               {recentMatches.map((match, index) => (
-                <Link href={`/match/${match.id}`} key={index} className={`${styles.matchItem} ${styles[match.result.toLowerCase()]}`}>
+                <div key={index} className={`${styles.matchItem} ${styles[match.result.toLowerCase()]}`}
+                  onClick={() => router.push(`/match/${match.id}`)}
+                  style={{ cursor: "pointer" }}>
                   <Link href={`/profile/${match.opponentId}`} className={styles.matchOpponent}>
                     {match.opponentUsername}
                   </Link>
@@ -141,7 +146,7 @@ export default function DashboardPage() {
                     <span>{match.playerScore} - {match.opponentScore}</span>
                     <span className={styles.matchDate}>{formatRelativeTime(match.date)}</span>
                   </div>
-                </Link>
+                </div>
               ))}
             </div>
           </section>

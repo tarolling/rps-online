@@ -277,7 +277,7 @@
 
 .username a:hover {
     color: var(--color-primary);
-    text-decoration: underline;
+    text-decoration: none;
 }
 
 .role {
