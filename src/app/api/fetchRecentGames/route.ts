@@ -15,17 +15,20 @@ export async function GET(req: NextRequest) {
           MATCH (p:Player {uid: $playerId})-[r1:PARTICIPATED_IN]->(m:Match)<-[r2:PARTICIPATED_IN]-(opp:Player)
           ORDER BY m.timestamp DESC
           LIMIT 3
-          RETURN opp.uid AS uid,
-          opp.username AS username,
-          r1.result AS result,
-          r1.score AS playerScore,
-          r2.score AS opponentScore,
-          m.timestamp AS date
+          RETURN
+            m.id AS id,
+            opp.uid AS uid,
+            opp.username AS username,
+            r1.result AS result,
+            r1.score AS playerScore,
+            r2.score AS opponentScore,
+            m.timestamp AS date
         `,
         { playerId },
         );
 
         return data.records.map((record) => ({
+          id: record.get("id"),
           opponentId: record.get("uid"),
           opponentUsername: record.get("username"),
           result: record.get("result") === MatchResult.Win ? "Win" : "Loss",

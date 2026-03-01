@@ -9,7 +9,7 @@ import Header from "@/components/Header";
 import { formatRelativeTime } from "@/lib/time";
 import styles from "./ProfilePage.module.css";
 import { getJSON, postJSON } from "@/lib/api";
-import { Match } from "@/types/common";
+import { PlayerMatch } from "@/types/common";
 import { getRankTier } from "@/lib/ranks";
 import Avatar from "@/components/Avatar";
 import { getAvatarUrl, uploadAvatar } from "@/lib/avatar";
@@ -29,7 +29,7 @@ function ProfilePage() {
   const [profileData, setProfileData] = useState<ProfileData | null>(null);
   const [gameStats, setGameStats] = useState<GameStats | null>(null);
   const [userClub, setUserClub] = useState<ClubData | null>(null);
-  const [recentMatches, setRecentMatches] = useState<Match[]>([]);
+  const [recentMatches, setRecentMatches] = useState<PlayerMatch[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -80,7 +80,7 @@ function ProfilePage() {
           currentStreak: number,
           bestStreak: number
         } | null>("/api/fetchDashboardStats", { playerId: userId }),
-        getJSON<Match[]>("/api/fetchRecentGames", { playerId: userId }),
+        getJSON<PlayerMatch[]>("/api/fetchRecentGames", { playerId: userId }),
         getJSON<ClubData | null>("/api/clubs/user", { uid: userId }),
       ]);
       if (stats.status === "fulfilled" && stats.value) {
@@ -226,7 +226,7 @@ function ProfilePage() {
             ) : (
               <div className={styles.matchList}>
                 {recentMatches.map((match, i) => (
-                  <div key={i} className={`${styles.matchItem} ${styles[match.result.toLowerCase()]}`}>
+                  <Link href={`/match/${match.id}`} key={i} className={`${styles.matchItem} ${styles[match.result.toLowerCase()]}`}>
                     <Link href={`/profile/${match.opponentId}`} onClick={(e) => e.stopPropagation()} className={styles.matchOpponent}>
                       {match.opponentUsername}
                     </Link>
@@ -235,7 +235,7 @@ function ProfilePage() {
                       <span>{match.playerScore} - {match.opponentScore}</span>
                       <span className={styles.matchDate}>{formatRelativeTime(match.date)}</span>
                     </div>
-                  </div>
+                  </Link>
                 ))}
               </div>
             )}

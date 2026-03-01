@@ -90,6 +90,7 @@
     margin-bottom: 1rem;
     background: var(--color-bg);
     transition: transform 0.2s ease;
+    text-decoration: none;
 }
 
 .matchItem:hover {
@@ -107,6 +108,11 @@
 .matchOpponent {
     font-weight: bold;
     color: var(--color-text);
+    text-decoration: none;
+}
+
+.matchOpponent:hover {
+    color: var(--color-primary);
     text-decoration: none;
 }
 

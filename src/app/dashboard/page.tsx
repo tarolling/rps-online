@@ -8,7 +8,7 @@ import Link from "next/link";
 import { formatRelativeTime } from "@/lib/time";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import { Match } from "@/types/common";
+import { PlayerMatch } from "@/types/common";
 import config from "@/config/settings.json";
 import RankBadge from "@/components/RankBadge";
 import { ProfileData } from "@/types";
@@ -22,7 +22,7 @@ export default function DashboardPage() {
     currentStreak: 0,
     bestStreak: 0,
   });
-  const [recentMatches, setRecentMatches] = useState<Match[]>([]);
+  const [recentMatches, setRecentMatches] = useState<PlayerMatch[]>([]);
   const [playerData, setPlayerData] = useState<ProfileData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -53,7 +53,7 @@ export default function DashboardPage() {
         }));
       }
 
-      const recentGames = await getJSON<Match[]>("/api/fetchRecentGames", {
+      const recentGames = await getJSON<PlayerMatch[]>("/api/fetchRecentGames", {
         playerId: user?.uid,
       });
 
@@ -132,7 +132,7 @@ export default function DashboardPage() {
             <h2>Recent Matches</h2>
             <div className={styles.matchesList}>
               {recentMatches.map((match, index) => (
-                <div key={index} className={`${styles.matchItem} ${styles[match.result.toLowerCase()]}`}>
+                <Link href={`/match/${match.id}`} key={index} className={`${styles.matchItem} ${styles[match.result.toLowerCase()]}`}>
                   <Link href={`/profile/${match.opponentId}`} className={styles.matchOpponent}>
                     {match.opponentUsername}
                   </Link>
@@ -141,7 +141,7 @@ export default function DashboardPage() {
                     <span>{match.playerScore} - {match.opponentScore}</span>
                     <span className={styles.matchDate}>{formatRelativeTime(match.date)}</span>
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
           </section>
