@@ -11,14 +11,10 @@ import RankBadge from "@/components/RankBadge";
 import Avatar from "@/components/Avatar";
 import styles from "@/styles/game.module.css";
 import config from "@/config/settings.json";
-import { Game, RoundData, UserClub } from "@/types";
+import { CHOICE_EMOJI, Game, RoundData, UserClub } from "@/types";
 import { Choice, MatchStatus } from "@/types/neo4j";
 
-const CHOICE_EMOJI: Record<string, string> = {
-  [Choice.Rock]: "✊",
-  [Choice.Paper]: "✋",
-  [Choice.Scissors]: "✌️",
-};
+
 
 export default function SpectatePage() {
   const { gameId } = useParams<{ gameId: string }>();

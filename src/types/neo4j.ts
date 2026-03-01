@@ -75,6 +75,7 @@ export interface Match {
     timestamp: DateTime;
     totalRounds: number;
     winnerId: string;
+    p1Id: string;
     // Optional: only present for tournament matches
     tournamentId?: string;
     matchId?: string;
@@ -114,27 +115,4 @@ export type ParticipatedIn = {
 /** On (Player)-[:EARNED_TITLE]->(Title) */
 export type EarnedTitle = {
     awardedAt: DateTime;
-};
-
-////////////////////////////////////////////////////////////////
-// Deprecated
-////////////////////////////////////////////////////////////////
-
-/**
- * @deprecated Use Match node + ParticipatedIn relationship instead
- */
-export type Played = {
-    opponentRocks: number;
-    opponentPapers: number;
-    opponentScissors: number;
-    opponentScore: number;
-    opponentRating: number;
-    playerRocks: number;
-    playerPapers: number;
-    playerScissors: number;
-    playerScore: number;
-    playerRating: number;
-    result: "W" | "L";
-    timestamp: DateTime;
-    totalRounds: number;
 };

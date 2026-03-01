@@ -91,7 +91,7 @@ const ClubsPage = () => {
     }
     setError(null);
     try {
-      await postJSON("/api/clubs", { ...createForm, uid: user.uid });
+      await postJSON("/api/clubs", { ...createForm, name: createForm.name.trim(), uid: user.uid });
       setShowCreateModal(false);
       setCreateForm({ name: "", tag: "", availability: "Open" });
       await Promise.all([fetchClubs(), fetchUserClub()]);
@@ -205,7 +205,7 @@ const ClubsPage = () => {
                   id="club-name"
                   type="text"
                   value={createForm.name}
-                  onChange={(e) => setCreateForm((p) => ({ ...p, name: e.target.value.trim() }))}
+                  onChange={(e) => setCreateForm((p) => ({ ...p, name: e.target.value }))}
                   required
                 />
               </div>

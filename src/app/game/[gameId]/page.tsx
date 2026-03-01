@@ -15,16 +15,10 @@ import RankBadge from "@/components/RankBadge";
 import Avatar from "@/components/Avatar";
 import { getAvatarUrl } from "@/lib/avatar";
 import { getJSON, postJSON } from "@/lib/api";
-import { Game, RoundData, Tournament, UserClub } from "@/types";
+import { CHOICE_EMOJI, Game, RoundData, Tournament, UserClub } from "@/types";
 import { Choice, MatchStatus } from "@/types/neo4j";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
-
-const CHOICE_EMOJI: Record<string, string> = {
-  [Choice.Rock]: "✊",
-  [Choice.Paper]: "✋",
-  [Choice.Scissors]: "✌️",
-};
 
 const PLAYABLE_CHOICES = [Choice.Rock, Choice.Paper, Choice.Scissors];
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { RoundData } from "@/types";
+import { CHOICE_EMOJI, RoundData } from "@/types";
 import setupAI from "@/lib/aiAlgorithm";
 import { FIRST_TO, determineRoundWinner } from "@/lib/matchmaking";
 import Footer from "@/components/Footer";
@@ -19,12 +19,6 @@ type GameData = {
 };
 
 // ── Constants ─────────────────────────────────────────────────────────────────
-
-const CHOICE_EMOJI: Record<Choice, string> = {
-  [Choice.Rock]: "✊",
-  [Choice.Paper]: "✋",
-  [Choice.Scissors]: "✌️",
-};
 
 // Maps between full choice names and the single-char keys the AI algorithm uses
 const TO_AI: Record<Choice, string> = {

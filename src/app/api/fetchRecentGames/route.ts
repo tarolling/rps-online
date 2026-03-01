@@ -36,6 +36,7 @@ export async function GET(req: NextRequest) {
       } else {
         const data = await tx.run(`
           MATCH (p1:Player)-[r1:PARTICIPATED_IN]->(m:Match)<-[r2:PARTICIPATED_IN]-(p2:Player)
+          WHERE elementId(p1) < elementId(p2)
           ORDER BY m.timestamp DESC
           LIMIT 3
           RETURN m.id AS id,
