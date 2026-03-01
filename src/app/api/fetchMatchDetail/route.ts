@@ -12,34 +12,36 @@ export async function GET(req: NextRequest) {
   try {
     const response = await session.executeRead(async (tx) =>
     {
-      const matchResult = await tx.run(
-        `MATCH (p1:Player)-[r1:PARTICIPATED_IN]->(m:Match {id: $matchId})<-[r2:PARTICIPATED_IN]-(p2:Player)
-         RETURN
-           m.id           AS matchId,
-           m.timestamp    AS timestamp,
-           m.totalRounds  AS totalRounds,
-           m.winnerId     AS winnerId,
-           m.mode         AS mode,
-           m.status       AS status,
-           p1.uid         AS p1Id,
-           p1.username    AS p1Username,
-           p1.rating      AS p1Rating,
-           r1.score       AS p1Score,
-           r1.ratingBefore AS p1RatingBefore,
-           r1.ratingAfter  AS p1RatingAfter,
-           r1.rocks        AS p1Rocks,
-           r1.papers       AS p1Papers,
-           r1.scissors     AS p1Scissors,
-           p2.uid         AS p2Id,
-           p2.username    AS p2Username,
-           p2.rating      AS p2Rating,
-           r2.score       AS p2Score,
-           r2.ratingBefore AS p2RatingBefore,
-           r2.ratingAfter  AS p2RatingAfter,
-           r2.rocks        AS p2Rocks,
-           r2.papers       AS p2Papers,
-           r2.scissors     AS p2Scissors`,
-        { matchId },
+      const matchResult = await tx.run(`
+        MATCH (m:Match {id: $matchId})
+        MATCH (p1:Player {uid: m.p1Id})-[r1:PARTICIPATED_IN]->(m)<-[r2:PARTICIPATED_IN]-(p2:Player)
+        RETURN
+          m.id            AS matchId,
+          m.timestamp     AS timestamp,
+          m.totalRounds   AS totalRounds,
+          m.winnerId      AS winnerId,
+          m.p1Id          AS matchP1Id,
+          m.mode          AS mode,
+          m.status        AS status,
+          p1.uid          AS p1Id,
+          p1.username     AS p1Username,
+          p1.rating       AS p1Rating,
+          r1.score        AS p1Score,
+          r1.ratingBefore AS p1RatingBefore,
+          r1.ratingAfter  AS p1RatingAfter,
+          r1.rocks        AS p1Rocks,
+          r1.papers       AS p1Papers,
+          r1.scissors     AS p1Scissors,
+          p2.uid          AS p2Id,
+          p2.username     AS p2Username,
+          p2.rating       AS p2Rating,
+          r2.score        AS p2Score,
+          r2.ratingBefore AS p2RatingBefore,
+          r2.ratingAfter  AS p2RatingAfter,
+          r2.rocks        AS p2Rocks,
+          r2.papers       AS p2Papers,
+          r2.scissors     AS p2Scissors`,
+      { matchId },
       );
 
       if (matchResult.records.length === 0) return null;
@@ -66,6 +68,7 @@ export async function GET(req: NextRequest) {
           timestamp: m.get("timestamp"),
           totalRounds: toInt(m.get("totalRounds")),
           winnerId: m.get("winnerId"),
+          p1Id: m.get("matchP1Id"),
           mode: m.get("mode"),
           status: m.get("status"),
         },

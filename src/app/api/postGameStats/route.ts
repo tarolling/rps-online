@@ -38,7 +38,8 @@ export async function POST(req: NextRequest) {
             status:      $matchStatus,
             timestamp:   datetime(),
             totalRounds: $totalRounds,
-            winnerId:    $winnerId
+            winnerId:    $winnerId,
+            p1Id:        $playerOneId
         })
 
         CREATE (p1)-[:PARTICIPATED_IN {

@@ -9,6 +9,7 @@ import { formatTime } from "@/lib/time";
 import { getAvatarUrl } from "@/lib/avatar";
 import Avatar from "@/components/Avatar";
 import RankBadge from "@/components/RankBadge";
+import { CHOICE_EMOJI } from "@/types";
 
 async function getGameDetail(id: string) {
   const data = await getJSON<{
@@ -79,12 +80,6 @@ async function getGameDetail(id: string) {
     })),
   };
 }
-
-const moveLabel: Record<string, string> = {
-  "ROCK": "✊",
-  "PAPER": "🖐️",
-  "SCISSORS": "✌️",
-};
 
 export default async function MatchDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -206,12 +201,12 @@ export default async function MatchDetailPage({ params }: { params: Promise<{ id
                   <span className={styles.roundNum}>Round {round.round}</span>
                   <div className={styles.roundMoves}>
                     <div className={`${styles.moveBlock} ${round.result === "player1" ? styles.moveWin : ""}`}>
-                      <span className={styles.moveEmoji}>{moveLabel[round.p1Move]}</span>
+                      <span className={styles.moveEmoji}>{CHOICE_EMOJI[round.p1Move]}</span>
                       <span className={styles.moveText}>{round.p1Move}</span>
                     </div>
                     <span className={styles.roundVs}>vs</span>
                     <div className={`${styles.moveBlock} ${round.result === "player2" ? styles.moveWin : ""}`}>
-                      <span className={styles.moveEmoji}>{moveLabel[round.p2Move]}</span>
+                      <span className={styles.moveEmoji}>{CHOICE_EMOJI[round.p2Move]}</span>
                       <span className={styles.moveText}>{round.p2Move}</span>
                     </div>
                   </div>
@@ -240,7 +235,7 @@ export default async function MatchDetailPage({ params }: { params: Promise<{ id
                   <div className={styles.timelineContent}>
                     <strong>Round {round.round}</strong>
                     <span>
-                      {moveLabel[round.p1Move]} {round.p1Move} vs {moveLabel[round.p2Move]} {round.p2Move}
+                      {CHOICE_EMOJI[round.p1Move]} {round.p1Move} vs {CHOICE_EMOJI[round.p2Move]} {round.p2Move}
                       {" · "}
                       {round.result === "draw" ? "Draw" :
                         round.result === "player1" ? `${player1.name} takes it` :
