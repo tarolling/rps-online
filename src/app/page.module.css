@@ -173,6 +173,11 @@
   text-decoration: none;
 }
 
+.player:hover {
+  color: var(--color-primary);
+  text-decoration: none;
+}
+
 .vs {
   display: flex;
   flex-direction: column;
