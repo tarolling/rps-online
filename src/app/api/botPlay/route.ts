@@ -6,7 +6,7 @@ import type { Game } from "@/types";
 
 function getCyclicChoice(round: number, offset = 2, cycleLength = 5): Choice {
   const cycle: Choice[] = [Choice.Rock, Choice.Paper, Choice.Scissors];
-  return cycle[(round + offset) % cycleLength];
+  return cycle[(round * offset) % cycleLength];
 }
 
 export async function POST(req: NextRequest) {
@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
   await adminDb.ref(`games/${gameId}/presence/${botId}`).set(true);
   
   const round = game.currentRound;
-  const botChoice = getCyclicChoice(round, round === 1 ? Math.floor(Math.random() * 3) : round, round);
+  const botChoice = getCyclicChoice(round, round === 1 ? Math.floor(Math.random() * 3) : round);
 
   await adminDb.ref(`games/${gameId}`).update({
     [`${botKey}/choice`]: botChoice,
