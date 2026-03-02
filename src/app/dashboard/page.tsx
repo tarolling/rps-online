@@ -19,6 +19,8 @@ export default function DashboardPage() {
   const [gameStats, setGameStats] = useState({
     rating: config.defaultRating,
     totalGames: 0,
+    wins: 0,
+    losses: 0,
     winRate: "N/A",
     currentStreak: 0,
     bestStreak: 0,
@@ -32,7 +34,15 @@ export default function DashboardPage() {
 
   useEffect(() => {
     const fetchStats = async () => {
-      const data = await postJSON<{ rating: number, totalGames: number, winRate: number, currentStreak: number, bestStreak: number }>("/api/fetchDashboardStats", {
+      const data = await postJSON<{
+        rating: number,
+        totalGames: number,
+        wins: number,
+        losses: number,
+        winRate: number,
+        currentStreak: number,
+        bestStreak: number
+      }>("/api/fetchDashboardStats", {
         playerId: user?.uid,
       });
 
@@ -41,6 +51,8 @@ export default function DashboardPage() {
           ...prevState,
           rating: config.defaultRating,
           totalGames: 0,
+          wins: 0,
+          losses: 0,
           winRate: "N/A",
           currentStreak: 0,
           bestStreak: 0,
@@ -50,6 +62,8 @@ export default function DashboardPage() {
           ...prevState,
           rating: data.rating,
           totalGames: data.totalGames,
+          wins: data.wins,
+          losses: data.losses,
           winRate: `${data.winRate.toFixed(1)}%`,
           currentStreak: data.currentStreak,
           bestStreak: data.bestStreak,
@@ -119,6 +133,14 @@ export default function DashboardPage() {
               <div className={styles.statItem}>
                 <span className={styles.statValue}>{gameStats.winRate}</span>
                 <span className={styles.statLabel}>Win Rate</span>
+              </div>
+              <div className={styles.statItem}>
+                <span className={styles.statValue}>{gameStats.wins}</span>
+                <span className={styles.statLabel}>Wins</span>
+              </div>
+              <div className={styles.statItem}>
+                <span className={styles.statValue}>{gameStats.losses}</span>
+                <span className={styles.statLabel}>Losses</span>
               </div>
               <div className={styles.statItem}>
                 <span className={styles.statValue}>{gameStats.currentStreak}</span>

@@ -18,8 +18,23 @@ import type { ClubAvailability } from "@/types/neo4j";
 import FriendButton from "@/components/FriendButton";
 import { fetchFriends, FriendEntry } from "@/lib/friends";
 
-type GameStats = { totalGames: number; winRate: string; currentStreak: number; bestStreak: number };
-type ClubData = { name: string; tag: string; availability: ClubAvailability, memberRole: string; memberCount: number };
+type GameStats = {
+  totalGames: number;
+  wins: number;
+  losses: number;
+  winRate: string;
+};
+type HeadToHeadStats = {
+  wins: number;
+  losses: number;
+};
+type ClubData = {
+  name: string;
+  tag: string;
+  availability: ClubAvailability;
+  memberRole: string; 
+  memberCount: number;
+};
 
 const USERNAME_REGEX = /^[a-zA-Z0-9_]{3,20}$/;
 
@@ -30,6 +45,7 @@ function ProfilePage() {
 
   const [profileData, setProfileData] = useState<ProfileData | null>(null);
   const [gameStats, setGameStats] = useState<GameStats | null>(null);
+  const [h2hStats, setH2hStats] = useState<HeadToHeadStats | null>(null);
   const [userClub, setUserClub] = useState<ClubData | null>(null);
   const [recentMatches, setRecentMatches] = useState<PlayerMatch[]>([]);
   const [loading, setLoading] = useState(true);
@@ -53,6 +69,9 @@ function ProfilePage() {
     fetchStats();
     if (!isOwnProfile) {
       getAvatarUrl(userId).then(setOtherAvatarUrl);
+      if (user) {
+        fetchHeadToHeadStats(user?.uid, userId);
+      }
     }
   }, [userId]);
 
@@ -76,7 +95,7 @@ function ProfilePage() {
     }
   };
 
-  const fetchStats = async () => {
+  async function fetchStats() {
     setGameStats(null);
     setUserClub(null);
     setRecentMatches([]);
@@ -85,6 +104,8 @@ function ProfilePage() {
         postJSON<{        
           rating: number,
           totalGames: number,
+          wins: number,
+          losses: number,
           winRate: number,
           currentStreak: number,
           bestStreak: number
@@ -94,7 +115,12 @@ function ProfilePage() {
       ]);
       if (stats.status === "fulfilled" && stats.value) {
         const d = stats.value;
-        setGameStats({ totalGames: d.totalGames, winRate: `${d.winRate.toFixed(1)}%`, currentStreak: d.currentStreak, bestStreak: d.bestStreak });
+        setGameStats({
+          totalGames: d.totalGames,
+          wins: d.wins,
+          losses: d.losses,
+          winRate: `${d.winRate.toFixed(1)}%`,
+        });
       }
       if (games.status === "fulfilled") setRecentMatches(games.value);
       if (club.status === "fulfilled" && club.value) setUserClub(club.value);
@@ -102,6 +128,25 @@ function ProfilePage() {
       console.error("Error fetching stats:", err);
     }
   };
+
+  async function fetchHeadToHeadStats(viewerId: string, targetId: string) {
+    setH2hStats(null);
+    try {
+      const stats = await getJSON<{
+      wins: number,
+      losses: number,
+    }>("/api/fetchH2hStats", {
+      viewerId,
+      targetId,
+    });
+      setH2hStats({
+        wins: stats.wins,
+        losses: stats.losses,
+      });
+    } catch (err) {
+      console.error("Error fetching head-to-head stats:", err);
+    }
+  }
 
   const handleUpdateUsername = async () => {
     setUsernameError("");
@@ -212,6 +257,16 @@ function ProfilePage() {
         </section>
 
         <div className={styles.grid}>
+          {!isOwnProfile && h2hStats && (
+            <section className={styles.card}>
+              <h2>Head-to-Head</h2>
+              <div className={styles.statsGrid}>
+                <StatItem value={h2hStats.wins} label="Wins" />
+                <StatItem value={h2hStats.losses} label="Losses" />
+              </div>
+            </section>
+          )}
+          
           <section className={styles.card}>
             <h2>Statistics</h2>
             {gameStats ? (
@@ -223,8 +278,8 @@ function ProfilePage() {
                 <StatItem value={profileData?.rating ?? "N/A"} label="Skill Rating" />
                 <StatItem value={gameStats.totalGames} label="Games Played" />
                 <StatItem value={gameStats.winRate} label="Win Rate" />
-                <StatItem value={gameStats.currentStreak} label="Current Streak" />
-                <StatItem value={gameStats.bestStreak} label="Best Streak" />
+                <StatItem value={gameStats.wins} label="Wins" />
+                <StatItem value={gameStats.losses} label="Losses" />
               </div>
             ) : (
               <p className={styles.emptyState}>This player has not played any games.</p>

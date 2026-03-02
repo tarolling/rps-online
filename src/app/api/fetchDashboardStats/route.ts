@@ -22,22 +22,28 @@ export async function POST(req: NextRequest) {
         WITH
           p,
           games,
-          size([g IN games WHERE g.result = 'W']) AS totalWins,
+          size([g IN games WHERE g.result = 'W']) AS wins,
+          size([g IN games WHERE g.result = 'L']) AS losses,
           size(games) AS totalGames
         WITH
           p,
           totalGames,
-          totalWins,
-          toFloat(totalWins) / totalGames * 100 AS winPercentage,
+          wins,
+          losses,
+          toFloat(wins) / totalGames * 100 AS winPercentage,
           apoc.coll.sortMaps(games, "timestamp") AS sortedAsc
         WITH
           p,
           totalGames,
+          wins,
+          losses,
           winPercentage,
           reverse(sortedAsc) AS sortedDesc
         WITH
           p,
           totalGames,
+          wins,
+          losses,
           winPercentage,
           reduce(streaks = {current: 0, best: 0}, g IN sortedDesc |
               CASE
@@ -54,6 +60,8 @@ export async function POST(req: NextRequest) {
         RETURN
           p.rating AS rating,
           totalGames,
+          wins,
+          losses,
           winPercentage AS winRate,
           streakStats.current AS currentStreak,
           streakStats.best AS bestStreak
@@ -68,6 +76,8 @@ export async function POST(req: NextRequest) {
       return {
         rating: neo4j.integer.toNumber(data.records[0].get("rating")),
         totalGames: neo4j.integer.toNumber(data.records[0].get("totalGames")),
+        wins: neo4j.integer.toNumber(data.records[0].get("wins")),
+        losses: neo4j.integer.toNumber(data.records[0].get("losses")),
         winRate: neo4j.integer.toNumber(data.records[0].get("winRate")),
         currentStreak: neo4j.integer.toNumber(data.records[0].get("currentStreak")),
         bestStreak: neo4j.integer.toNumber(data.records[0].get("bestStreak")),
