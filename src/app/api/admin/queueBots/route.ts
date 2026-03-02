@@ -8,7 +8,7 @@ export async function POST() {
 
   // Fetch some bots from Neo4j
   const result = await session.executeRead((tx) =>
-    tx.run("MATCH (p:Player {isBot: true}) RETURN p.uid AS uid, p.username AS username, p.rating AS rating LIMIT 25"),
+    tx.run("MATCH (p:Player {isBot: true}) RETURN p.uid AS uid, p.username AS username, p.rating AS rating LIMIT 100"),
   );
   await session.close();
 
