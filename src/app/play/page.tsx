@@ -14,14 +14,14 @@ import { ProfileData } from "@/types";
 import { getRankTier } from "@/lib/ranks";
 import { MatchStatus } from "@/types/neo4j";
 
-type MatchStatus = "idle" | "searching" | "matched" | "error";
+type MatchmakingStatus = "idle" | "searching" | "matched" | "error";
 
 function MatchmakingPage() {
   const { user } = useAuth();
   const router = useRouter();
   const db = getDatabase();
 
-  const [matchStatus, setMatchStatus] = useState<MatchStatus>("idle");
+  const [matchStatus, setMatchStatus] = useState<MatchmakingStatus>("idle");
   const [onlineCount, setOnlineCount] = useState(0);
   const [playerInfo, setPlayerInfo] = useState<ProfileData | null>(null);
 
