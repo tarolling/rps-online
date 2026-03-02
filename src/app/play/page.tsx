@@ -7,9 +7,12 @@ import { useRouter } from "next/navigation";
 import { findMatch } from "@/lib/matchmaking";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
+import RankBadge from "@/components/RankBadge";
 import styles from "./MatchmakingPage.module.css";
 import { postJSON } from "@/lib/api";
 import { ProfileData } from "@/types";
+import { getRankTier } from "@/lib/ranks";
+import { MatchStatus } from "@/types/neo4j";
 
 type MatchStatus = "idle" | "searching" | "matched" | "error";
 
@@ -20,6 +23,14 @@ function MatchmakingPage() {
 
   const [matchStatus, setMatchStatus] = useState<MatchStatus>("idle");
   const [onlineCount, setOnlineCount] = useState(0);
+  const [playerInfo, setPlayerInfo] = useState<ProfileData | null>(null);
+
+  useEffect(() => {
+    if (!user) return;
+    postJSON<ProfileData>("/api/fetchPlayer", { uid: user.uid })
+      .then(setPlayerInfo)
+      .catch(console.error);
+  }, [user?.uid]);
 
   // Track online player count and redirect if already in a game
   useEffect(() => {
@@ -40,10 +51,7 @@ function MatchmakingPage() {
       const snapshot = await get(gamesRef);
       const games = snapshot.val() || {};
       for (const [gameId, game] of Object.entries(games) as [string, any][]) {
-        if (
-          game.state === "in_progress" &&
-                    (game.player1.id === user.uid || game.player2.id === user.uid)
-        ) {
+        if (game.state === MatchStatus.InProgress && (game.player1.id === user.uid || game.player2.id === user.uid)) {
           router.push(`/game/${gameId}`);
           return;
         }
@@ -64,8 +72,9 @@ function MatchmakingPage() {
     if (!user) return;
     setMatchStatus("searching");
     try {
-      const playerInfo = await postJSON<ProfileData>("/api/fetchPlayer", { uid: user?.uid });
-      const result = await findMatch(user?.uid, playerInfo.username, playerInfo.rating);
+      const info = await postJSON<ProfileData>("/api/fetchPlayer", { uid: user?.uid });
+      if (!playerInfo) setPlayerInfo(info);
+      const result = await findMatch(user?.uid, info.username, info.rating);
 
       if ("gameID" in result) {
         setMatchStatus("matched");
@@ -85,67 +94,102 @@ function MatchmakingPage() {
     setMatchStatus("idle");
   };
 
+  const rankTier = playerInfo ? getRankTier(playerInfo.rating) : null;
+  const rankColor = rankTier?.rank === "Infinity" ? "#ffffff" : rankTier?.color;
+
   return (
     <div className="app">
       <Header />
       <main className={styles.main}>
+
+        <div className={styles.pageHeader}>
+          <h1 className={styles.pageTitle}>Select Mode</h1>
+          <div className={styles.onlineCount}>
+            <span className={styles.onlineDot} />
+            <span>{onlineCount} online</span>
+          </div>
+        </div>
+
         <div className={styles.grid}>
 
-          {/* Ranked matchmaking */}
-          {user && (<div className={styles.card}>
-            <div className={styles.cardHeader}>
-              <h2>Ranked Match</h2>
-              <p className={styles.subtitle}>Compete to climb the leaderboard.</p>
-            </div>
+          {/* ── Ranked ── */}
+          {user && (
+            <div
+              className={`${styles.card} ${styles.cardRanked}`}
+              style={{ "--rank-color": rankColor ?? "var(--color-primary)", "--rank-glow": rankTier?.glow ?? "transparent" } as React.CSSProperties}
+            >
+              <div className={styles.cardBg} aria-hidden />
 
-            <div className={styles.onlineCount}>
-              <span className={styles.onlineDot} />
-              <span>{onlineCount} players online</span>
-            </div>
+              <div className={styles.modeTag}>Competitive</div>
+              <h2 className={styles.cardTitle}>Ranked</h2>
+              <p className={styles.cardDesc}>Climb the leaderboard. Your rating is on the line.</p>
 
-            {matchStatus === "idle" && (
-              <button className={styles.primaryButton} onClick={handleFindMatch}>
-                                Find Match
+              {playerInfo && (
+                <div className={styles.playerSnapshot}>
+                  <RankBadge rating={playerInfo.rating} variant="full" />
+                </div>
+              )}
+
+              <div className={styles.cardFooter}>
+                {matchStatus === "idle" && (
+                  <button className={styles.primaryBtn} onClick={handleFindMatch}>
+                    Find Match
+                  </button>
+                )}
+
+                {matchStatus === "searching" && (
+                  <div className={styles.statusBlock}>
+                    <div className={styles.searchingRow}>
+                      <div className={styles.spinner} />
+                      <span className={styles.statusText}>Searching for opponent…</span>
+                    </div>
+                    <button className={styles.cancelBtn} onClick={handleCancel}>Cancel</button>
+                  </div>
+                )}
+
+                {matchStatus === "matched" && (
+                  <div className={styles.statusBlock}>
+                    <div className={styles.matchedRow}>
+                      <span className={styles.successIcon}>✓</span>
+                      <span className={styles.successText}>Match Found — Joining…</span>
+                    </div>
+                  </div>
+                )}
+
+                {matchStatus === "error" && (
+                  <div className={styles.statusBlock}>
+                    <p className={styles.errorText}>Something went wrong.</p>
+                    <button className={styles.primaryBtn} onClick={handleFindMatch}>Retry</button>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* ── vs AI ── */}
+          <div className={`${styles.card} ${styles.cardAI}`}>
+            <div className={styles.cardBg} aria-hidden />
+            <div className={styles.modeTag}>Practice</div>
+            <h2 className={styles.cardTitle}>vs AI</h2>
+            <p className={styles.cardDesc}>Sharpen your skills. No rating at stake.</p>
+            <div className={styles.cardFooter}>
+              <button className={styles.secondaryBtn} onClick={() => router.push("/playAI")}>
+                Play
               </button>
-            )}
-
-            {matchStatus === "searching" && (
-              <div className={styles.statusBlock}>
-                <div className={styles.spinner} />
-                <p className={styles.statusText}>Searching for an opponent…</p>
-                <button className={styles.cancelButton} onClick={handleCancel}>
-                                    Cancel
-                </button>
-              </div>
-            )}
-
-            {matchStatus === "matched" && (
-              <div className={styles.statusBlock}>
-                <div className={styles.successIcon}>✓</div>
-                <p className={styles.successText}>Match Found!</p>
-                <p className={styles.statusText}>Joining game…</p>
-              </div>
-            )}
-
-            {matchStatus === "error" && (
-              <div className={styles.statusBlock}>
-                <p className={styles.errorText}>Something went wrong. Please try again.</p>
-                <button className={styles.primaryButton} onClick={handleFindMatch}>
-                                    Retry
-                </button>
-              </div>
-            )}
-          </div>)}
-
-          {/* vs AI */}
-          <div className={styles.card}>
-            <div className={styles.cardHeader}>
-              <h2>Play vs AI</h2>
-              <p className={styles.subtitle}>Practice without affecting your rating.</p>
             </div>
-            <button className={styles.secondaryButton} onClick={() => router.push("/playAI")}>
-                            Play
-            </button>
+          </div>
+
+          {/* ── TBD Mode ── */}
+          <div className={`${styles.card} ${styles.cardTBD} ${styles.comingSoon}`}>
+            <div className={styles.cardBg} aria-hidden />
+            <div className={styles.modeTag}>Coming Soon</div>
+            <h2 className={styles.cardTitle}>Casual</h2>
+            <p className={styles.cardDesc}>Play for fun without affecting your rank.</p>
+            <div className={styles.cardFooter}>
+              <button className={styles.secondaryBtn} disabled>
+                Unavailable
+              </button>
+            </div>
           </div>
 
         </div>
