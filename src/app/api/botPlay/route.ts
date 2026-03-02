@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
   await adminDb.ref(`games/${gameId}/presence/${botId}`).set(true);
   
   const round = game.currentRound;
-  const botStrength = Math.floor(getRankTierIndex(game[botKey].rating) / 3);
+  const botStrength = Math.floor(getRankTierIndex(game[botKey].rating) / 3) * 2;
   const lookback = getRankTierIndex(game[botKey].rating) % 3;
   const oppLastChoice = round === 1 ? Choice.Paper : isPlayer1 ? game.rounds.at(-lookback - 1)?.player2Choice : game.rounds.at(-lookback - 1)?.player1Choice;
   const botChoice = getBotChoice(round, botStrength, oppLastChoice!);
