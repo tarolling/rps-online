@@ -1,232 +1,431 @@
+/* page.module.css — Dark Arena Redesign */
+
+/* ─────────────────────────────────────────
+   Base
+───────────────────────────────────────── */
+
 .homePage {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  background: var(--color-bg);
 }
 
-/* Hero */
+/* shared section utilities */
+.sectionEyebrow {
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--color-primary);
+  margin: 0 0 0.6rem;
+}
+
+.sectionTitle {
+  font-size: clamp(1.6rem, 3vw, 2.4rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--color-text);
+  margin: 0;
+  line-height: 1.1;
+}
+
+/* ─────────────────────────────────────────
+   Hero
+───────────────────────────────────────── */
+
 .hero {
-  background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
-  color: white;
-  padding: 80px 20px;
-  text-align: center;
+  position: relative;
+  overflow: hidden;
+  padding: 6rem 2rem 5rem;
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+}
+
+/* Noise texture overlay */
+.hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+  background-size: 180px;
+  opacity: 0.6;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Radial glow behind content */
+.hero::after {
+  content: "";
+  position: absolute;
+  top: -20%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 700px;
+  height: 500px;
+  background: radial-gradient(ellipse, color-mix(in srgb, var(--color-primary) 12%, transparent) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.heroBg {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Large floating glyphs */
+.floatGlyph {
+  position: absolute;
+  font-size: clamp(6rem, 12vw, 11rem);
+  opacity: 0.04;
+  user-select: none;
+  animation: floatDrift 12s ease-in-out infinite;
+  line-height: 1;
+}
+
+.floatGlyph::before {
+  content: attr(data-glyph);
+}
+
+.floatGlyph:nth-child(1) {
+  top: 5%;
+  left: -2%;
+  animation-delay: 0s;
+  animation-duration: 14s;
+}
+
+.floatGlyph:nth-child(2) {
+  top: 55%;
+  right: 2%;
+  animation-delay: -5s;
+  animation-duration: 11s;
+  font-size: clamp(5rem, 10vw, 9rem);
+}
+
+.floatGlyph:nth-child(3) {
+  bottom: 5%;
+  left: 30%;
+  animation-delay: -9s;
+  animation-duration: 16s;
+  font-size: clamp(4rem, 8vw, 7rem);
+}
+
+@keyframes floatDrift {
+
+  0%,
+  100% {
+    transform: translateY(0) rotate(-4deg);
+  }
+
+  50% {
+    transform: translateY(-18px) rotate(4deg);
+  }
 }
 
 .heroContent {
-  max-width: 800px;
+  position: relative;
+  z-index: 1;
+  max-width: 680px;
   margin: 0 auto;
+  text-align: center;
 }
 
-.hero h1 {
-  font-size: 2.5rem;
-  margin-bottom: 20px;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
-  color: white;
-  /* override global h1 color */
+.heroEyebrow {
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--color-primary);
+  margin: 0 0 1.5rem;
+  animation: fadeUp 0.5s ease both;
 }
 
-.hero p {
-  font-size: 1.2rem;
-  margin-bottom: 30px;
-  opacity: 0.9;
+.heroHeadline {
+  font-size: clamp(3rem, 8vw, 6rem);
+  font-weight: 900;
+  letter-spacing: -0.04em;
+  line-height: 0.95;
+  color: var(--color-text);
+  margin: 0 0 1.5rem;
+  animation: fadeUp 0.5s 0.1s ease both;
 }
 
+.heroAccent {
+  color: var(--color-primary);
+  display: block;
+}
+
+.heroSub {
+  font-size: clamp(0.95rem, 1.8vw, 1.1rem);
+  color: var(--color-text-muted);
+  margin: 0 auto 2.5rem;
+  max-width: 480px;
+  line-height: 1.6;
+  animation: fadeUp 0.5s 0.2s ease both;
+}
+
+/* HeroButtons inherit this animation via the wrapper */
+.heroContent> :last-child {
+  animation: fadeUp 0.5s 0.3s ease both;
+}
+
+.heroDivider {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--color-border) 30%, var(--color-primary) 50%, var(--color-border) 70%, transparent);
+}
+
+/* HeroButtons */
 .heroButtons {
   display: flex;
-  gap: 20px;
+  gap: 0.85rem;
   justify-content: center;
   flex-wrap: wrap;
 }
 
 .ctaButton {
-  background: var(--color-danger);
-  color: white;
-  padding: 15px 30px;
-  border-radius: 25px;
-  font-size: 1.1rem;
-  font-weight: bold;
+  background: var(--color-primary);
+  color: #fff;
+  padding: 0.8rem 2rem;
+  border-radius: var(--radius);
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
   text-decoration: none;
   display: inline-flex;
   align-items: center;
-  transition: transform 0.2s, background 0.2s;
+  transition: background 0.15s, transform 0.1s, box-shadow 0.15s;
+  border-radius: 8px;
 }
 
 .ctaButton:hover {
+  background: var(--color-primary-hover);
   transform: translateY(-2px);
-  background: #c0392b;
-  color: white;
+  box-shadow: 0 6px 20px color-mix(in srgb, var(--color-primary) 35%, transparent);
+  color: #fff;
 }
 
 .secondaryButton {
   background: transparent;
-  color: white;
-  border: 2px solid white;
-  padding: 15px 30px;
-  border-radius: 25px;
-  font-size: 1.1rem;
-  font-weight: bold;
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  padding: 0.8rem 2rem;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
   text-decoration: none;
   display: inline-flex;
   align-items: center;
-  transition: background 0.2s;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
 }
 
 .secondaryButton:hover {
-  background: rgba(255, 255, 255, 0.15);
-  color: white;
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-primary) 6%, transparent);
 }
 
-/* Features */
+/* ─────────────────────────────────────────
+   Ticker
+───────────────────────────────────────── */
+
+.ticker {
+  overflow: hidden;
+  background: var(--color-primary);
+  height: 36px;
+  display: flex;
+  align-items: center;
+}
+
+.tickerTrack {
+  display: flex;
+  white-space: nowrap;
+  animation: tickerScroll 30s linear infinite;
+  gap: 0;
+}
+
+.tickerItems {
+  display: inline-flex;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 0 1.5rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #fff;
+}
+
+.tickerDot {
+  opacity: 0.5;
+  font-size: 0.5rem;
+}
+
+@keyframes tickerScroll {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(-33.333%);
+  }
+}
+
+/* ─────────────────────────────────────────
+   Features
+───────────────────────────────────────── */
+
 .features {
-  padding: 60px 20px;
-  background: var(--color-bg-secondary);
+  padding: 5rem 1.5rem;
+  background: var(--color-bg);
+  border-bottom: 1px solid var(--color-border);
 }
 
-.features h2 {
-  margin-bottom: 40px;
-  color: var(--color-text);
+.featuresInner {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.featuresHeader {
+  margin-bottom: 3rem;
 }
 
 .featuresGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 30px;
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 20px;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 1px;
+  border: 1px solid var(--color-border);
+  border-radius: calc(var(--radius) + 4px);
+  overflow: hidden;
 }
 
 .featureCard {
   background: var(--color-surface);
-  padding: 30px;
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-  text-align: center;
-  transition: transform 0.2s;
+  padding: 2rem 1.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  position: relative;
+  transition: background 0.2s;
+}
+
+.featureCard::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 1.75rem;
+  right: 1.75rem;
+  height: 1px;
+  background: var(--color-border);
 }
 
 .featureCard:hover {
-  transform: translateY(-5px);
+  background: color-mix(in srgb, var(--color-primary) 4%, var(--color-surface));
+}
+
+.featureLabel {
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
 }
 
 .featureIcon {
-  font-size: 2.5rem;
-  margin-bottom: 20px;
+  font-size: 1.6rem;
+  line-height: 1;
+  margin: 0.25rem 0;
 }
 
-.featureCard h3 {
+.featureTitle {
+  font-size: 1rem;
+  font-weight: 700;
   color: var(--color-text);
-  margin-bottom: 15px;
+  margin: 0;
+  letter-spacing: -0.01em;
 }
 
-.featureCard p {
+.featureDesc {
+  font-size: 0.82rem;
   color: var(--color-text-muted);
   line-height: 1.6;
+  margin: 0;
 }
 
-/* Recent Matches */
+/* ─────────────────────────────────────────
+   Live matches — LiveMatches component uses page.module.css
+   so we override here for the redesign
+───────────────────────────────────────── */
+
 .liveMatches {
-  padding: 60px 20px;
-  background: var(--color-bg);
+  padding: 5rem 1.5rem;
+  background: var(--color-bg-secondary);
+  border-bottom: 1px solid var(--color-border);
 }
 
 .liveMatches h2 {
-  margin-bottom: 40px;
+  font-size: clamp(1.4rem, 2.5vw, 2rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
   color: var(--color-text);
+  margin: 0 0 2.5rem;
+  max-width: 1100px;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 0;
 }
 
 .matchesContainer {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 20px;
-  max-width: 1200px;
+  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+  gap: 1rem;
+  max-width: 1100px;
   margin: 0 auto;
-  padding: 0 20px;
+  padding: 0;
 }
 
+/* Match card overrides */
 .matchCard {
   background: var(--color-surface);
+  border: 1px solid var(--color-border);
   border-radius: var(--radius);
-  padding: 20px;
-  box-shadow: var(--shadow);
+  padding: 1.25rem 1.5rem;
   text-decoration: none;
+  display: block;
+  transition: border-color 0.15s, transform 0.15s, box-shadow 0.15s;
+}
+
+.matchCard:hover {
+  border-color: color-mix(in srgb, var(--color-primary) 40%, var(--color-border));
+  transform: translateY(-2px);
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--color-primary) 10%, transparent);
 }
 
 .matchHeader {
   display: flex;
-  justify-content: flex-end;
-  color: var(--color-text-muted);
-  font-size: 0.9rem;
-  margin-bottom: 15px;
-}
-
-.matchContent {
-  display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 15px;
-}
-
-.player {
-  font-weight: bold;
-  color: var(--color-text);
-  text-decoration: none;
-}
-
-.player:hover {
-  color: var(--color-primary);
-  text-decoration: none;
-}
-
-.vs {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  color: var(--color-text-muted);
-}
-
-.score {
-  font-weight: bold;
-  color: var(--color-danger);
-}
-
-.matchFooter {
-  text-align: center;
-  color: var(--color-success);
-  font-weight: bold;
-}
-
-.viewMoreButton {
-  display: block;
-  width: fit-content;
-  margin: 40px auto 0;
-  padding: 12px 30px;
-  background: var(--color-primary);
-  color: white;
-  border-radius: 25px;
-  text-decoration: none;
-  font-weight: bold;
-  transition: background 0.2s, transform 0.2s;
-}
-
-.viewMoreButton:hover {
-  background: var(--color-primary-hover);
-  transform: translateY(-2px);
-  color: white;
+  margin-bottom: 1rem;
 }
 
 .liveIndicator {
-  font-size: 0.65rem;
+  font-size: 0.6rem;
   font-weight: 800;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.12em;
   color: #fff;
-  background: var(--color-danger, #ef4444);
-  padding: 0.15rem 0.45rem;
+  background: var(--color-danger);
+  padding: 0.15rem 0.5rem;
   border-radius: 4px;
-  animation: pulse 1.5s ease-in-out infinite;
+  animation: pulseBg 1.5s ease-in-out infinite;
 }
 
-@keyframes pulse {
+@keyframes pulseBg {
 
   0%,
   100% {
@@ -234,31 +433,389 @@
   }
 
   50% {
-    opacity: 0.6;
+    opacity: 0.65;
   }
+}
+
+.matchTime {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.matchContent {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.9rem;
+}
+
+.player {
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--color-text);
+  text-decoration: none;
+  flex: 1;
+}
+
+.player:first-child {
+  text-align: left;
+}
+
+.player:last-child {
+  text-align: right;
+}
+
+.player:hover {
+  color: var(--color-primary);
+}
+
+.vs {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.score {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--color-text);
+  letter-spacing: -0.02em;
+}
+
+.matchFooter {
+  text-align: center;
+}
+
+.winner {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--color-success);
 }
 
 .spectateHint {
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   color: var(--color-text-muted);
+  font-weight: 500;
 }
 
+/* ─────────────────────────────────────────
+   Recent section
+───────────────────────────────────────── */
+
+.recentSection {
+  padding: 5rem 1.5rem;
+  background: var(--color-bg);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.recentInner {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.recentHeader {
+  margin-bottom: 2.5rem;
+}
+
+.matchesGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+  gap: 1rem;
+}
+
+.leaderboardCta {
+  margin-top: 2.5rem;
+  text-align: center;
+}
+
+.leaderboardLink {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--color-primary);
+  text-decoration: none;
+  letter-spacing: 0.04em;
+  transition: opacity 0.15s;
+}
+
+.leaderboardLink:hover {
+  opacity: 0.7;
+}
+
+/* ─────────────────────────────────────────
+   Bottom CTA
+───────────────────────────────────────── */
+
+.bottomCta {
+  padding: 6rem 2rem;
+  background: var(--color-surface);
+  border-top: 1px solid var(--color-border);
+  position: relative;
+  overflow: hidden;
+  text-align: center;
+}
+
+.bottomCta::before {
+  content: "";
+  position: absolute;
+  top: -30%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 600px;
+  height: 400px;
+  background: radial-gradient(ellipse, color-mix(in srgb, var(--color-primary) 10%, transparent), transparent 70%);
+  pointer-events: none;
+}
+
+.bottomCtaInner {
+  position: relative;
+  z-index: 1;
+  max-width: 560px;
+  margin: 0 auto;
+}
+
+.bottomCtaTitle {
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  font-weight: 900;
+  letter-spacing: -0.04em;
+  color: var(--color-text);
+  margin: 0 0 1rem;
+  line-height: 1;
+}
+
+.bottomCtaSub {
+  font-size: 1rem;
+  color: var(--color-text-muted);
+  margin: 0 0 2.5rem;
+  line-height: 1.6;
+}
+
+.bottomCtaBtn {
+  display: inline-flex;
+  align-items: center;
+  background: var(--color-primary);
+  color: #fff;
+  padding: 0.9rem 2.5rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-decoration: none;
+  transition: background 0.15s, transform 0.1s, box-shadow 0.15s;
+}
+
+.bottomCtaBtn:hover {
+  background: var(--color-primary-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--color-primary) 35%, transparent);
+  color: #fff;
+}
+
+/* ─────────────────────────────────────────
+   Animations
+───────────────────────────────────────── */
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ─────────────────────────────────────────
+   Responsive — Tablet (≤ 768px)
+───────────────────────────────────────── */
+
 @media (max-width: 768px) {
+
+  /* Features: 2-col on tablet */
+  .featuresGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  /* Match grids: 2-col on tablet */
+  .matchesContainer,
+  .matchesGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  /* Section padding tightens up */
+  .features,
+  .liveMatches,
+  .recentSection {
+    padding: 3.5rem 1.25rem;
+  }
+
+  .bottomCta {
+    padding: 4.5rem 1.5rem;
+  }
+}
+
+/* ─────────────────────────────────────────
+   Responsive — Mobile (≤ 480px)
+───────────────────────────────────────── */
+
+@media (max-width: 480px) {
+
+  /* ── Hero ── */
   .hero {
-    padding: 60px 20px;
+    padding: 3.5rem 1.25rem 3rem;
+    /* Reduce glow radius so it doesn't bleed badly on small screens */
   }
 
-  .hero h1 {
-    font-size: 2rem;
+  /* Tone down the floating glyphs — they crowd the text on mobile */
+  .floatGlyph {
+    opacity: 0.025;
   }
 
-  .heroButtons {
+  .floatGlyph:nth-child(2) {
+    /* Move the right-side glyph further offscreen */
+    right: -8%;
+  }
+
+  .floatGlyph:nth-child(3) {
+    /* Hide the bottom glyph — it overlaps the CTA buttons */
+    display: none;
+  }
+
+  .heroEyebrow {
+    font-size: 0.6rem;
+    letter-spacing: 0.16em;
+    margin-bottom: 1rem;
+  }
+
+  .heroHeadline {
+    /* clamp already handles font size; fix letter-spacing for narrow screens */
+    letter-spacing: -0.025em;
+    margin-bottom: 1.25rem;
+  }
+
+  .heroSub {
+    font-size: 0.9rem;
+    margin-bottom: 2rem;
+  }
+
+  /* Stack hero buttons full-width */
+  :global(.heroButtons) {
     flex-direction: column;
-    align-items: center;
+    align-items: stretch;
+    gap: 0.65rem;
   }
 
-  .featuresGrid,
-  .matchesContainer {
+  :global(.ctaButton),
+  :global(.secondaryButton) {
+    justify-content: center;
+    padding: 0.9rem 1.5rem;
+    font-size: 0.95rem;
+  }
+
+  /* ── Ticker ── */
+  .ticker {
+    height: 28px;
+  }
+
+  .tickerItems {
+    font-size: 0.58rem;
+    gap: 0.85rem;
+    padding: 0 1rem;
+  }
+
+  /* ── Features ── */
+  .features,
+  .recentSection,
+  .liveMatches {
+    padding: 3rem 1rem;
+  }
+
+  .featuresGrid {
+    /* Single column on phone */
     grid-template-columns: 1fr;
+    /* Remove combined outer border; each card has its own border instead */
+    border: none;
+    gap: 0.75rem;
+  }
+
+  .featureCard {
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+  }
+
+  /* Remove the bottom pseudo-border on mobile since cards are separated */
+  .featureCard::after {
+    display: none;
+  }
+
+  .sectionTitle {
+    /* clamp already scales; ensure tight line-height on mobile */
+    line-height: 1.05;
+  }
+
+  /* ── Match grids ── */
+  .matchesContainer,
+  .matchesGrid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  /* Match card inner layout */
+  .matchCard {
+    padding: 1rem 1.1rem;
+  }
+
+  .score {
+    font-size: 1rem;
+  }
+
+  .player {
+    font-size: 0.85rem;
+  }
+
+  /* ── Live section h2 ── */
+  .liveMatches h2 {
+    margin-bottom: 1.5rem;
+  }
+
+  /* ── Bottom CTA ── */
+  .bottomCta {
+    padding: 3.5rem 1.25rem;
+  }
+
+  .bottomCtaTitle {
+    line-height: 0.95;
+    margin-bottom: 0.85rem;
+  }
+
+  .bottomCtaSub {
+    font-size: 0.9rem;
+    margin-bottom: 2rem;
+  }
+
+  .bottomCtaBtn {
+    width: 100%;
+    justify-content: center;
+    padding: 0.85rem 1.5rem;
+  }
+}
+
+/* ── Prevent ticker animation jank on reduced motion ── */
+@media (prefers-reduced-motion: reduce) {
+  .tickerTrack {
+    animation: none;
+  }
+
+  .floatGlyph {
+    animation: none;
+  }
+
+  .onlineDot {
+    animation: none;
   }
 }
