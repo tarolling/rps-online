@@ -10,7 +10,7 @@ import LiveMatches from "@/components/LiveMatches";
 
 async function getRecentMatches() {
   const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/fetchRecentGames`, {
-    next: { revalidate: 30 }, // refresh every 30 seconds
+    next: { revalidate: 0 }, // refresh every 0 seconds
   });
   if (!res.ok) return [];
   const data = await res.json();
