@@ -10,7 +10,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "UID is required." }, { status: 400 });
   }
 
-  const session = getDriver().session({ database: "neo4j" });
+  const session = getDriver().session({ database: process.env.NEO4J_DATABASE });
 
   try {
     const read = await session.executeRead(async (tx) => {

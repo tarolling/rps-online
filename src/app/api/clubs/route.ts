@@ -11,7 +11,7 @@ import { Club } from "@/types/neo4j";
 export async function GET(req: NextRequest) {
   const searchTerm = req.nextUrl.searchParams.get("search") ?? "";
 
-  const session = getDriver().session({ database: "neo4j" });
+  const session = getDriver().session({ database: process.env.NEO4J_DATABASE });
   try {
     const result = await session.executeRead((tx) =>
       tx.run(`
@@ -60,7 +60,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Club availability is required." }, { status: 400 });
   }
 
-  const session = getDriver().session({ database: "neo4j" });
+  const session = getDriver().session({ database: process.env.NEO4J_DATABASE });
   try {
     const club: Club = {
       name,

@@ -4,7 +4,7 @@ import { adminDb } from "@/lib/firebaseAdmin";
 
 export async function POST() {
   const driver = getDriver();
-  const session = driver.session({ database: "neo4j" });
+  const session = driver.session({ database: process.env.NEO4J_DATABASE });
 
   // Fetch some bots from Neo4j
   const result = await session.executeRead((tx) =>

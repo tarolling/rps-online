@@ -14,7 +14,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ nam
     return NextResponse.json({ error: "Club name is required." }, { status: 400 });
   }
 
-  const session = getDriver().session({ database: "neo4j" });
+  const session = getDriver().session({ database: process.env.NEO4J_DATABASE });
   try {
     // Returns club info + all members sorted by rating desc
     const result = await session.executeRead((tx) =>
@@ -79,7 +79,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ na
     return NextResponse.json({ error: "User ID is required." }, { status: 400 });
   }
 
-  const session = getDriver().session({ database: "neo4j" });
+  const session = getDriver().session({ database: process.env.NEO4J_DATABASE });
   try {
     // Founder only - update club name, tag, or availability
     // Verify requester is founder first
@@ -130,7 +130,7 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
     return NextResponse.json({ error: "Club name is required." }, { status: 400 });
   }
 
-  const session = getDriver().session({ database: "neo4j" });
+  const session = getDriver().session({ database: process.env.NEO4J_DATABASE });
   try {
     await session.executeWrite((tx) =>
       tx.run(`

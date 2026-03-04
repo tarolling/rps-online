@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
   if (!uid) {
     return NextResponse.json({ error: "User ID is required." }, { status: 400 });
   }
-  const session = getDriver().session({ database: "neo4j" });
+  const session = getDriver().session({ database: process.env.NEO4J_DATABASE });
 
   try {
     const result = await session.executeRead((tx) =>

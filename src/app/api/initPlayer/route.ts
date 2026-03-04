@@ -3,19 +3,19 @@ import { getDriver } from "@/lib/neo4j";
 import config from "@/config/settings.json";
 
 export async function POST(req: NextRequest) {
-    const { uid, username = "random" } = await req.json();
+  const { uid, username = "random" } = await req.json();
 
-    if (!uid) {
-        return NextResponse.json({ error: "uid is required" }, { status: 400 });
-    }
+  if (!uid) {
+    return NextResponse.json({ error: "uid is required" }, { status: 400 });
+  }
 
-    const driver = getDriver();
-    const session = driver.session({ database: "neo4j" });
+  const driver = getDriver();
+  const session = driver.session({ database: process.env.NEO4J_DATABASE });
 
-    try {
-        const result = await session.executeWrite(async (tx) => {
-            const res = await tx.run(
-                `
+  try {
+    const result = await session.executeWrite(async (tx) => {
+      const res = await tx.run(
+        `
                 MERGE (p:Player {uid: $uid})
                 ON CREATE
                     SET p.username = $username,
@@ -26,20 +26,20 @@ export async function POST(req: NextRequest) {
                     SET p.lastSeen = datetime()
                 RETURN p.username AS username
                 `,
-                { uid, username, defaultRating: config.defaultRating }
-            );
+        { uid, username, defaultRating: config.defaultRating },
+      );
 
-            if (!res || res.records.length === 0) {
-                throw new Error("Unable to modify player.");
-            }
-            return res.records[0].get("username");
-        });
+      if (!res || res.records.length === 0) {
+        throw new Error("Unable to modify player.");
+      }
+      return res.records[0].get("username");
+    });
 
-        return NextResponse.json({ username: result });
-    } catch (err) {
-        console.error("initPlayer error:", err);
-        return NextResponse.json({ error: "Failed to process player." }, { status: 500 });
-    } finally {
-        await session.close();
-    }
+    return NextResponse.json({ username: result });
+  } catch (err) {
+    console.error("initPlayer error:", err);
+    return NextResponse.json({ error: "Failed to process player." }, { status: 500 });
+  } finally {
+    await session.close();
+  }
 }
