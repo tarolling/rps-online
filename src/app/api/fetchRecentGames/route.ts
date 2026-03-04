@@ -6,7 +6,7 @@ import { NextRequest, NextResponse } from "next/server";
 export async function GET(req: NextRequest) {
   const playerId = req.nextUrl.searchParams.get("playerId");
 
-  const session = getDriver().session({ database: "neo4j" });
+  const session = getDriver().session({ database: process.env.NEO4J_DATABASE });
 
   try {
     const response = await session.executeRead(async (tx) => {

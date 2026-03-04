@@ -64,7 +64,7 @@ export async function GET(req: Request) {
   }
 
   const driver = getDriver();
-  const session = driver.session({ database: "neo4j" });
+  const session = driver.session({ database: process.env.NEO4J_DATABASE });
 
   try {
     const query = QUERIES[type](ratingFilter);

@@ -10,7 +10,7 @@ export async function POST(req: NextRequest) {
   }
 
   const driver = getDriver();
-  const session = driver.session({ database: "neo4j" });
+  const session = driver.session({ database: process.env.NEO4J_DATABASE });
 
   try {
     const response = await session.executeRead(async (tx) => {

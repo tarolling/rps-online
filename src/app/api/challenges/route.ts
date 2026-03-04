@@ -7,7 +7,7 @@ import { getDriver } from "@/lib/neo4j";
 type Action = "send" | "accept" | "reject" | "clear";
 
 async function fetchPlayer(uid: string): Promise<{ username: string; rating: number }> {
-  const session = getDriver().session({ database: "neo4j" });
+  const session = getDriver().session({ database: process.env.NEO4J_DATABASE });
   try {
     const result = await session.executeRead((tx) =>
       tx.run("MATCH (p:Player {uid: $uid}) RETURN p.username AS username, p.rating AS rating", { uid }),

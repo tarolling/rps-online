@@ -58,7 +58,7 @@ const BOT_NAMES = [
 
 async function seedBots() {
   const driver = getDriver();
-  const session = driver.session({ database: "neo4j" });
+  const session = driver.session({ database: process.env.NEO4J_DATABASE });
 
   for (const name of BOT_NAMES) {
     const uid = `bot_${name.toLowerCase()}`;

@@ -8,7 +8,7 @@ export async function GET(req: NextRequest) {
   const uid = req.nextUrl.searchParams.get("uid");
   if (!uid) return NextResponse.json({ error: "uid required" }, { status: 400 });
 
-  const session = getDriver().session({ database: "neo4j" });
+  const session = getDriver().session({ database: process.env.NEO4J_DATABASE });
   try {
     const result = await session.executeRead((tx) =>
       tx.run(
@@ -58,7 +58,7 @@ export async function POST(req: NextRequest) {
     const fromUsername = inSnap.val()?.username ?? otherUsername ?? "";
     const since = Date.now();
 
-    const session = getDriver().session({ database: "neo4j" });
+    const session = getDriver().session({ database: process.env.NEO4J_DATABASE });
     try {
       await session.executeWrite((tx) =>
         tx.run(
@@ -89,7 +89,7 @@ export async function POST(req: NextRequest) {
     break;
 
   case "remove": {
-    const session = getDriver().session({ database: "neo4j" });
+    const session = getDriver().session({ database: process.env.NEO4J_DATABASE });
     try {
       await session.executeWrite((tx) =>
         tx.run(

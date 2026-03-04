@@ -17,7 +17,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ nam
     return NextResponse.json({ error: "Club name is required." }, { status: 400 });
   }
 
-  const session = getDriver().session({ database: "neo4j" });
+  const session = getDriver().session({ database: process.env.NEO4J_DATABASE });
   try {
     // can only join if club availability is not closed
     const check = await session.executeRead((tx) =>
@@ -63,7 +63,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ n
     return NextResponse.json({ error: "Club name is required." }, { status: 400 });
   }
 
-  const session = getDriver().session({ database: "neo4j" });
+  const session = getDriver().session({ database: process.env.NEO4J_DATABASE });
   try {
     await session.executeWrite((tx) =>
       tx.run(`

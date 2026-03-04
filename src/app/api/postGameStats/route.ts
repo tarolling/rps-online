@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
     rounds,
   } = await req.json();
 
-  const session = getDriver().session({ database: "neo4j" });
+  const session = getDriver().session({ database: process.env.NEO4J_DATABASE });
   try {
     await session.executeWrite((tx) => tx.run(`
         MATCH (p1:Player {uid: $playerOneId})
