@@ -314,9 +314,8 @@ export async function endGame(gameId: string): Promise<void> {
     // if no winner, both players didn't respond or both dc'd
     // don't record 
     if (game.state !== MatchStatus.Cancelled) {
-      if (!game.tournamentId) {
-        await recordRankedGame(game);
-      } else {
+      await recordRankedGame(game);
+      if (game.tournamentId) {
         await advanceWinner(game.tournamentId, game.matchId!, game.winner!);
       }
     } else {
