@@ -10,7 +10,7 @@ import { formatRelativeTime } from "@/lib/time";
 import styles from "./ProfilePage.module.css";
 import { getJSON, postJSON } from "@/lib/api";
 import { PlayerMatch } from "@/types/common";
-import { getRankTier } from "@/lib/ranks";
+import { getDivisionLabel, getRankTier } from "@/lib/ranks";
 import Avatar from "@/components/Avatar";
 import { getAvatarUrl, uploadAvatar } from "@/lib/avatar";
 import { ProfileData } from "@/types";
@@ -272,7 +272,7 @@ function ProfilePage() {
             {gameStats ? (
               <div className={styles.statsGrid}>
                 {profileData ?
-                  <StatItem value={`${getRankTier(profileData.rating).rank} ${getRankTier(profileData.rating).division}`} label="Rank" /> :
+                  <StatItem value={`${getRankTier(profileData.rating).rank} ${getDivisionLabel(getRankTier(profileData.rating).division)}`} label="Rank" /> :
                   <StatItem value="N/A" label="Rank" />
                 }
                 <StatItem value={profileData?.rating ?? "N/A"} label="Skill Rating" />
