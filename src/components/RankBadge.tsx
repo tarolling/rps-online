@@ -1,5 +1,6 @@
-import { getRankTier, getDivisionLabel, RankTier } from "@/lib/ranks";
+import { getRankTier, getDivisionLabel } from "@/lib/ranks";
 import styles from "./RankBadge.module.css";
+import type { RankTier } from "@/types";
 
 interface Props {
     rating: number;

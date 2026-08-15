@@ -1,12 +1,10 @@
-export type Rank = "Recruit" | "Apprentice" | "Veteran" | "Expert" | "Master" | "Grandmaster" | "Ultimate" | "Infinity";
+import { RankTier, type RankName } from "@/types";
 
-export interface RankTier {
-    rank: Rank;
-    division: 1 | 2 | 3 | null; // null for Infinity
-    minRating: number;
-    color: string;
-    glow: string;
-}
+
+export const RANK_SUMMARY: RankName[] = [
+  "Recruit", "Apprentice", "Veteran", "Expert",
+  "Master", "Grandmaster", "Ultimate", "Infinity",
+];
 
 // rank tier definitions; mainly for UI
 export const RANK_TIERS: RankTier[] = [
@@ -33,6 +31,13 @@ export const RANK_TIERS: RankTier[] = [
   { rank: "Ultimate", division: 3, minRating: 2000, color: "#e74c3c", glow: "rgba(231,76,60,0.5)" },
   { rank: "Infinity", division: null, minRating: 2100, color: "rainbow", glow: "rgba(255,255,255,0.3)" },
 ];
+
+/**
+ * Get coarse rank names
+ */
+export function getRankNames(): RankName[] {
+  return [...new Set(RANK_TIERS.map((tier) => tier.rank))];
+}
 
 export function getRankTier(rating: number): RankTier {
   return [...RANK_TIERS]
