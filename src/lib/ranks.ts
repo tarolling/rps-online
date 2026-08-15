@@ -1,12 +1,10 @@
-export type Rank = "Recruit" | "Apprentice" | "Veteran" | "Expert" | "Master" | "Grandmaster" | "Ultimate" | "Infinity";
+import { RankTier, type RankName } from "@/types";
 
-export interface RankTier {
-    rank: Rank;
-    division: 1 | 2 | 3 | null; // null for Infinity
-    minRating: number;
-    color: string;
-    glow: string;
-}
+
+export const RANK_SUMMARY: RankName[] = [
+  "Recruit", "Apprentice", "Veteran", "Expert",
+  "Master", "Grandmaster", "Ultimate", "Infinity",
+];
 
 // rank tier definitions; mainly for UI
 export const RANK_TIERS: RankTier[] = [
@@ -34,10 +32,30 @@ export const RANK_TIERS: RankTier[] = [
   { rank: "Infinity", division: null, minRating: 2100, color: "rainbow", glow: "rgba(255,255,255,0.3)" },
 ];
 
+/**
+ * Get coarse rank names
+ */
+export function getRankNames(): RankName[] {
+  return [...new Set(RANK_TIERS.map((tier) => tier.rank))];
+}
+
 export function getRankTier(rating: number): RankTier {
   return [...RANK_TIERS]
     .reverse()
     .find((tier) => rating >= tier.minRating) ?? RANK_TIERS[0];
+}
+
+/**
+ * Map rank name → [minRating, maxRating)
+ * @param rank 
+ * @returns 
+ */
+export function getRankRatingRange(rank: RankName): [number, number] {
+  const tiers = RANK_TIERS.filter((t) => t.rank === rank);
+  const min = Math.min(...tiers.map((t) => t.minRating));
+  const allMins = RANK_TIERS.map((t) => t.minRating).sort((a, b) => a - b);
+  const max = allMins.find((r) => r > Math.max(...tiers.map((t) => t.minRating))) ?? Infinity;
+  return [min, max];
 }
 
 export function getRankTierIndex(rating: number): number {

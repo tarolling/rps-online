@@ -1,14 +1,9 @@
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
-import { RANK_TIERS, Rank } from "@/lib/ranks";
+import { getRankNames, RANK_TIERS } from "@/lib/ranks";
 import RankBadge from "@/components/RankBadge";
 import styles from "./RulesPage.module.css";
 
-// Build one row per rank (not per tier) for the summary table
-const RANK_SUMMARY: Rank[] = [
-  "Recruit", "Apprentice", "Veteran", "Expert",
-  "Master", "Grandmaster", "Ultimate", "Infinity",
-] as const;
 
 export default function RulesPage() {
   return (
@@ -45,7 +40,7 @@ export default function RulesPage() {
                 </tr>
               </thead>
               <tbody>
-                {RANK_SUMMARY.map((rankName) => {
+                {getRankNames().map((rankName) => {
                   const tiers = RANK_TIERS.filter((t) => t.rank === rankName);
                   const color = tiers[0]?.color ?? "#fff";
                   const isInfinity = rankName === "Infinity";
