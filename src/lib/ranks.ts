@@ -45,6 +45,19 @@ export function getRankTier(rating: number): RankTier {
     .find((tier) => rating >= tier.minRating) ?? RANK_TIERS[0];
 }
 
+/**
+ * Map rank name → [minRating, maxRating)
+ * @param rank 
+ * @returns 
+ */
+export function getRankRatingRange(rank: RankName): [number, number] {
+  const tiers = RANK_TIERS.filter((t) => t.rank === rank);
+  const min = Math.min(...tiers.map((t) => t.minRating));
+  const allMins = RANK_TIERS.map((t) => t.minRating).sort((a, b) => a - b);
+  const max = allMins.find((r) => r > Math.max(...tiers.map((t) => t.minRating))) ?? Infinity;
+  return [min, max];
+}
+
 export function getRankTierIndex(rating: number): number {
   const reversedTiers = [...RANK_TIERS].reverse();
   const foundTier = reversedTiers.find((tier) => rating >= tier.minRating);

@@ -1,16 +1,10 @@
 import neo4j from "neo4j-driver";
 import { NextResponse } from "next/server";
 import { getDriver } from "@/lib/neo4j";
-import { RANK_TIERS, type Rank } from "@/lib/ranks";
+import { getRankRatingRange } from "@/lib/ranks";
+import type { RankName } from "@/types";
 
-// Map rank name → [minRating, maxRating)
-function getRankRatingRange(rank: Rank): [number, number] {
-  const tiers = RANK_TIERS.filter((t) => t.rank === rank);
-  const min = Math.min(...tiers.map((t) => t.minRating));
-  const allMins = RANK_TIERS.map((t) => t.minRating).sort((a, b) => a - b);
-  const max = allMins.find((r) => r > Math.max(...tiers.map((t) => t.minRating))) ?? Infinity;
-  return [min, max];
-}
+
 
 const QUERIES = {
   rating: (ratingFilter: string) => `
@@ -49,7 +43,7 @@ const QUERIES = {
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const type = (searchParams.get("type") ?? "rating") as keyof typeof QUERIES;
-  const rank = searchParams.get("rank") as Rank | null;
+  const rank = searchParams.get("rank") as RankName | null;
 
   if (!QUERIES[type]) {
     return NextResponse.json({ error: "Invalid leaderboard type." }, { status: 400 });
