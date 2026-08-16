@@ -39,10 +39,6 @@ export default function ClubPage() {
   const [isFounder, setIsFounder] = useState(false);
 
 
-  useEffect(() => {
-    fetchClub();
-  }, [decodedName]);
-
   const fetchClub = async () => {
     setLoading(true);
     setError(null);
@@ -57,6 +53,10 @@ export default function ClubPage() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchClub();
+  }, [decodedName]);
 
   const handleSaveEdit = async () => {
     if (!user || !club) return;

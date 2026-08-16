@@ -64,23 +64,6 @@ function ProfilePage() {
   // Other profile: use local state fetched independently.
   const avatarUrl = isOwnProfile ? contextAvatarUrl : otherAvatarUrl;
 
-  useEffect(() => {
-    fetchProfileData();
-    fetchStats();
-    if (!isOwnProfile) {
-      getAvatarUrl(userId).then(setOtherAvatarUrl);
-      if (user) {
-        fetchHeadToHeadStats(user?.uid, userId);
-      }
-    }
-  }, [userId]);
-
-  // friends
-  useEffect(() => {
-    if (!isOwnProfile || !user) return;
-    fetchFriends(user.uid).then(setFriends);
-  }, [isOwnProfile, user?.uid]);
-
   const fetchProfileData = async () => {
     try {
       setLoading(true);
@@ -101,7 +84,7 @@ function ProfilePage() {
     setRecentMatches([]);
     try {
       const [stats, games, club] = await Promise.allSettled([
-        postJSON<{        
+        postJSON<{
           rating: number,
           totalGames: number,
           wins: number,
@@ -147,6 +130,23 @@ function ProfilePage() {
       console.error("Error fetching head-to-head stats:", err);
     }
   }
+
+  useEffect(() => {
+    fetchProfileData();
+    fetchStats();
+    if (!isOwnProfile) {
+      getAvatarUrl(userId).then(setOtherAvatarUrl);
+      if (user) {
+        fetchHeadToHeadStats(user?.uid, userId);
+      }
+    }
+  }, [userId]);
+
+  // friends
+  useEffect(() => {
+    if (!isOwnProfile || !user) return;
+    fetchFriends(user.uid).then(setFriends);
+  }, [isOwnProfile, user?.uid]);
 
   const handleUpdateUsername = async () => {
     setUsernameError("");
