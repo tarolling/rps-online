@@ -10,7 +10,7 @@ import Header from "@/components/Header";
 import RankBadge from "@/components/RankBadge";
 import styles from "./MatchmakingPage.module.css";
 import { postJSON } from "@/lib/api";
-import { ProfileData } from "@/types";
+import { Game, ProfileData } from "@/types";
 import { getRankTier } from "@/lib/ranks";
 import { MatchStatus } from "@/types/neo4j";
 
@@ -54,7 +54,7 @@ function MatchmakingPage() {
     const redirectIfInGame = async () => {
       const snapshot = await get(gamesRef);
       const games = snapshot.val() || {};
-      for (const [gameId, game] of Object.entries(games) as [string, any][]) {
+      for (const [gameId, game] of Object.entries(games) as [string, Game][]) {
         const mode = game.mode ?? "blitz";
         if (mode === "blitz" && game.state === MatchStatus.InProgress && (game.player1.id === user.uid || game.player2.id === user.uid)) {
           router.push(`/game/${gameId}`);

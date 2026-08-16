@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
       username: read.get("username"),
       rating: neo4j.integer.toNumber(read.get("rating")),
       // fall back for players created before asyncRating existed / not yet backfilled
-      asyncRating: asyncRating != null ? neo4j.integer.toNumber(asyncRating) : config.defaultRating,
+      asyncRating: asyncRating !== null && asyncRating !== undefined ? neo4j.integer.toNumber(asyncRating) : config.defaultRating,
     });
   } catch (err) {
     console.error("fetchPlayer error:", err);

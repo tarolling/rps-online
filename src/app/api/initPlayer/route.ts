@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getDriver } from "@/lib/neo4j";
 import config from "@/config/settings.json";
 import { getAuthedUid } from "@/lib/auth";
+import { Neo4jError } from "neo4j-driver";
 
 export async function POST(req: NextRequest) {
   const { uid, username = "random" } = await req.json();
@@ -45,9 +46,9 @@ export async function POST(req: NextRequest) {
     });
 
     return NextResponse.json({ username: result });
-  } catch (err: any) {
+  } catch (err) {
     console.error("initPlayer error:", err);
-    if (err.code === "Neo.ClientError.Schema.ConstraintValidationFailed") {
+    if (err instanceof Neo4jError && err.code === "Neo.ClientError.Schema.ConstraintValidationFailed") {
       return NextResponse.json({ error: "Username is already taken." }, { status: 409 });
     }
     return NextResponse.json({ error: "Failed to process player." }, { status: 500 });

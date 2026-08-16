@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDriver } from "@/lib/neo4j";
 import { getAuthedUid } from "@/lib/auth";
+import { Neo4jError } from "neo4j-driver";
 
 export async function POST(req: NextRequest) {
   const { uid, newUsername } = await req.json();
@@ -32,9 +33,9 @@ export async function POST(req: NextRequest) {
     });
 
     return NextResponse.json({ success: true });
-  } catch (err: any) {
+  } catch (err) {
     console.error("updateUsername error:", err);
-    if (err.code === "Neo.ClientError.Schema.ConstraintValidationFailed") {
+    if (err instanceof Neo4jError && err.code === "Neo.ClientError.Schema.ConstraintValidationFailed") {
       return NextResponse.json({ error: "Username is already taken." }, { status: 409 });
     }
     return NextResponse.json({ error: "Failed to update username." }, { status: 500 });
