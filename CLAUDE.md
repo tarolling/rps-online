@@ -12,10 +12,13 @@ Ranked RPS Online — a ranked Rock-Paper-Scissors matchmaking game (live at htt
 - `npm run build` — production build
 - `npm run start` — run a production build
 - `npm run lint` — ESLint (via `eslint.config.mjs`, flat config extending `eslint-config-next`)
-
-There is no test script/suite in this repo currently.
+- `npm run typecheck` — `tsc --noEmit`
+- `npm run test` — Vitest, one-shot (`vitest run`); `npm run test:watch` for the interactive watcher
 
 Path alias: `@/*` → `./src/*`. TypeScript is `strict: true`.
+
+### Testing
+Vitest (`vitest.config.mts`, resolves the `@/*` alias, `environment: "node"`). Test files are co-located next to source as `*.test.ts` (e.g. `src/lib/calculateRating.test.ts`). Scope is currently limited to pure, dependency-free logic — `calculateRating.ts`, `gameLogic.ts`'s `computeRoundOutcome`/`determineRoundWinner`/`calculateGameStats`, `ranks.ts`, `tournamentBracket.ts`, `time.ts`'s `formatCountdown`. Anything that touches Firebase RTDB/Admin, Neo4j, or `fetch` (`matchmaking.ts`, `matchmakingServer.ts`, `matchmaking.server.ts`, `auth.ts`, all `src/app/api/*/route.ts` handlers) isn't covered yet — it would need module-mocking (e.g. `vi.mock` on `@/lib/firebaseAdmin`/`@/lib/neo4j`) since those modules initialize SDK singletons at import time. `npm run test` runs in CI (`.github/workflows/ci.yml`) after lint/typecheck.
 
 ### ESLint style rules worth knowing before editing
 Double quotes, required semicolons, 2-space indent, trailing commas on multiline, `eqeqeq`, no `var`. `console.log` warns (only `console.warn`/`console.error` are allowed) — don't leave debug `console.log`s in.
@@ -27,8 +30,8 @@ Double quotes, required semicolons, 2-space indent, trailing commas on multiline
 - **Neo4j** (`src/lib/neo4j.ts`, a lazy `getDriver()` singleton using `NEO4J_URI`/`NEO4J_USERNAME`/`NEO4J_PASSWORD`/`NEO4J_DATABASE`) is the permanent record: `Player`, `Match`, `Round`, `Club`, `Title` nodes with `PARTICIPATED_IN`/`HAD_ROUND` relationships. All Neo4j access happens server-side inside API routes, never from the client. Username uniqueness is enforced by a Neo4j schema constraint; `initPlayer` catches `Neo.ClientError.Schema.ConstraintValidationFailed` and returns 409.
 
 ### Two game modes sharing one core, diverging in execution
-Both modes share pure/shared logic in `src/lib/matchmaking.ts` (`findMatch`, `createGame`, `computeRoundOutcome`, `resolveRound`, `endGame`, `recordRankedGame`), but differ in who drives resolution:
-- **Blitz** (`src/app/game/[gameId]/page.tsx`): fully client-driven — a browser tab must stay open, since the client itself calls `resolveRound`/`endGame` against Firebase RTDB. One live game per player at a time.
+The round/game rules themselves live in `src/lib/gameLogic.ts` (`computeRoundOutcome`, `determineRoundWinner`, `calculateGameStats`, `recordRankedGame`) — a deliberately dependency-free module (no `firebase/database`, no `firebase-admin`) so it's safely importable from both client and server code. `src/lib/matchmaking.ts` re-exports these and adds the client-driven (Firebase client SDK) I/O on top: `findMatch`, `createGame`, `resolveRound`, `endGame`. The two modes (labeled "Ranked" and "Async" in the UI on `/play`) differ in who drives resolution:
+- **Blitz** (`src/app/game/[gameId]/page.tsx`, shown to users as "Ranked"): fully client-driven — a browser tab must stay open, since the client itself calls `resolveRound`/`endGame` against Firebase RTDB. One live game per player at a time.
 - **Async** (`src/app/game/async/`, `src/app/asyncGames/`, both newer additions): a player can have many concurrent games; `findMatch(mode="async")` returns `{queued:true}` immediately rather than blocking. Resolution is server-side via `src/lib/matchmakingServer.ts` (Admin SDK), which is a deliberate server-side counterpart to `matchmaking.ts` — **never import it from a `"use client"` file**. Choice submission goes through `POST /api/games/submitChoice` → `submitChoiceServer`, which always attempts `resolveRoundServer` afterward (safe no-op if the opponent hasn't acted yet). `resolveRoundServer` uses an RTDB `.transaction()` so the submission path and the cron sweep can race safely without double-resolving a round or double-recording stats (`shouldFinalize` is only true for the transaction attempt that actually completes/cancels the game). `GET /api/cron/resolveAsyncRounds` (bearer-secret auth via `CRON_SECRET`, scheduled `0 0 * * *` in `vercel.json`) calls `sweepExpiredAsyncRounds` as a backstop for rounds nobody acted on — Vercel Hobby plan limits cron to once/day, which is acceptable since `roundTimeout` fallback logic still eventually ends abandoned matches.
 
 Both modes converge on `recordRankedGame`, which posts to `/api/postGameStats` (writes `Match`/`Round`/`PARTICIPATED_IN` to Neo4j) and `/api/adjustRating`.

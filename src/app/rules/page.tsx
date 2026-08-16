@@ -22,8 +22,38 @@ export default function RulesPage() {
           <h2 className={styles.sectionTitle}>Game Rules</h2>
           <ol className={styles.rulesList}>
             <li>Don&apos;t be stupid.</li>
-            <li>Games are first to 4 wins.</li>
+            <li>Rock beats Scissors, Scissors beats Paper, Paper beats Rock.</li>
+            <li>Matches are first to 4 round wins.</li>
+            <li>If you don&apos;t submit a choice before the round timer runs out, you forfeit that round.</li>
+            <li>Ranked and Async games track separate ratings — climbing one doesn&apos;t affect the other.</li>
           </ol>
+        </section>
+
+        <section className={styles.card}>
+          <h2 className={styles.sectionTitle}>Game Modes</h2>
+          <dl className={styles.modesList}>
+            <div className={styles.modeItem}>
+              <dt className={styles.modeName}>Ranked</dt>
+              <dd className={styles.modeDesc}>
+                Real-time, head-to-head matches. You and your opponent are both online at once, so keep
+                the tab open — you have 30 seconds to make each choice. One ranked match at a time.
+              </dd>
+            </div>
+            <div className={styles.modeItem}>
+              <dt className={styles.modeName}>Async</dt>
+              <dd className={styles.modeDesc}>
+                Play at your own pace. You have up to 24 hours to respond each round, and you can have
+                several async games going at once — check in whenever it&apos;s convenient. A round resolves
+                automatically once both players have chosen, or when the timer runs out.
+              </dd>
+            </div>
+            <div className={styles.modeItem}>
+              <dt className={styles.modeName}>vs AI</dt>
+              <dd className={styles.modeDesc}>
+                Practice against a bot opponent. No rating is at stake, so it&apos;s a good place to warm up.
+              </dd>
+            </div>
+          </dl>
         </section>
 
         <section className={styles.card}>
