@@ -54,7 +54,9 @@ function GamePage() {
   // only depends on [gameId, playerId] and would otherwise close over a stale
   // (null) `game` from its first render.
   const latestGameRef = useRef<Game | null>(null);
-  latestGameRef.current = game;
+  useEffect(() => {
+    latestGameRef.current = game;
+  }, [game]);
 
   // Fetch avatars once we know both player IDs
   useEffect(() => {

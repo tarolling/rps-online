@@ -52,6 +52,35 @@
     line-height: 1.6;
 }
 
+/* ── Game modes list ── */
+
+.modesList {
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1.1rem;
+}
+
+.modeItem {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.modeName {
+    font-weight: 700;
+    font-size: 0.95rem;
+    letter-spacing: 0.03em;
+    color: var(--color-text);
+}
+
+.modeDesc {
+    margin: 0;
+    color: var(--color-text-muted);
+    font-size: 0.9rem;
+    line-height: 1.6;
+}
+
 /* ── Rank intro text ── */
 
 .rankIntro {

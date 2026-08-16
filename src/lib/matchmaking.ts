@@ -21,7 +21,16 @@ interface TournamentInfo {
     matchId: string;
 }
 
-type MatchResult = { gameID: string } | { error: string } | { gameID: string, opponent: any } | { queued: true };
+interface QueueEntry {
+    uid: string;
+    username: string;
+    rating: number;
+    mode: PlayMode;
+    timestamp: number;
+    isBot?: boolean;
+}
+
+type MatchResult = { gameID: string } | { error: string } | { gameID: string, opponent: QueueEntry } | { queued: true };
 
 const db = getDatabase();
 
@@ -95,7 +104,7 @@ export async function findMatch(uid: string, username: string, userRating: numbe
     // Clear any stale queue entry for this user+mode before searching
     await remove(ref(db, `matchmaking_queue/${myQueueKey}`));
 
-    for (const [queueKey, playerData] of Object.entries(queue) as [string, any][]) {
+    for (const [queueKey, playerData] of Object.entries(queue) as [string, QueueEntry][]) {
       const candidateUid: string = playerData.uid;
       const sameMode = (playerData.mode ?? "blitz") === mode;
       const ratingClose = Math.abs(playerData.rating - userRating) <= config.matchmakingRatingRange;
@@ -145,8 +154,14 @@ export async function findMatch(uid: string, username: string, userRating: numbe
 
     return new Promise((resolve) => {
       const userQueueRef = ref(db, `matchmaking_queue/${myQueueKey}`);
-      let timeoutID: NodeJS.Timeout;
       let done = false;
+
+      const timeoutID = setTimeout(() => {
+        done = true;
+        off(userQueueRef);
+        remove(ref(db, `matchmaking_queue/${myQueueKey}`));
+        resolve({ error: "Match timeout" });
+      }, 90_000);
 
       const unsubscribe = onValue(userQueueRef, async (snapshot) => {
         if (done) return;
@@ -162,13 +177,6 @@ export async function findMatch(uid: string, username: string, userRating: numbe
           }
         }
       });
-
-      timeoutID = setTimeout(() => {
-        done = true;
-        off(userQueueRef);
-        remove(ref(db, `matchmaking_queue/${myQueueKey}`));
-        resolve({ error: "Match timeout" });
-      }, 90_000);
 
       return () => {
         done = true;
@@ -272,9 +280,9 @@ export async function resolveRound(gameId: string, playerId: string) {
 
     await update(gameRef, outcome.updates!);
 
-    if (outcome.updates!.state === MatchStatus.Completed) {
+    if (outcome.gameOverWinnerId) {
       await endGame(gameId);
-      return { winner: outcome.updates!.winner };
+      return { winner: outcome.gameOverWinnerId };
     }
     return null;
   } catch (error) {

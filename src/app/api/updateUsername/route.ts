@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getDriver } from "@/lib/neo4j";
+import { runQuery } from "@/lib/neo4j";
 import { getAuthedUid } from "@/lib/auth";
+import { Neo4jError } from "neo4j-driver";
 
 export async function POST(req: NextRequest) {
   const { uid, newUsername } = await req.json();
@@ -19,26 +20,19 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Username is required." }, { status: 400 });
   }
 
-  const driver = getDriver();
-  const session = driver.session({ database: process.env.NEO4J_DATABASE });
-
   try {
-    await session.executeWrite(async (tx) => {
-      await tx.run(`
-            MATCH (p:Player {uid: $uid})
-            SET p.username = $newUsername,
-                p.usernameLower = toLower($newUsername)
-            `, { uid, newUsername });
-    });
+    await runQuery(`
+      MATCH (p:Player {uid: $uid})
+      SET p.username = $newUsername,
+          p.usernameLower = toLower($newUsername)
+      `, { uid, newUsername }, "write");
 
     return NextResponse.json({ success: true });
-  } catch (err: any) {
+  } catch (err) {
     console.error("updateUsername error:", err);
-    if (err.code === "Neo.ClientError.Schema.ConstraintValidationFailed") {
+    if (err instanceof Neo4jError && err.code === "Neo.ClientError.Schema.ConstraintValidationFailed") {
       return NextResponse.json({ error: "Username is already taken." }, { status: 409 });
     }
     return NextResponse.json({ error: "Failed to update username." }, { status: 500 });
-  } finally {
-    await session.close();
   }
 }

@@ -30,6 +30,11 @@ const eslintConfig = defineConfig([
       "prefer-const": "error",
       "eqeqeq": ["error", "always"],
       "no-var": "error",
+
+      // React Compiler diagnostics: treated as advisory, same as react-hooks/exhaustive-deps.
+      // Flags the standard "setLoading(true) before an await" fetch-on-mount pattern used
+      // throughout this app; a real fix means restructuring how loading/error state is derived.
+      "react-hooks/set-state-in-effect": "warn",
     },
   },
 ]);

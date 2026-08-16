@@ -27,7 +27,7 @@ export const FIRST_TO = 4;
 
 export interface RoundOutcome {
     action: "cancel" | "noop" | "resolve";
-    updates?: Record<string, any>;
+    updates?: Record<string, unknown>;
     /** uid of the winner, set only when this round resolution also ends the game */
     gameOverWinnerId?: string;
 }
@@ -55,7 +55,7 @@ export function computeRoundOutcome(game: Game, now: number): RoundOutcome {
   const winner = determineRoundWinner(game.player1.choice, game.player2.choice);
   const isGameOver = winner && (game[winner].score + 1) >= FIRST_TO;
 
-  const updates: Record<string, any> = {
+  const updates: Record<string, unknown> = {
     "player1/choice": null,
     "player1/submitted": false,
     "player2/choice": null,

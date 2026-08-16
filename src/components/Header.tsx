@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import styles from "./header.module.css";
 import Image from "next/image";
 import Link from "next/link";
@@ -16,6 +16,11 @@ export default function Header() {
   const { user, username, avatarUrl } = useAuth();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  useEffect(() => {
+    document.body.classList.toggle("menuOpen", isMobileMenuOpen);
+    return () => document.body.classList.remove("menuOpen");
+  }, [isMobileMenuOpen]);
 
   const handleLogout = async () => {
     await signOut(auth);

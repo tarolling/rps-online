@@ -23,13 +23,16 @@ export default function FriendButton({ targetId, targetUsername }: Props) {
   const [challengeStatus, setChallengeStatus] = useState<"idle" | "pending">("idle");
 
   const refreshStatus = () => {
-    if (!user) { setStatus("error"); return; }
+    if (!user) return;
     getFriendshipStatus(user.uid, targetId)
       .then(setStatus)
       .catch((err) => { console.error("FriendButton: failed to get status", err); setStatus("error"); });
   };
 
-  useEffect(() => { refreshStatus(); }, [user?.uid, targetId]);
+  useEffect(() => {
+    if (!user) return;
+    refreshStatus();
+  }, [user?.uid, targetId]);
 
   if (!user || user.uid === targetId) return null;
   if (status === "loading") return <span className={styles.muted}>…</span>;

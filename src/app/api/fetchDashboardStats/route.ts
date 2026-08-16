@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import neo4j from "neo4j-driver";
-import { getDriver } from "@/lib/neo4j";
+import { runQuery } from "@/lib/neo4j";
 import type { PlayMode } from "@/types";
 
 export async function POST(req: NextRequest) {
@@ -16,12 +16,8 @@ export async function POST(req: NextRequest) {
   const matchMode = (mode as PlayMode) === "async" ? "ranked_async" : "ranked";
   const ratingField = (mode as PlayMode) === "async" ? "asyncRating" : "rating";
 
-  const driver = getDriver();
-  const session = driver.session({ database: process.env.NEO4J_DATABASE });
-
   try {
-    const response = await session.executeRead(async (tx) => {
-      const data = await tx.run(`
+    const data = await runQuery(`
         MATCH (p:Player {uid: $playerId})-[r:PARTICIPATED_IN]->(m:Match {mode: $matchMode})
         WITH
           p,
@@ -73,30 +69,25 @@ export async function POST(req: NextRequest) {
           streakStats.current AS currentStreak,
           streakStats.best AS bestStreak
             `, {
-        playerId,
-        matchMode,
-      });
-
-      if (data.records.length === 0) {
-        return null;
-      }
-
-      return {
-        rating: neo4j.integer.toNumber(data.records[0].get("rating")),
-        totalGames: neo4j.integer.toNumber(data.records[0].get("totalGames")),
-        wins: neo4j.integer.toNumber(data.records[0].get("wins")),
-        losses: neo4j.integer.toNumber(data.records[0].get("losses")),
-        winRate: neo4j.integer.toNumber(data.records[0].get("winRate")),
-        currentStreak: neo4j.integer.toNumber(data.records[0].get("currentStreak")),
-        bestStreak: neo4j.integer.toNumber(data.records[0].get("bestStreak")),
-      };
+      playerId,
+      matchMode,
     });
 
-    return NextResponse.json(response);
+    if (data.records.length === 0) {
+      return NextResponse.json(null);
+    }
+
+    return NextResponse.json({
+      rating: neo4j.integer.toNumber(data.records[0].get("rating")),
+      totalGames: neo4j.integer.toNumber(data.records[0].get("totalGames")),
+      wins: neo4j.integer.toNumber(data.records[0].get("wins")),
+      losses: neo4j.integer.toNumber(data.records[0].get("losses")),
+      winRate: neo4j.integer.toNumber(data.records[0].get("winRate")),
+      currentStreak: neo4j.integer.toNumber(data.records[0].get("currentStreak")),
+      bestStreak: neo4j.integer.toNumber(data.records[0].get("bestStreak")),
+    });
   } catch (err) {
     console.error("fetchDashboardStats error:", err);
     return NextResponse.json({ error: "Failed to fetch dashboard stats." }, { status: 500 });
-  } finally {
-    await session.close();
   }
 }

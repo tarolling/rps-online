@@ -1,7 +1,7 @@
 import neo4j from "neo4j-driver";
 import { NextResponse } from "next/server";
-import { getDriver } from "@/lib/neo4j";
-import { getRankRatingRange } from "@/lib/ranks";
+import { runQuery } from "@/lib/neo4j";
+import { getRankRatingRange, RANK_SUMMARY } from "@/lib/ranks";
 import type { PlayMode, RankName } from "@/types";
 
 
@@ -52,6 +52,9 @@ export async function GET(req: Request) {
   if (mode !== "blitz" && mode !== "async") {
     return NextResponse.json({ error: "Invalid mode." }, { status: 400 });
   }
+  if (rank && !RANK_SUMMARY.includes(rank)) {
+    return NextResponse.json({ error: "Invalid rank." }, { status: 400 });
+  }
 
   const ratingField = mode === "async" ? "asyncRating" : "rating";
   const matchMode = mode === "async" ? "ranked_async" : "ranked";
@@ -64,26 +67,18 @@ export async function GET(req: Request) {
       : `WHERE p.${ratingField} >= ${min} AND p.${ratingField} < ${max}`;
   }
 
-  const driver = getDriver();
-  const session = driver.session({ database: process.env.NEO4J_DATABASE });
-
   try {
     const query = QUERIES[type](ratingFilter, ratingField);
-    const data = await session.executeRead((tx) =>
-      tx.run(query, { matchMode }).then((result) =>
-        result.records.map((r) => ({
-          uid: r.get("uid"),
-          username: r.get("username"),
-          rating: neo4j.integer.toNumber(r.get("rating")),
-          statValue: neo4j.integer.toNumber(r.get("statValue")),
-        })),
-      ),
-    );
+    const result = await runQuery(query, { matchMode });
+    const data = result.records.map((r) => ({
+      uid: r.get("uid"),
+      username: r.get("username"),
+      rating: neo4j.integer.toNumber(r.get("rating")),
+      statValue: neo4j.integer.toNumber(r.get("statValue")),
+    }));
     return NextResponse.json(data);
   } catch (err) {
     console.error("fetchLeaderboard error:", err);
     return NextResponse.json({ error: "Failed to fetch leaderboard." }, { status: 500 });
-  } finally {
-    await session.close();
   }
 }

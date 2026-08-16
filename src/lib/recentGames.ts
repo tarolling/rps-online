@@ -1,7 +1,20 @@
 import { getDriver } from "@/lib/neo4j";
 import { MatchResult } from "@/types/neo4j";
 import type { PlayMode } from "@/types";
-import neo4j from "neo4j-driver";
+import neo4j, { DateTime } from "neo4j-driver";
+
+/** Shape returned by `getRecentGames(null, ...)` — matches across all players, not scoped to one. */
+export interface GlobalRecentMatch {
+  id: string;
+  mode: PlayMode;
+  player1: string;
+  player2: string;
+  playerOneId: string;
+  playerTwoId: string;
+  winner: string;
+  score: string;
+  timestamp: DateTime;
+}
 
 function formatResult(result: MatchResult): string {
   switch (result) {
@@ -78,7 +91,7 @@ export async function getRecentGames(playerId: string | null, mode: PlayMode | n
               m.timestamp AS timestamp
         `, { matchModes });
 
-        return data.records.map((record) => {
+        return data.records.map((record): GlobalRecentMatch => {
           const playerOneScore = neo4j.integer.toNumber(record.get("playerOneScore"));
           const playerTwoScore = neo4j.integer.toNumber(record.get("playerTwoScore"));
           const winnerId = record.get("winner");

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getDriver } from "@/lib/neo4j";
+import { runQuery } from "@/lib/neo4j";
 
 export async function POST(req: NextRequest) {
   const { username } = await req.json();
@@ -8,22 +8,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Username is required." }, { status: 400 });
   }
 
-  const session = getDriver().session({ database: process.env.NEO4J_DATABASE });
-
   try {
-    const read = await session.executeRead(async (tx) => {
-      return await tx.run(`
-            MATCH (p:Player)
-            WHERE toLower(p.username) = toLower($username)
-            RETURN p
-            `, { username: username });
-    });
+    const read = await runQuery(`
+      MATCH (p:Player)
+      WHERE toLower(p.username) = toLower($username)
+      RETURN p
+      `, { username });
 
     return NextResponse.json({ usernameExists: read.records.length !== 0 });
   } catch (err) {
     console.error("checkUsername error:", err);
     return NextResponse.json({ error: "Failed to check username." }, { status: 500 });
-  } finally {
-    await session.close();
   }
 }
