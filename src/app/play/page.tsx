@@ -13,6 +13,7 @@ import { postJSON } from "@/lib/api";
 import { Game, ProfileData } from "@/types";
 import { getRankTier } from "@/lib/ranks";
 import { MatchStatus } from "@/types/neo4j";
+import config from "@/config/settings.json";
 
 type MatchmakingStatus = "idle" | "searching" | "matched" | "error";
 type AsyncQueueStatus = "idle" | "queueing" | "queued" | "matched" | "error";
@@ -24,6 +25,7 @@ function MatchmakingPage() {
 
   const [matchStatus, setMatchStatus] = useState<MatchmakingStatus>("idle");
   const [asyncStatus, setAsyncStatus] = useState<AsyncQueueStatus>("idle");
+  const [wildcardStatus, setWildcardStatus] = useState<MatchmakingStatus>("idle");
   const [onlineCount, setOnlineCount] = useState(0);
   const [playerInfo, setPlayerInfo] = useState<ProfileData | null>(null);
 
@@ -60,6 +62,10 @@ function MatchmakingPage() {
           router.push(`/game/${gameId}`);
           return;
         }
+        if (mode === "wildcard" && game.state === MatchStatus.InProgress && (game.player1.id === user.uid || game.player2.id === user.uid)) {
+          router.push(`/game/wildcard/${gameId}`);
+          return;
+        }
       }
     };
 
@@ -70,8 +76,11 @@ function MatchmakingPage() {
       if (matchStatus === "searching") {
         remove(ref(db, `matchmaking_queue/${matchmakingQueueKey(user.uid, "blitz")}`));
       }
+      if (wildcardStatus === "searching") {
+        remove(ref(db, `matchmaking_queue/${matchmakingQueueKey(user.uid, "wildcard")}`));
+      }
     };
-  }, [db, user?.uid, matchStatus]);
+  }, [db, user?.uid, matchStatus, wildcardStatus]);
 
   const handleFindMatch = async () => {
     if (!user) return;
@@ -79,7 +88,7 @@ function MatchmakingPage() {
     try {
       const info = await postJSON<ProfileData>("/api/fetchPlayer", { uid: user?.uid });
       if (!playerInfo) setPlayerInfo(info);
-      const result = await findMatch(user?.uid, info.username, info.rating, "blitz");
+      const result = await findMatch(user?.uid, info.username, info.ratings.blitz ?? config.defaultRating, "blitz");
 
       if ("gameID" in result) {
         setMatchStatus("matched");
@@ -105,7 +114,7 @@ function MatchmakingPage() {
     try {
       const info = await postJSON<ProfileData>("/api/fetchPlayer", { uid: user?.uid });
       if (!playerInfo) setPlayerInfo(info);
-      const result = await findMatch(user?.uid, info.username, info.asyncRating, "async");
+      const result = await findMatch(user?.uid, info.username, info.ratings.async ?? config.defaultRating, "async");
 
       if ("gameID" in result) {
         setAsyncStatus("matched");
@@ -125,10 +134,38 @@ function MatchmakingPage() {
     setAsyncStatus("idle");
   };
 
-  const rankTier = playerInfo ? getRankTier(playerInfo.rating) : null;
+  const handleFindWildcardMatch = async () => {
+    if (!user) return;
+    setWildcardStatus("searching");
+    try {
+      const info = await postJSON<ProfileData>("/api/fetchPlayer", { uid: user?.uid });
+      if (!playerInfo) setPlayerInfo(info);
+      const result = await findMatch(user?.uid, info.username, info.ratings.wildcard ?? config.defaultRating, "wildcard");
+
+      if ("gameID" in result) {
+        setWildcardStatus("matched");
+        router.push(`/game/wildcard/${result.gameID}`);
+      } else if ("error" in result && result.error === "Match timeout") {
+        setWildcardStatus("idle");
+      }
+    } catch (err) {
+      await remove(ref(db, `matchmaking_queue/${matchmakingQueueKey(user?.uid ?? "", "wildcard")}`));
+      console.error("Wildcard matchmaking error:", err);
+      setWildcardStatus("error");
+    }
+  };
+
+  const handleCancelWildcard = async () => {
+    await remove(ref(db, `matchmaking_queue/${matchmakingQueueKey(user?.uid ?? "", "wildcard")}`));
+    setWildcardStatus("idle");
+  };
+
+  const rankTier = playerInfo ? getRankTier(playerInfo.ratings.blitz ?? config.defaultRating) : null;
   const rankColor = rankTier?.rank === "Infinity" ? "#ffffff" : rankTier?.color;
-  const asyncRankTier = playerInfo ? getRankTier(playerInfo.asyncRating) : null;
+  const asyncRankTier = playerInfo ? getRankTier(playerInfo.ratings.async ?? config.defaultRating) : null;
   const asyncRankColor = asyncRankTier?.rank === "Infinity" ? "#ffffff" : asyncRankTier?.color;
+  const wildcardRankTier = playerInfo ? getRankTier(playerInfo.ratings.wildcard ?? config.defaultRating) : null;
+  const wildcardRankColor = wildcardRankTier?.rank === "Infinity" ? "#ffffff" : wildcardRankTier?.color;
 
   return (
     <div className="app">
@@ -145,21 +182,21 @@ function MatchmakingPage() {
 
         <div className={styles.grid}>
 
-          {/* ── Ranked ── */}
+          {/* ── Blitz ── */}
           {user && (
             <div
-              className={`${styles.card} ${styles.cardRanked}`}
+              className={`${styles.card} ${styles.cardAccent}`}
               style={{ "--rank-color": rankColor ?? "var(--color-primary)", "--rank-glow": rankTier?.glow ?? "transparent" } as React.CSSProperties}
             >
               <div className={styles.cardBg} aria-hidden />
 
               <div className={styles.modeTag}>Competitive</div>
-              <h2 className={styles.cardTitle}>Ranked</h2>
+              <h2 className={styles.cardTitle}>Blitz</h2>
               <p className={styles.cardDesc}>Climb the leaderboard. Your rating is on the line.</p>
 
               {playerInfo && (
                 <div className={styles.playerSnapshot}>
-                  <RankBadge rating={playerInfo.rating} variant="full" />
+                  <RankBadge rating={playerInfo.ratings.blitz ?? config.defaultRating} variant="full" />
                 </div>
               )}
 
@@ -202,7 +239,7 @@ function MatchmakingPage() {
           {/* ── Async ── */}
           {user && (
             <div
-              className={`${styles.card} ${styles.cardRanked}`}
+              className={`${styles.card} ${styles.cardAccent}`}
               style={{ "--rank-color": asyncRankColor ?? "var(--color-primary)", "--rank-glow": asyncRankTier?.glow ?? "transparent" } as React.CSSProperties}
             >
               <div className={styles.cardBg} aria-hidden />
@@ -213,7 +250,7 @@ function MatchmakingPage() {
 
               {playerInfo && (
                 <div className={styles.playerSnapshot}>
-                  <RankBadge rating={playerInfo.asyncRating} variant="full" />
+                  <RankBadge rating={playerInfo.ratings.async ?? config.defaultRating} variant="full" />
                 </div>
               )}
 
@@ -258,6 +295,60 @@ function MatchmakingPage() {
                   <div className={styles.statusBlock}>
                     <p className={styles.errorText}>Something went wrong.</p>
                     <button className={styles.primaryBtn} onClick={handleFindAsyncMatch}>Retry</button>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* ── Wildcard ── */}
+          {user && (
+            <div
+              className={`${styles.card} ${styles.cardAccent}`}
+              style={{ "--rank-color": wildcardRankColor ?? "var(--color-primary)", "--rank-glow": wildcardRankTier?.glow ?? "transparent" } as React.CSSProperties}
+            >
+              <div className={styles.cardBg} aria-hidden />
+
+              <div className={styles.modeTag}>Mind Games</div>
+              <h2 className={styles.cardTitle}>Wildcard</h2>
+              <p className={styles.cardDesc}>Blitz rules, plus two bluff moves you configure before the match.</p>
+
+              {playerInfo && (
+                <div className={styles.playerSnapshot}>
+                  <RankBadge rating={playerInfo.ratings.wildcard ?? config.defaultRating} variant="full" />
+                </div>
+              )}
+
+              <div className={styles.cardFooter}>
+                {wildcardStatus === "idle" && (
+                  <button className={styles.primaryBtn} onClick={handleFindWildcardMatch}>
+                    Find Match
+                  </button>
+                )}
+
+                {wildcardStatus === "searching" && (
+                  <div className={styles.statusBlock}>
+                    <div className={styles.searchingRow}>
+                      <div className={styles.spinner} />
+                      <span className={styles.statusText}>Searching for opponent…</span>
+                    </div>
+                    <button className={styles.cancelBtn} onClick={handleCancelWildcard}>Cancel</button>
+                  </div>
+                )}
+
+                {wildcardStatus === "matched" && (
+                  <div className={styles.statusBlock}>
+                    <div className={styles.matchedRow}>
+                      <span className={styles.successIcon}>✓</span>
+                      <span className={styles.successText}>Match Found — Joining…</span>
+                    </div>
+                  </div>
+                )}
+
+                {wildcardStatus === "error" && (
+                  <div className={styles.statusBlock}>
+                    <p className={styles.errorText}>Something went wrong.</p>
+                    <button className={styles.primaryBtn} onClick={handleFindWildcardMatch}>Retry</button>
                   </div>
                 )}
               </div>

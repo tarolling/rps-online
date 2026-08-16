@@ -67,14 +67,16 @@ const TournamentPage = () => {
     }
 
     try {
-      const userData = await postJSON<{ username: string; rating: number }>(
+      const userData = await postJSON<{ username: string; ratings: Partial<Record<string, number>> }>(
         "/api/fetchPlayer",
         { uid: user.uid },
       );
       await set(ref(db, `tournaments/${tournamentId}/participants/${user.uid}`), {
         id: user.uid,
         username: userData.username,
-        rating: userData.rating,
+        // Tournaments are always blitz-style games (matchmaking.server.ts's
+        // createGame has no mode parameter), so blitz rating is what's relevant.
+        rating: userData.ratings.blitz,
         registered: Date.now(),
       });
     } catch (err) {

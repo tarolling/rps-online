@@ -61,8 +61,8 @@ describe("calculateGameStats", () => {
   it("returns all-zero counts when there are no rounds", () => {
     const stats = calculateGameStats(buildGame({ rounds: [] }));
     expect(stats).toEqual({
-      playerOneChoices: { ROCK: 0, PAPER: 0, SCISSORS: 0 },
-      playerTwoChoices: { ROCK: 0, PAPER: 0, SCISSORS: 0 },
+      playerOneChoices: { ROCK: 0, PAPER: 0, SCISSORS: 0, WILDCARD_A: 0, WILDCARD_B: 0 },
+      playerTwoChoices: { ROCK: 0, PAPER: 0, SCISSORS: 0, WILDCARD_A: 0, WILDCARD_B: 0 },
     });
   });
 
@@ -76,8 +76,8 @@ describe("calculateGameStats", () => {
 
     const stats = calculateGameStats(buildGame({ rounds }));
     expect(stats).toEqual({
-      playerOneChoices: { ROCK: 2, PAPER: 1, SCISSORS: 0 },
-      playerTwoChoices: { ROCK: 0, PAPER: 1, SCISSORS: 1 },
+      playerOneChoices: { ROCK: 2, PAPER: 1, SCISSORS: 0, WILDCARD_A: 0, WILDCARD_B: 0 },
+      playerTwoChoices: { ROCK: 0, PAPER: 1, SCISSORS: 1, WILDCARD_A: 0, WILDCARD_B: 0 },
     });
   });
 });

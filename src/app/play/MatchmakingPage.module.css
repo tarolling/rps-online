@@ -100,6 +100,14 @@
     animation-delay: 0.14s;
 }
 
+.card:nth-child(4) {
+    animation-delay: 0.21s;
+}
+
+.card:nth-child(5) {
+    animation-delay: 0.28s;
+}
+
 @keyframes fadeUp {
     from {
         opacity: 0;
@@ -127,19 +135,19 @@
     z-index: 1;
 }
 
-/* ── Ranked card ── */
+/* ── Accent card (mode-neutral: used by any card that colors itself from a rank) ── */
 
-.cardRanked {
+.cardAccent {
     border-color: color-mix(in srgb, var(--rank-color, var(--color-primary)) 35%, var(--color-border));
     box-shadow: 0 0 24px color-mix(in srgb, var(--rank-color, var(--color-primary)) 12%, transparent);
 }
 
-.cardRanked:hover {
+.cardAccent:hover {
     box-shadow: 0 0 36px color-mix(in srgb, var(--rank-color, var(--color-primary)) 22%, transparent);
     border-color: color-mix(in srgb, var(--rank-color, var(--color-primary)) 55%, var(--color-border));
 }
 
-.cardRanked .cardBg {
+.cardAccent .cardBg {
     background: radial-gradient(ellipse at top right,
             color-mix(in srgb, var(--rank-color, var(--color-primary)) 10%, transparent) 0%,
             transparent 65%);

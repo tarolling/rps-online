@@ -25,7 +25,7 @@ export default function RulesPage() {
             <li>Rock beats Scissors, Scissors beats Paper, Paper beats Rock.</li>
             <li>Matches are first to 4 round wins.</li>
             <li>If you don&apos;t submit a choice before the round timer runs out, you forfeit that round.</li>
-            <li>Ranked and Async games track separate ratings — climbing one doesn&apos;t affect the other.</li>
+            <li>Blitz, Async, and Wildcard games each track separate ratings — climbing one doesn&apos;t affect the others.</li>
           </ol>
         </section>
 
@@ -33,10 +33,10 @@ export default function RulesPage() {
           <h2 className={styles.sectionTitle}>Game Modes</h2>
           <dl className={styles.modesList}>
             <div className={styles.modeItem}>
-              <dt className={styles.modeName}>Ranked</dt>
+              <dt className={styles.modeName}>Blitz</dt>
               <dd className={styles.modeDesc}>
                 Real-time, head-to-head matches. You and your opponent are both online at once, so keep
-                the tab open — you have 30 seconds to make each choice. One ranked match at a time.
+                the tab open — you have 30 seconds to make each choice. One Blitz match at a time.
               </dd>
             </div>
             <div className={styles.modeItem}>
@@ -45,6 +45,16 @@ export default function RulesPage() {
                 Play at your own pace. You have up to 24 hours to respond each round, and you can have
                 several async games going at once — check in whenever it&apos;s convenient. A round resolves
                 automatically once both players have chosen, or when the timer runs out.
+              </dd>
+            </div>
+            <div className={styles.modeItem}>
+              <dt className={styles.modeName}>Wildcard</dt>
+              <dd className={styles.modeDesc}>
+                Real-time like Blitz, with two extra moves: A and B. Before the match starts, you secretly
+                pick 2 of Rock/Paper/Scissors that your A will beat — the one you don&apos;t pick beats your A
+                instead, and B beats only A. A and B tie themselves, and B always loses to Rock, Paper, and
+                Scissors. You get 3 total plays of A and B combined for the whole match, so use them wisely
+                and watch for patterns in your opponent&apos;s picks.
               </dd>
             </div>
             <div className={styles.modeItem}>

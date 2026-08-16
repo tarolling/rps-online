@@ -5,6 +5,7 @@ import config from "@/config/settings.json";
 import { postJSON } from "./api";
 import { MatchStatus } from "@/types/neo4j";
 import { computeRoundOutcome, recordRankedGame, FIRST_TO } from "./gameLogic";
+import { GAME_MODES } from "./gameModes";
 
 // Re-exported so existing consumers (game/[gameId]/page.tsx, playAI/page.tsx,
 // tournaments.ts) don't need to change their import paths. The underlying
@@ -93,7 +94,7 @@ export async function findMatch(uid: string, username: string, userRating: numbe
   const myQueueKey = matchmakingQueueKey(uid, mode);
 
   try {
-    if (mode === "blitz") {
+    if (GAME_MODES[mode].live) {
       const existingGameId = await checkExistingGame(uid, mode);
       if (existingGameId) return { gameID: existingGameId };
     }
@@ -116,7 +117,7 @@ export async function findMatch(uid: string, username: string, userRating: numbe
       const { committed } = await runTransaction(candidateRef, (current) => (current === null ? undefined : null));
       if (!committed) continue; // another search already claimed this candidate
 
-      if (mode === "blitz") {
+      if (GAME_MODES[mode].live) {
         const opponentInGame = await checkExistingGame(candidateUid, mode);
         if (opponentInGame) {
           await set(candidateRef, playerData); // shouldn't normally happen, but put them back
@@ -146,9 +147,9 @@ export async function findMatch(uid: string, username: string, userRating: numbe
       timestamp: Date.now(),
     });
 
-    // Async: don't block the caller waiting for a match that may take a while
-    // to show up — the player can navigate away and check back later.
-    if (mode === "async") {
+    // Non-live modes: don't block the caller waiting for a match that may take
+    // a while to show up — the player can navigate away and check back later.
+    if (!GAME_MODES[mode].live) {
       return { queued: true };
     }
 
@@ -210,13 +211,14 @@ export async function createGame(
   mode: PlayMode = "blitz",
 ): Promise<string> {
   const gameId = crypto.randomUUID();
-  const roundDurationSeconds = mode === "async" ? config.async.roundTimeoutSeconds : config.roundTimeout;
+  const roundDurationSeconds = GAME_MODES[mode].roundDurationSeconds;
 
-  // Blitz waits in the WAITING state until both players' live presence is
-  // detected (see game/[gameId]/page.tsx) before starting the round clock.
-  // Async players are never simultaneously "present" for a 24h round, so the
-  // match starts immediately and the first round's clock begins right away.
-  const startsImmediately = mode === "async";
+  // Live modes (blitz, wildcard) wait in the WAITING state until both players'
+  // live presence is detected (see game/[gameId]/page.tsx) before starting the
+  // round clock. Non-live modes (async) are never simultaneously "present" for
+  // a 24h round, so the match starts immediately and the first round's clock
+  // begins right away.
+  const startsImmediately = !GAME_MODES[mode].live;
 
   const game: Game = {
     id: gameId,
@@ -229,6 +231,9 @@ export async function createGame(
     currentRound: 1,
     timestamp: Date.now(),
     ...(startsImmediately && { roundStartTimestamp: Date.now() }),
+    // Wildcard games need a pregame "pick your A config" step before round 1's
+    // timer can start — see game/wildcard/[gameId]/page.tsx.
+    ...(mode === "wildcard" && { configPhase: true }),
     ...(tournamentInfo && {
       tournamentId: tournamentInfo.tournamentId,
       matchId: tournamentInfo.matchId,

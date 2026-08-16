@@ -7,6 +7,7 @@ import { Game } from "@/types";
 import { MatchStatus } from "@/types/neo4j";
 import styles from "@/app/page.module.css";
 import { useRouter } from "next/navigation";
+import { GAME_MODES } from "@/lib/gameModes";
 
 type LiveGame = {
   id: string;
@@ -30,8 +31,8 @@ export default function LiveMatches() {
       const data = snapshot.val() ?? {};
       const live: LiveGame[] = Object.values(data as Record<string, Game>)
         // Async games sit InProgress for up to 24h between moves — they aren't
-        // "live" in the sense this ticker means, so only blitz games qualify.
-        .filter((g) => (g.mode ?? "blitz") === "blitz" && g.state === MatchStatus.InProgress)
+        // "live" in the sense this ticker means, so only synchronous modes qualify.
+        .filter((g) => GAME_MODES[g.mode ?? "blitz"].live && g.state === MatchStatus.InProgress)
         // filter bots out later when we have real players
         // .filter((g) => g.state === MatchStatus.InProgress && !g.player1.id.startsWith("bot_") && !g.player2.id.startsWith("bot_"))
         .map((g) => ({

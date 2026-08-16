@@ -2,6 +2,7 @@ import { getDriver } from "@/lib/neo4j";
 import { MatchResult } from "@/types/neo4j";
 import type { PlayMode } from "@/types";
 import neo4j, { DateTime } from "neo4j-driver";
+import { GAME_MODES, PLAY_MODES, toPlayMode } from "@/lib/gameModes";
 
 /** Shape returned by `getRecentGames(null, ...)` — matches across all players, not scoped to one. */
 export interface GlobalRecentMatch {
@@ -27,10 +28,6 @@ function formatResult(result: MatchResult): string {
   }
 }
 
-function toPlayMode(matchMode: string): PlayMode {
-  return matchMode === "ranked_async" ? "async" : "blitz";
-}
-
 /**
  * Fetches the most recent ranked matches, either for a specific player or
  * merged across all players. Shared by the API route and by Server Components
@@ -38,7 +35,7 @@ function toPlayMode(matchMode: string): PlayMode {
  * breaks under Vercel Deployment Protection on preview builds).
  */
 export async function getRecentGames(playerId: string | null, mode: PlayMode | null) {
-  const matchModes = mode === "async" ? ["ranked_async"] : mode === "blitz" ? ["ranked"] : ["ranked", "ranked_async"];
+  const matchModes = mode ? [GAME_MODES[mode].matchMode] : PLAY_MODES.map((m) => GAME_MODES[m].matchMode);
 
   const session = getDriver().session({ database: process.env.NEO4J_DATABASE });
 

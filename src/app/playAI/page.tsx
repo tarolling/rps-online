@@ -20,8 +20,9 @@ type GameData = {
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
-// Maps between full choice names and the single-char keys the AI algorithm uses
-const TO_AI: Record<Choice, string> = {
+// Maps between full choice names and the single-char keys the AI algorithm
+// uses. The AI only ever plays plain Rock/Paper/Scissors, never Wildcard's A/B.
+const TO_AI: Record<Choice.Rock | Choice.Paper | Choice.Scissors, string> = {
   [Choice.Rock]: "R",
   [Choice.Paper]: "P",
   [Choice.Scissors]: "S",
@@ -52,7 +53,8 @@ export default function PlayAIPage() {
   const [aiAlgorithm] = useState(() => setupAI());
 
   const resolveRound = useCallback((selected: Choice) => {
-    const aiResponse = FROM_AI[aiAlgorithm(TO_AI[selected])];
+    // playAI's own choice buttons are always plain Rock/Paper/Scissors (see PLAYABLE_CHOICES).
+    const aiResponse = FROM_AI[aiAlgorithm(TO_AI[selected as Choice.Rock | Choice.Paper | Choice.Scissors])];
     setAIChoice(aiResponse);
 
     const roundWinner = determineRoundWinner(selected, aiResponse);

@@ -6,5 +6,9 @@
     "roundTimeout": 30,
     "async": {
         "roundTimeoutSeconds": 86400
+    },
+    "wildcard": {
+        "roundTimeoutSeconds": 30,
+        "abStartingPoints": 3
     }
 }

@@ -1,7 +1,9 @@
 import { runQuery } from "@/lib/neo4j";
-import neo4j from "neo4j-driver";
+import neo4j, { Integer } from "neo4j-driver";
 import { NextRequest, NextResponse } from "next/server";
 import config from "@/config/settings.json";
+import { PLAY_MODES } from "@/lib/gameModes";
+import type { PlayMode } from "@/types";
 
 export async function POST(req: NextRequest) {
   const { uid } = await req.json();
@@ -13,7 +15,8 @@ export async function POST(req: NextRequest) {
   try {
     const result = await runQuery(`
       MATCH (p:Player {uid: $uid})
-      RETURN p.username AS username, p.rating AS rating, p.asyncRating AS asyncRating
+      OPTIONAL MATCH (p)-[:HAS_RATING]->(r:Rating)
+      RETURN p.username AS username, collect({mode: r.mode, value: r.value}) AS ratings
       `, { uid });
 
     if (result.records.length === 0) {
@@ -21,12 +24,19 @@ export async function POST(req: NextRequest) {
     }
     const read = result.records[0];
 
-    const asyncRating = read.get("asyncRating");
+    const ratingsByMode = new Map<string, number>();
+    for (const entry of read.get("ratings") as { mode: string | null; value: number | Integer }[]) {
+      if (entry.mode !== null) ratingsByMode.set(entry.mode, neo4j.integer.toNumber(entry.value));
+    }
+
+    // Players who predate a mode (or haven't been backfilled) fall back to the default rating.
+    const ratings = Object.fromEntries(
+      PLAY_MODES.map((mode) => [mode, ratingsByMode.get(mode) ?? config.defaultRating]),
+    ) as Record<PlayMode, number>;
+
     return NextResponse.json({
       username: read.get("username"),
-      rating: neo4j.integer.toNumber(read.get("rating")),
-      // fall back for players created before asyncRating existed / not yet backfilled
-      asyncRating: asyncRating !== null && asyncRating !== undefined ? neo4j.integer.toNumber(asyncRating) : config.defaultRating,
+      ratings,
     });
   } catch (err) {
     console.error("fetchPlayer error:", err);
