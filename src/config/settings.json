@@ -3,5 +3,8 @@
     "distributionFactor": 750,
     "matchmakingRatingRange": 300,
     "defaultRating": 1000,
-    "roundTimeout": 30
+    "roundTimeout": 30,
+    "async": {
+        "roundTimeoutSeconds": 86400
+    }
 }
