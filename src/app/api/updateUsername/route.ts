@@ -1,8 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDriver } from "@/lib/neo4j";
+import { getAuthedUid } from "@/lib/auth";
 
 export async function POST(req: NextRequest) {
   const { uid, newUsername } = await req.json();
+
+  // authenticate so that only the ego user can update their own username
+  const authedUid = await getAuthedUid(req);
+  if (!authedUid || authedUid !== uid) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
   if (!uid) {
     return NextResponse.json({ error: "UID is required." }, { status: 400 });
@@ -19,13 +26,17 @@ export async function POST(req: NextRequest) {
     await session.executeWrite(async (tx) => {
       await tx.run(`
             MATCH (p:Player {uid: $uid})
-            SET p.username = $newUsername
+            SET p.username = $newUsername,
+                p.usernameLower = toLower($newUsername)
             `, { uid, newUsername });
     });
 
     return NextResponse.json({ success: true });
-  } catch (err) {
+  } catch (err: any) {
     console.error("updateUsername error:", err);
+    if (err.code === "Neo.ClientError.Schema.ConstraintValidationFailed") {
+      return NextResponse.json({ error: "Username is already taken." }, { status: 409 });
+    }
     return NextResponse.json({ error: "Failed to update username." }, { status: 500 });
   } finally {
     await session.close();

@@ -1,4 +1,4 @@
-import { getDatabase, ref, set, get, update, remove, onValue, off } from "firebase/database";
+import { getDatabase, ref, set, get, update, remove, onValue, off, runTransaction } from "firebase/database";
 import { Game } from "../types";
 import calculateRating from "./calculateRating";
 import { advanceWinner } from "./tournaments";
@@ -73,21 +73,30 @@ export async function findMatch(uid: string, username: string, userRating: numbe
 
     for (const [playerId, playerData] of Object.entries(queue) as [string, any][]) {
       const ratingClose = Math.abs(playerData.rating - userRating) <= config.matchmakingRatingRange;
-      if (playerId !== uid && ratingClose) {
-        const opponentInGame = await checkExistingGame(playerId);
-        if (!opponentInGame) {
-          const gameID = await createGame(
-            playerId, playerData.username, playerData.rating,
-            uid, username, userRating,
-          );
-          if (playerData.isBot) {
-            await set(ref(db, `games/${gameID}/presence/${playerId}`), true);
-            // bot plays the game server-side
-            postJSON("/api/botPlay", { gameId: gameID, botId: playerId });
-          }
-          return { gameID, opponent: playerData };
-        }
+      if (playerId === uid || !ratingClose) continue;
+
+      // atomically claim this candidate's queue slot so no other
+      // concurrent matchmaking attempt can also grab them
+      const candidateRef = ref(db, `matchmaking_queue/${playerId}`);
+      const { committed } = await runTransaction(candidateRef, (current) => (current === null ? undefined : null));
+      if (!committed) continue; // another search already claimed this candidate
+
+      const opponentInGame = await checkExistingGame(playerId);
+      if (opponentInGame) {
+        await set(candidateRef, playerData); // shouldn't normally happen, but put them back
+        continue;
       }
+      
+      const gameId = await createGame(
+        playerId, playerData.username, playerData.rating,
+        uid, username, userRating,
+      );
+      if (playerData.isBot) {
+        await set(ref(db, `games/${gameId}/presence/${playerId}`), true);
+        // bot plays the game server-side
+        postJSON("/api/botPlay", { gameId: gameId, botId: playerId });
+      }
+      return { gameID: gameId, opponent: playerData };
     }
 
     // No match found — add to queue and wait

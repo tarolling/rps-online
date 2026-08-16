@@ -1,12 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebaseAdmin";
 import { getDriver } from "@/lib/neo4j";
+import { getAuthedUid } from "@/lib/auth";
 
 type Action = "send" | "accept" | "reject" | "remove" | "cancel";
 
 export async function GET(req: NextRequest) {
   const uid = req.nextUrl.searchParams.get("uid");
   if (!uid) return NextResponse.json({ error: "uid required" }, { status: 400 });
+
+  // authenticate so that only the ego user can see their own friends
+  const authedUid = await getAuthedUid(req);
+  if (!authedUid || authedUid !== uid) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
   const session = getDriver().session({ database: process.env.NEO4J_DATABASE });
   try {
@@ -39,6 +46,12 @@ export async function POST(req: NextRequest) {
 
   if (!action || !myId || !otherId) {
     return NextResponse.json({ error: "Missing fields" }, { status: 400 });
+  }
+
+  // authenticate so that only the ego user can manage their own friends
+  const authedUid = await getAuthedUid(req);
+  if (!authedUid || authedUid !== myId) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   switch (action) {
