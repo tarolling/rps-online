@@ -21,14 +21,14 @@ import { Choice, MatchStatus } from "@/types/neo4j";
  * Applies a Firebase-style flattened update map (e.g. `{ "player1/choice": null }`)
  * onto a plain object copy, the way the Realtime Database's `update()` would.
  */
-function applyFlatUpdates<T extends Record<string, any>>(obj: T, updates: Record<string, any>): T {
-  const next: any = JSON.parse(JSON.stringify(obj));
+function applyFlatUpdates<T extends object>(obj: T, updates: Record<string, unknown>): T {
+  const next: T = JSON.parse(JSON.stringify(obj));
   for (const [path, value] of Object.entries(updates)) {
     const parts = path.split("/");
-    let cursor = next;
+    let cursor: Record<string, unknown> = next as unknown as Record<string, unknown>;
     for (let i = 0; i < parts.length - 1; i++) {
       cursor[parts[i]] ??= {};
-      cursor = cursor[parts[i]];
+      cursor = cursor[parts[i]] as Record<string, unknown>;
     }
     cursor[parts[parts.length - 1]] = value;
   }

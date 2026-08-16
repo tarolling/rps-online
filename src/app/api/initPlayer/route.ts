@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getDriver } from "@/lib/neo4j";
+import { runQuery } from "@/lib/neo4j";
 import config from "@/config/settings.json";
 import { getAuthedUid } from "@/lib/auth";
+import { Neo4jError } from "neo4j-driver";
 
 export async function POST(req: NextRequest) {
   const { uid, username = "random" } = await req.json();
@@ -16,42 +17,35 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "uid is required" }, { status: 400 });
   }
 
-  const driver = getDriver();
-  const session = driver.session({ database: process.env.NEO4J_DATABASE });
-
   try {
-    const result = await session.executeWrite(async (tx) => {
-      const res = await tx.run(
-        `
-                MERGE (p:Player {uid: $uid})
-                ON CREATE
-                    SET p.username = $username,
-                        p.usernameLower = toLower($username),
-                        p.rating = $defaultRating,
-                        p.asyncRating = $defaultRating,
-                        p.created = datetime(),
-                        p.lastSeen = datetime()
-                ON MATCH
-                    SET p.lastSeen = datetime()
-                RETURN p.username AS username
-                `,
-        { uid, username, defaultRating: config.defaultRating },
-      );
+    const res = await runQuery(
+      `
+      MERGE (p:Player {uid: $uid})
+      ON CREATE
+          SET p.username = $username,
+              p.usernameLower = toLower($username),
+              p.rating = $defaultRating,
+              p.asyncRating = $defaultRating,
+              p.created = datetime(),
+              p.lastSeen = datetime()
+      ON MATCH
+          SET p.lastSeen = datetime()
+      RETURN p.username AS username
+      `,
+      { uid, username, defaultRating: config.defaultRating },
+      "write",
+    );
 
-      if (!res || res.records.length === 0) {
-        throw new Error("Unable to modify player.");
-      }
-      return res.records[0].get("username");
-    });
+    if (res.records.length === 0) {
+      throw new Error("Unable to modify player.");
+    }
 
-    return NextResponse.json({ username: result });
-  } catch (err: any) {
+    return NextResponse.json({ username: res.records[0].get("username") });
+  } catch (err) {
     console.error("initPlayer error:", err);
-    if (err.code === "Neo.ClientError.Schema.ConstraintValidationFailed") {
+    if (err instanceof Neo4jError && err.code === "Neo.ClientError.Schema.ConstraintValidationFailed") {
       return NextResponse.json({ error: "Username is already taken." }, { status: 409 });
     }
     return NextResponse.json({ error: "Failed to process player." }, { status: 500 });
-  } finally {
-    await session.close();
   }
 }

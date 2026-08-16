@@ -3,6 +3,8 @@ import { adminDb } from "@/lib/firebaseAdmin";
 import { Choice, MatchStatus } from "@/types/neo4j";
 import type { Game, RoundData } from "@/types";
 import { getRankTierIndex } from "@/lib/ranks";
+import { getAuthedUid } from "@/lib/auth";
+import { withErrorHandling } from "@/lib/apiHandler";
 
 const COUNTER: Record<Choice, Choice> = {
   [Choice.Rock]: Choice.Paper,
@@ -25,16 +27,23 @@ function getBotChoice(round: number, botStrength: number, oppLastChoice?: Choice
   return COUNTER[oppLastChoice];
 }
 
-export async function POST(req: NextRequest) {
+export const POST = withErrorHandling("botPlay", async (req: NextRequest) => {
   const { gameId, botId } = await req.json();
 
   const snap = await adminDb.ref(`games/${gameId}`).get();
   const game: Game = snap.val();
   if (!game || game.state !== MatchStatus.InProgress) return NextResponse.json({ done: true });
-  
+
+  // only a participant of this game (i.e. the human who was just matched
+  // with the bot) may trigger the bot's move for it
+  const authedUid = await getAuthedUid(req);
+  if (authedUid !== game.player1.id && authedUid !== game.player2.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const isPlayer1 = game.player1.id === botId;
   const botKey = isPlayer1 ? "player1" : "player2";
-  
+
   if (game[botKey].submitted) return NextResponse.json({ done: true });
   
   // add slight delay
@@ -56,4 +65,4 @@ export async function POST(req: NextRequest) {
   });
 
   return NextResponse.json({ done: true });
-}
+});

@@ -6,13 +6,13 @@ import { formatRelativeTime } from "@/lib/time";
 import MatchCard from "@/components/MatchCard";
 import HeroButtons from "@/components/HeroButtons";
 import LiveMatches from "@/components/LiveMatches";
-import { getRecentGames } from "@/lib/recentGames";
+import { getRecentGames, GlobalRecentMatch } from "@/lib/recentGames";
 
 export const revalidate = 0;
 
 async function getRecentMatches() {
-  const data = await getRecentGames(null, null);
-  return data.map((record: any) => ({
+  const data = await getRecentGames(null, null) as GlobalRecentMatch[];
+  return data.map((record) => ({
     ...record,
     timestamp: formatRelativeTime(record.timestamp),
   }));
@@ -129,7 +129,7 @@ export default async function Home() {
             <h2 className={styles.sectionTitle}>Recent battles.</h2>
           </div>
           <div className={styles.matchesGrid}>
-            {recentMatches.map((match: any, index: number) => (
+            {recentMatches.map((match, index) => (
               <MatchCard key={index} match={match} index={index} />
             ))}
           </div>

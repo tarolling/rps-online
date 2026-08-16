@@ -154,18 +154,6 @@ export interface RankTier {
  * API Request/Response Types
  */
 
-export type ClubMethodType = "search" | "members" | "user" | "join" | "leave" | "update";
-
-export interface ClubsRequest {
-    methodType: ClubMethodType;
-    uid?: string;
-    clubName?: string;
-    searchTerm?: string;
-    newName?: string;
-    newTag?: string;
-    availability?: ClubAvailability;
-}
-
 export interface DashboardStats {
     rating: number;
     totalGames: number;

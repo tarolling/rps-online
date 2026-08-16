@@ -1,6 +1,9 @@
 import { MatchStatus } from "@/types/neo4j";
 import { Game } from "../types";
 import { adminDb } from "./firebaseAdmin";
+import { FIRST_TO } from "./gameLogic";
+
+export { FIRST_TO };
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -8,9 +11,6 @@ interface TournamentInfo {
     tournamentId: string;
     matchId: string;
 }
-
-/** Number of rounds a player must win to win the game. */
-export const FIRST_TO = 4;
 
 // ── Game lifecycle ────────────────────────────────────────────────────────────
 
