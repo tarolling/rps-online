@@ -2,18 +2,21 @@
 type QueryParamValue = string | number | boolean | null | undefined;
 
 /**
- * Builds a full URL by appending the base URL and optional query parameters.
- * @param url - The absolute URL without the domain prefix
+ * Builds a relative URL (path + query string) for same-origin requests from
+ * the browser. Deliberately not an absolute URL: these calls run client-side,
+ * where a relative path resolves against the current origin automatically —
+ * no base URL needed, and no risk of it pointing somewhere unintended.
+ * @param url - The absolute path without the domain prefix
  * @param params - Optional query parameters to append
  */
 function buildUrl(url: string, params?: Record<string, QueryParamValue>): string {
-  const fullUrl = new URL(`${process.env.NEXT_PUBLIC_BASE_URL}${url}`);
-  if (params) {
-    Object.entries(params).forEach(([k, v]) => {
-      if (v !== null) fullUrl.searchParams.set(k, String(v));
-    });
-  }
-  return fullUrl.toString();
+  if (!params) return url;
+  const searchParams = new URLSearchParams();
+  Object.entries(params).forEach(([k, v]) => {
+    if (v !== null) searchParams.set(k, String(v));
+  });
+  const qs = searchParams.toString();
+  return qs ? `${url}?${qs}` : url;
 }
 
 /**

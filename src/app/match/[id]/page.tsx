@@ -2,9 +2,8 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Link from "next/link";
 import styles from "./MatchDetailPage.module.css";
-import { getJSON } from "@/lib/api";
-import { DateTime } from "neo4j-driver";
-import { Choice, MatchStatus, type GameMode } from "@/types/neo4j";
+import { getMatchDetail } from "@/lib/matchDetail";
+import { Choice } from "@/types/neo4j";
 import { formatTime } from "@/lib/time";
 import { getAvatarUrl } from "@/lib/avatar";
 import Avatar from "@/components/Avatar";
@@ -12,44 +11,7 @@ import RankBadge from "@/components/RankBadge";
 import { CHOICE_EMOJI } from "@/types";
 
 async function getGameDetail(id: string) {
-  const data = await getJSON<{
-    match: {
-      id: string,
-      timestamp: DateTime,
-      totalRounds: number,
-      winnerId: string,
-      mode: GameMode,
-      status: MatchStatus,
-    },
-    player1: {
-      uid: string,
-      username: string,
-      rating: number,
-      score: number,
-      ratingBefore:number,
-      ratingAfter:number,
-      rocks:number,
-      papers:number,
-      scissors:number,
-    },
-    player2: {
-      uid: string,
-      username: string,
-      rating: number,
-      score: number,
-      ratingBefore: number,
-      ratingAfter: number,
-      rocks: number,
-      papers: number,
-      scissors: number,
-    },
-    rounds: {
-      roundNumber: number,
-      p1Choice: Choice,
-      p2Choice: Choice,
-      winnerId: string,
-    }[],
-  }>("/api/fetchMatchDetail", { id });
+  const data = (await getMatchDetail(id))!;
 
   return {
     id: data.match.id,
