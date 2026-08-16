@@ -28,6 +28,7 @@ export async function POST(req: NextRequest) {
                     SET p.username = $username,
                         p.usernameLower = toLower($username),
                         p.rating = $defaultRating,
+                        p.asyncRating = $defaultRating,
                         p.created = datetime(),
                         p.lastSeen = datetime()
                 ON MATCH

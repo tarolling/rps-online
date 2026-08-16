@@ -113,6 +113,9 @@ export default function DashboardPage() {
           <Link className={styles.playButton} href='/play'>
                         Quick Play
           </Link>
+          <Link className={styles.playButton} href='/asyncGames'>
+                        Async Games
+          </Link>
         </section>
         <div className={styles.dashboardGrid}>
           <section className={styles.statsCard}>
@@ -125,6 +128,10 @@ export default function DashboardPage() {
               <div className={styles.statItem}>
                 <span className={styles.statValue}>{gameStats.rating}</span>
                 <span className={styles.statLabel}>Skill Rating</span>
+              </div>
+              <div className={styles.statItem}>
+                <span className={styles.statValue}>{playerData?.asyncRating ?? config.defaultRating}</span>
+                <span className={styles.statLabel}>Async Rating</span>
               </div>
               <div className={styles.statItem}>
                 <span className={styles.statValue}>{gameStats.totalGames}</span>

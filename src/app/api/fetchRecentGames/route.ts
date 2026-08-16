@@ -1,5 +1,6 @@
 import { getDriver } from "@/lib/neo4j";
 import { MatchResult } from "@/types/neo4j";
+import type { PlayMode } from "@/types";
 import neo4j from "neo4j-driver";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -16,6 +17,12 @@ function formatResult(result: MatchResult): string {
 
 export async function GET(req: NextRequest) {
   const playerId = req.nextUrl.searchParams.get("playerId");
+  const mode = (req.nextUrl.searchParams.get("mode") ?? "blitz") as PlayMode;
+
+  if (mode !== "blitz" && mode !== "async") {
+    return NextResponse.json({ error: "Invalid mode." }, { status: 400 });
+  }
+  const matchMode = mode === "async" ? "ranked_async" : "ranked";
 
   const session = getDriver().session({ database: process.env.NEO4J_DATABASE });
 
@@ -23,7 +30,7 @@ export async function GET(req: NextRequest) {
     const response = await session.executeRead(async (tx) => {
       if (playerId) {
         const data = await tx.run(`
-          MATCH (p:Player {uid: $playerId})-[r1:PARTICIPATED_IN]->(m:Match)<-[r2:PARTICIPATED_IN]-(opp:Player)
+          MATCH (p:Player {uid: $playerId})-[r1:PARTICIPATED_IN]->(m:Match {mode: $matchMode})<-[r2:PARTICIPATED_IN]-(opp:Player)
           ORDER BY m.timestamp DESC
           LIMIT 3
           RETURN
@@ -35,7 +42,7 @@ export async function GET(req: NextRequest) {
             r2.score AS opponentScore,
             m.timestamp AS date
         `,
-        { playerId },
+        { playerId, matchMode },
         );
 
         return data.records.map((record) => ({
@@ -49,20 +56,20 @@ export async function GET(req: NextRequest) {
         }));
       } else {
         const data = await tx.run(`
-          MATCH (p1:Player)-[r1:PARTICIPATED_IN]->(m:Match)<-[r2:PARTICIPATED_IN]-(p2:Player)
+          MATCH (p1:Player)-[r1:PARTICIPATED_IN]->(m:Match {mode: $matchMode})<-[r2:PARTICIPATED_IN]-(p2:Player)
           WHERE elementId(p1) < elementId(p2)
           ORDER BY m.timestamp DESC
           LIMIT 3
           RETURN m.id AS id,
               p1.uid AS playerOneId,
               p1.username AS playerOneUsername,
-              p2.uid AS playerTwoId, 
+              p2.uid AS playerTwoId,
               p2.username AS playerTwoUsername,
               m.winnerId AS winner,
               r1.score AS playerOneScore,
               r2.score AS playerTwoScore,
               m.timestamp AS timestamp
-        `);
+        `, { matchMode });
 
         return data.records.map((record) => {
           const playerOneScore = neo4j.integer.toNumber(record.get("playerOneScore"));
