@@ -8,7 +8,8 @@ import Header from "@/components/Header";
 import styles from "./LeaderboardPage.module.css";
 import RankBadge from "@/components/RankBadge";
 import { getJSON } from "@/lib/api";
-import { Rank, RANK_TIERS } from "@/lib/ranks";
+import { getRankNames } from "@/lib/ranks";
+import type { RankName } from "@/types";
 
 type Player = {
   uid: string;
@@ -25,14 +26,11 @@ const LEADERBOARD_TABS: { type: LeaderboardType; label: string; colHeader: strin
   { type: "gamesPlayed", label: "Games Played",  colHeader: "Games"     },
 ];
 
-// Unique rank names in order
-const RANKS: Rank[] = [...new Map(RANK_TIERS.map((t) => [t.rank, t])).keys()];
-
 const RANK_ICON = ["👑", "🥈", "🥉"];
 
 function LeaderboardPage() {
   const [activeType, setActiveType] = useState<LeaderboardType>("rating");
-  const [activeRank, setActiveRank] = useState<Rank | null>(null);
+  const [activeRank, setActiveRank] = useState<RankName | null>(null);
   const [playerData, setPlayerData] = useState<Player[] | null>(null);
   const router = useRouter();
 
@@ -73,7 +71,7 @@ function LeaderboardPage() {
           >
             Global
           </button>
-          {RANKS.map((rank) => (
+          {getRankNames().map((rank) => (
             <button
               key={rank}
               className={`${styles.rankChip} ${activeRank === rank ? styles.rankChipActive : ""}`}

@@ -1,5 +1,8 @@
 import config from "@/config/settings.json";
 
+const MIN_RATING = 0;
+const MAX_RATING = 5000;
+
 /**
  * 
  * @param {number} playerRating The player's rating
@@ -29,5 +32,9 @@ export default function calculateRating(playerRating: number, oppRating: number,
   const winInc = Math.round(config.K * (1 - expectedWin));
   const loseInc = Math.round(config.K * (0 - expectedLoss));
 
-  return won ? playerRating + winInc : playerRating + loseInc;
+  const newRating = won ? playerRating + winInc : playerRating + loseInc;
+
+  // guard against NaN/infinity and clamp ratings to sane range
+  if (!Number.isFinite(newRating)) return playerRating;
+  return Math.min(MAX_RATING, Math.max(MIN_RATING, newRating));
 }

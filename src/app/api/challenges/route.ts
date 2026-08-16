@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebaseAdmin";
 import { createGame } from "@/lib/matchmaking.server";
 import { getDriver } from "@/lib/neo4j";
+import { getAuthedUid } from "@/lib/auth";
 
 type Action = "send" | "accept" | "reject" | "clear";
 
@@ -30,6 +31,13 @@ export async function POST(req: NextRequest) {
 
   if (!action || !fromId || !toId) {
     return NextResponse.json({ error: "Missing fields" }, { status: 400 });
+  }
+
+  // authenticate so that only the ego user can manage their own challenges
+  const authedUid = await getAuthedUid(req);
+  const actingId = action === "send" ? fromId : toId;
+  if (!authedUid || authedUid !== actingId) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   const challengeRef = adminDb.ref(`challenges/${toId}/${fromId}`);

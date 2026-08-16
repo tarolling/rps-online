@@ -3,6 +3,17 @@ import { MatchResult } from "@/types/neo4j";
 import neo4j from "neo4j-driver";
 import { NextRequest, NextResponse } from "next/server";
 
+function formatResult(result: MatchResult): string {
+  switch (result) {
+  case MatchResult.Win: return "Win";
+  case MatchResult.Loss: return "Loss";
+  case MatchResult.WinAfk: return "Win (AFK)";
+  case MatchResult.LossAfk: return "Loss (AFK)";
+  case MatchResult.DrawAfk: return "Draw (AFK)";
+  default: return "Loss";
+  }
+}
+
 export async function GET(req: NextRequest) {
   const playerId = req.nextUrl.searchParams.get("playerId");
 
@@ -31,7 +42,7 @@ export async function GET(req: NextRequest) {
           id: record.get("id"),
           opponentId: record.get("uid"),
           opponentUsername: record.get("username"),
-          result: record.get("result") === MatchResult.Win ? "Win" : "Loss",
+          result: formatResult(record.get("result")),
           playerScore: neo4j.integer.toNumber(record.get("playerScore")),
           opponentScore: neo4j.integer.toNumber(record.get("opponentScore")),
           date: record.get("date"),
@@ -56,13 +67,15 @@ export async function GET(req: NextRequest) {
         return data.records.map((record) => {
           const playerOneScore = neo4j.integer.toNumber(record.get("playerOneScore"));
           const playerTwoScore = neo4j.integer.toNumber(record.get("playerTwoScore"));
+          const winnerId = record.get("winner");
+          const winner = winnerId === null ? "Draw" : winnerId === record.get("playerOneId") ? record.get("playerOneUsername") : record.get("playerTwoUsername");
           return {
             id: record.get("id"),
             player1: record.get("playerOneUsername"),
             player2: record.get("playerTwoUsername"),
             playerOneId: record.get("playerOneId"),
             playerTwoId: record.get("playerTwoId"),
-            winner: record.get("winner") === record.get("playerOneId") ? record.get("playerOneUsername") : record.get("playerTwoUsername"),
+            winner: winner,
             score: `${playerOneScore}-${playerTwoScore}`,
             timestamp: record.get("timestamp"),
           };

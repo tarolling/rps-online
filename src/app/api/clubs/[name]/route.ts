@@ -1,6 +1,7 @@
 import { getDriver } from "@/lib/neo4j";
 import { NextResponse, type NextRequest } from "next/server";
 import neo4j from "neo4j-driver";
+import { getAuthedUid } from "@/lib/auth";
 
 /**
  * Get club members/info 
@@ -79,6 +80,12 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ na
     return NextResponse.json({ error: "User ID is required." }, { status: 400 });
   }
 
+  // authenticate so that only the ego user can edit their own club
+  const authedUid = await getAuthedUid(req);
+  if (!authedUid || authedUid !== uid) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const session = getDriver().session({ database: process.env.NEO4J_DATABASE });
   try {
     // Founder only - update club name, tag, or availability
@@ -124,14 +131,27 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ na
  * @param param1 
  * @returns 
  */
-export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ name: string }>}) {
+export async function DELETE(req: NextRequest, { params }: { params: Promise<{ name: string }>}) {
   const { name: clubName } = await params;
   if (!clubName) {
     return NextResponse.json({ error: "Club name is required." }, { status: 400 });
   }
 
+  // authenticate so that only the ego user can delete their own club
+  const authedUid = await getAuthedUid(req);
+  if (!authedUid) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
   const session = getDriver().session({ database: process.env.NEO4J_DATABASE });
   try {
+    const check = await session.executeRead((tx) =>
+      tx.run(
+        "MATCH (p:Player {uid: $uid})-[r:MEMBER]->(c:Club {name: $clubName}) RETURN r.role AS role",
+        { uid: authedUid, clubName },
+      ),
+    );
+    if (check.records.length === 0 || check.records[0].get("role") !== "Founder") {
+      return NextResponse.json({ error: "Only the founder can delete this club." }, { status: 403 });
+    }
     await session.executeWrite((tx) =>
       tx.run(`
         MATCH (c:Club {name: $clubName})

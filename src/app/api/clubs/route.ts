@@ -2,6 +2,7 @@ import neo4j from "neo4j-driver";
 import { NextRequest, NextResponse } from "next/server";
 import { getDriver } from "@/lib/neo4j";
 import { Club } from "@/types/neo4j";
+import { getAuthedUid } from "@/lib/auth";
 
 /**
  * Search from a list of clubs
@@ -18,8 +19,8 @@ export async function GET(req: NextRequest) {
       MATCH (c:Club)
       WHERE toLower(c.name) CONTAINS toLower($searchTerm)
       WITH c.name AS name, c.tag AS tag, c.availability AS availability
-      MATCH (:Player)-[:MEMBER]->(:Club {name: name})
-      RETURN name, tag, availability, count(*) AS memberCount
+      OPTIONAL MATCH (p:Player)-[:MEMBER]->(:Club {name: name})
+      RETURN name, tag, availability, count(p) AS memberCount
       `,
       { searchTerm },
       ),
@@ -47,6 +48,7 @@ export async function GET(req: NextRequest) {
  */
 export async function POST(req: NextRequest) {
   const { uid, name, tag, availability } = await req.json();
+
   if (!uid) {
     return NextResponse.json({ error: "Founder ID is required." }, { status: 400 });
   }
@@ -58,6 +60,12 @@ export async function POST(req: NextRequest) {
   }
   if (!availability) {
     return NextResponse.json({ error: "Club availability is required." }, { status: 400 });
+  }
+
+  // authenticate so that only the ego user can create their own clubs
+  const authedUid = await getAuthedUid(req);
+  if (!authedUid || authedUid !== uid) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const session = getDriver().session({ database: process.env.NEO4J_DATABASE });
