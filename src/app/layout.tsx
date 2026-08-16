@@ -5,13 +5,13 @@ import { AuthProvider } from "@/context/AuthContext";
 import "./global.css";
 
 const SITE_URL = "https://ranked-rps.com";
-const SITE_NAME = "Ranked RPS Online";
+const SITE_NAME = "Ranked RPS";
 const SITE_DESCRIPTION = "Competitive Rock-Paper-Scissors matchmaking. Climb ranked ladders, form clubs, and battle players worldwide.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: `${SITE_NAME} — Ranked Rock-Paper-Scissors Matchmaking`,
+    default: `${SITE_NAME} — Rock-Paper-Scissors Matchmaking`,
     template: `%s — ${SITE_NAME}`,
   },
   description: SITE_DESCRIPTION,
@@ -22,13 +22,13 @@ export const metadata: Metadata = {
     type: "website",
     url: SITE_URL,
     siteName: SITE_NAME,
-    title: `${SITE_NAME} — Ranked Rock-Paper-Scissors Matchmaking`,
+    title: `${SITE_NAME} — Rock-Paper-Scissors Matchmaking`,
     description: SITE_DESCRIPTION,
     images: [{ url: "/logo.png" }],
   },
   twitter: {
     card: "summary",
-    title: `${SITE_NAME} — Ranked Rock-Paper-Scissors Matchmaking`,
+    title: `${SITE_NAME} — Rock-Paper-Scissors Matchmaking`,
     description: SITE_DESCRIPTION,
     images: ["/logo.png"],
   },
