@@ -11,8 +11,8 @@ const SITE_DESCRIPTION = "Competitive Rock-Paper-Scissors matchmaking. Climb ran
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: `${SITE_NAME} — Rock-Paper-Scissors Matchmaking`,
-    template: `%s — ${SITE_NAME}`,
+    default: `${SITE_NAME} - Rock-Paper-Scissors Matchmaking`,
+    template: `%s - ${SITE_NAME}`,
   },
   description: SITE_DESCRIPTION,
   icons: {
@@ -22,13 +22,13 @@ export const metadata: Metadata = {
     type: "website",
     url: SITE_URL,
     siteName: SITE_NAME,
-    title: `${SITE_NAME} — Rock-Paper-Scissors Matchmaking`,
+    title: `${SITE_NAME} - Rock-Paper-Scissors Matchmaking`,
     description: SITE_DESCRIPTION,
     images: [{ url: "/logo.png" }],
   },
   twitter: {
     card: "summary",
-    title: `${SITE_NAME} — Rock-Paper-Scissors Matchmaking`,
+    title: `${SITE_NAME} - Rock-Paper-Scissors Matchmaking`,
     description: SITE_DESCRIPTION,
     images: ["/logo.png"],
   },

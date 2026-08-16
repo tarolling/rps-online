@@ -1,5 +1,5 @@
 import neo4j from "neo4j-driver";
-import { getDriver } from "@/lib/neo4j";
+import { runQuery } from "@/lib/neo4j";
 import { NextResponse, type NextRequest } from "next/server";
 
 export async function GET(req: NextRequest) {
@@ -17,38 +17,28 @@ export async function GET(req: NextRequest) {
   }
   const matchMode = mode === "async" ? "ranked_async" : mode === "blitz" ? "ranked" : null;
 
-  const session = getDriver().session({ database: process.env.NEO4J_DATABASE });
   try {
-    const response = await session.executeRead(async (tx) => {
-      const data = await tx.run(`
-        MATCH (p:Player {uid: $viewerId})-[r:PARTICIPATED_IN]->(m:Match)<-[:PARTICIPATED_IN]-(:Player {uid: $targetId})
-        WHERE $matchMode IS NULL OR m.mode = $matchMode
-        RETURN
-            sum(CASE WHEN r.result = 'W' THEN 1 ELSE 0 END) AS wins,
-            sum(CASE WHEN r.result = 'L' THEN 1 ELSE 0 END) AS losses
-        `, {
-        viewerId,
-        targetId,
-        matchMode,
-      });
+    const data = await runQuery(`
+      MATCH (p:Player {uid: $viewerId})-[r:PARTICIPATED_IN]->(m:Match)<-[:PARTICIPATED_IN]-(:Player {uid: $targetId})
+      WHERE $matchMode IS NULL OR m.mode = $matchMode
+      RETURN
+          sum(CASE WHEN r.result = 'W' THEN 1 ELSE 0 END) AS wins,
+          sum(CASE WHEN r.result = 'L' THEN 1 ELSE 0 END) AS losses
+      `, {
+      viewerId,
+      targetId,
+      matchMode,
+    });
 
-      if (data.records.length === 0) {
-        return {
-          wins: 0,
-          losses: 0,
-        };
-      }
-
-      return {
+    const response = data.records.length === 0
+      ? { wins: 0, losses: 0 }
+      : {
         wins: neo4j.integer.toNumber(data.records[0].get("wins")),
         losses: neo4j.integer.toNumber(data.records[0].get("losses")),
       };
-    });
     return NextResponse.json(response);
   } catch (err) {
     console.error("Error fetching head-to-head stats:", err);
     return NextResponse.json({ error: "Failed to fetch head-to-head stats." }, { status: 500 });
-  } finally {
-    await session.close();
   }
 }
