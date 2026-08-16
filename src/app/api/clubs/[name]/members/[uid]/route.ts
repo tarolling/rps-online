@@ -10,7 +10,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ n
   if (!clubName) {
     return NextResponse.json({ error: "Club name is required." }, { status: 400 });
   }
-  if (!uid) {
+  if (!targetUid) {
     return NextResponse.json({ error: "Target ID is required." }, { status: 400 });
   }
 
