@@ -15,14 +15,19 @@ function formatResult(result: MatchResult): string {
   }
 }
 
+function toPlayMode(matchMode: string): PlayMode {
+  return matchMode === "ranked_async" ? "async" : "blitz";
+}
+
 export async function GET(req: NextRequest) {
   const playerId = req.nextUrl.searchParams.get("playerId");
-  const mode = (req.nextUrl.searchParams.get("mode") ?? "blitz") as PlayMode;
+  const modeParam = req.nextUrl.searchParams.get("mode");
 
-  if (mode !== "blitz" && mode !== "async") {
+  if (modeParam !== null && modeParam !== "blitz" && modeParam !== "async") {
     return NextResponse.json({ error: "Invalid mode." }, { status: 400 });
   }
-  const matchMode = mode === "async" ? "ranked_async" : "ranked";
+  // No mode filter → merge blitz and async games into a single feed.
+  const matchModes = modeParam === "async" ? ["ranked_async"] : modeParam === "blitz" ? ["ranked"] : ["ranked", "ranked_async"];
 
   const session = getDriver().session({ database: process.env.NEO4J_DATABASE });
 
@@ -30,11 +35,13 @@ export async function GET(req: NextRequest) {
     const response = await session.executeRead(async (tx) => {
       if (playerId) {
         const data = await tx.run(`
-          MATCH (p:Player {uid: $playerId})-[r1:PARTICIPATED_IN]->(m:Match {mode: $matchMode})<-[r2:PARTICIPATED_IN]-(opp:Player)
+          MATCH (p:Player {uid: $playerId})-[r1:PARTICIPATED_IN]->(m:Match)<-[r2:PARTICIPATED_IN]-(opp:Player)
+          WHERE m.mode IN $matchModes
           ORDER BY m.timestamp DESC
           LIMIT 3
           RETURN
             m.id AS id,
+            m.mode AS mode,
             opp.uid AS uid,
             opp.username AS username,
             r1.result AS result,
@@ -42,11 +49,12 @@ export async function GET(req: NextRequest) {
             r2.score AS opponentScore,
             m.timestamp AS date
         `,
-        { playerId, matchMode },
+        { playerId, matchModes },
         );
 
         return data.records.map((record) => ({
           id: record.get("id"),
+          mode: toPlayMode(record.get("mode")),
           opponentId: record.get("uid"),
           opponentUsername: record.get("username"),
           result: formatResult(record.get("result")),
@@ -56,11 +64,12 @@ export async function GET(req: NextRequest) {
         }));
       } else {
         const data = await tx.run(`
-          MATCH (p1:Player)-[r1:PARTICIPATED_IN]->(m:Match {mode: $matchMode})<-[r2:PARTICIPATED_IN]-(p2:Player)
-          WHERE elementId(p1) < elementId(p2)
+          MATCH (p1:Player)-[r1:PARTICIPATED_IN]->(m:Match)<-[r2:PARTICIPATED_IN]-(p2:Player)
+          WHERE elementId(p1) < elementId(p2) AND m.mode IN $matchModes
           ORDER BY m.timestamp DESC
           LIMIT 3
           RETURN m.id AS id,
+              m.mode AS mode,
               p1.uid AS playerOneId,
               p1.username AS playerOneUsername,
               p2.uid AS playerTwoId,
@@ -69,7 +78,7 @@ export async function GET(req: NextRequest) {
               r1.score AS playerOneScore,
               r2.score AS playerTwoScore,
               m.timestamp AS timestamp
-        `, { matchMode });
+        `, { matchModes });
 
         return data.records.map((record) => {
           const playerOneScore = neo4j.integer.toNumber(record.get("playerOneScore"));
@@ -78,6 +87,7 @@ export async function GET(req: NextRequest) {
           const winner = winnerId === null ? "Draw" : winnerId === record.get("playerOneId") ? record.get("playerOneUsername") : record.get("playerTwoUsername");
           return {
             id: record.get("id"),
+            mode: toPlayMode(record.get("mode")),
             player1: record.get("playerOneUsername"),
             player2: record.get("playerTwoUsername"),
             playerOneId: record.get("playerOneId"),

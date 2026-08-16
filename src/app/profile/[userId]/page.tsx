@@ -301,7 +301,9 @@ function ProfilePage() {
                     <span className={styles.matchResult}>{match.result}</span>
                     <div className={styles.matchDetails}>
                       <span>{match.playerScore} - {match.opponentScore}</span>
-                      <span className={styles.matchDate}>{formatRelativeTime(match.date)}</span>
+                      <span className={styles.matchDate}>
+                        {match.mode === "async" ? "Async" : "Blitz"} · {formatRelativeTime(match.date)}
+                      </span>
                     </div>
                   </div>
                 ))}

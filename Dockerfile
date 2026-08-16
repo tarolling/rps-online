@@ -1,7 +1,7 @@
 FROM node:25-alpine
 
 WORKDIR /app
-RUN apk add git
+RUN apk add --no-cache git bash
 COPY package*.json yarn.lock ./
 RUN yarn install
 COPY . .
