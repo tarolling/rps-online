@@ -19,13 +19,17 @@ export async function POST(req: NextRequest) {
     await session.executeWrite(async (tx) => {
       await tx.run(`
             MATCH (p:Player {uid: $uid})
-            SET p.username = $newUsername
+            SET p.username = $newUsername,
+                p.usernameLower = toLower($newUsername)
             `, { uid, newUsername });
     });
 
     return NextResponse.json({ success: true });
-  } catch (err) {
+  } catch (err: any) {
     console.error("updateUsername error:", err);
+    if (err.code === "Neo.ClientError.Schema.ConstraintValidationFailed") {
+      return NextResponse.json({ error: "Username is already taken." }, { status: 409 });
+    }
     return NextResponse.json({ error: "Failed to update username." }, { status: 500 });
   } finally {
     await session.close();

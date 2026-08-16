@@ -19,6 +19,7 @@ export async function POST(req: NextRequest) {
                 MERGE (p:Player {uid: $uid})
                 ON CREATE
                     SET p.username = $username,
+                        p.usernameLower = toLower($username),
                         p.rating = $defaultRating,
                         p.created = datetime(),
                         p.lastSeen = datetime()
@@ -36,8 +37,11 @@ export async function POST(req: NextRequest) {
     });
 
     return NextResponse.json({ username: result });
-  } catch (err) {
+  } catch (err: any) {
     console.error("initPlayer error:", err);
+    if (err.code === "Neo.ClientError.Schema.ConstraintValidationFailed") {
+      return NextResponse.json({ error: "Username is already taken." }, { status: 409 });
+    }
     return NextResponse.json({ error: "Failed to process player." }, { status: 500 });
   } finally {
     await session.close();
