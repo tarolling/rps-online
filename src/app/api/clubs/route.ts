@@ -18,8 +18,8 @@ export async function GET(req: NextRequest) {
       MATCH (c:Club)
       WHERE toLower(c.name) CONTAINS toLower($searchTerm)
       WITH c.name AS name, c.tag AS tag, c.availability AS availability
-      MATCH (:Player)-[:MEMBER]->(:Club {name: name})
-      RETURN name, tag, availability, count(*) AS memberCount
+      OPTIONAL MATCH (p:Player)-[:MEMBER]->(:Club {name: name})
+      RETURN name, tag, availability, count(p) AS memberCount
       `,
       { searchTerm },
       ),
