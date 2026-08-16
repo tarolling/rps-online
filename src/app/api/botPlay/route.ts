@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminDb } from "@/lib/firebaseAdmin";
 import { Choice, MatchStatus } from "@/types/neo4j";
-import type { Game } from "@/types";
+import type { Game, RoundData } from "@/types";
 import { getRankTierIndex } from "@/lib/ranks";
 
 const COUNTER: Record<Choice, Choice> = {
@@ -9,6 +9,15 @@ const COUNTER: Record<Choice, Choice> = {
   [Choice.Paper]: Choice.Scissors,
   [Choice.Scissors]: Choice.Rock,
 };
+
+// game.rounds is stored in Firebase as an object keyed by round number, not a real array
+function toRoundsArray(rounds: Record<string, RoundData> | RoundData[]): RoundData[] {
+  return Array.isArray(rounds)
+    ? rounds
+    : Object.keys(rounds)
+      .sort((a, b) => Number(a) - Number(b))
+      .map((k) => rounds[k]);
+}
 
 function getBotChoice(round: number, botStrength: number, oppLastChoice?: Choice): Choice {
   const rng = [Choice.Rock, Choice.Paper, Choice.Scissors];
@@ -37,7 +46,8 @@ export async function POST(req: NextRequest) {
   const round = game.currentRound;
   const botStrength = Math.floor(getRankTierIndex(game[botKey].rating) / 3) * 2;
   const lookback = getRankTierIndex(game[botKey].rating) % 3;
-  const oppLastChoice = round === 1 ? Choice.Paper : isPlayer1 ? game.rounds.at(-lookback - 1)?.player2Choice : game.rounds.at(-lookback - 1)?.player1Choice;
+  const roundsArr = toRoundsArray(game.rounds);
+  const oppLastChoice = round === 1 ? Choice.Paper : isPlayer1 ? roundsArr.at(-lookback - 1)?.player2Choice : roundsArr.at(-lookback - 1)?.player1Choice;
   const botChoice = getBotChoice(round, botStrength, oppLastChoice!);
 
   await adminDb.ref(`games/${gameId}`).update({
