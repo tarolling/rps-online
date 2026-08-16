@@ -1,9 +1,14 @@
+import type { Metadata } from "next";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
 import { getRankNames, RANK_TIERS } from "@/lib/ranks";
 import RankBadge from "@/components/RankBadge";
 import styles from "./RulesPage.module.css";
 
+export const metadata: Metadata = {
+  title: "Rules",
+  description: "Learn how ranked Rock-Paper-Scissors matches, scoring, and rank tiers work in Ranked RPS Online.",
+};
 
 export default function RulesPage() {
   return (

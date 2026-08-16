@@ -19,7 +19,8 @@
     margin-top: 1.5rem;
     border-radius: var(--radius);
     box-shadow: var(--shadow);
-    overflow: hidden;
+    overflow-x: auto;
+    overflow-y: hidden;
 }
 
 .table {
