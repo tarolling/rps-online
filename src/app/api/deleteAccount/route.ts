@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true });
   } catch (err) {
     console.error("deleteAccount error:", err);
-    return NextResponse.json({ error: "Failed to delete account." });
+    return NextResponse.json({ error: "Failed to delete account." }, { status: 500 });
   } finally {
     await session.close();
   }
