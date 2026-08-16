@@ -1,8 +1,14 @@
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 import { getDriver } from "@/lib/neo4j";
 import { adminDb } from "@/lib/firebaseAdmin";
+import { getAuthedUid } from "@/lib/auth";
 
-export async function POST() {
+export async function POST(req: NextRequest) {
+  const authedUid = await getAuthedUid(req);
+  if (!authedUid || authedUid !== process.env.ADMIN_UID) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const driver = getDriver();
   const session = driver.session({ database: process.env.NEO4J_DATABASE });
 

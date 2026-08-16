@@ -147,7 +147,7 @@ export default async function Home() {
       <section className={styles.bottomCta}>
         <div className={styles.bottomCtaInner}>
           <h2 className={styles.bottomCtaTitle}>Your rank awaits.</h2>
-          <p className={styles.bottomCtaSub}>Every champion started at zero. What's your excuse?</p>
+          <p className={styles.bottomCtaSub}>Every champion started at zero. What&apos;s your excuse?</p>
           <Link href="/dashboard" className={styles.bottomCtaBtn}>Start Climbing</Link>
         </div>
       </section>

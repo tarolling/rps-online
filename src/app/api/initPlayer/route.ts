@@ -1,9 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getDriver } from "@/lib/neo4j";
 import config from "@/config/settings.json";
+import { getAuthedUid } from "@/lib/auth";
 
 export async function POST(req: NextRequest) {
   const { uid, username = "random" } = await req.json();
+
+  // authenticate so that only the ego user can create their own account
+  const authedUid = await getAuthedUid(req);
+  if (!authedUid || authedUid !== uid) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
   if (!uid) {
     return NextResponse.json({ error: "uid is required" }, { status: 400 });

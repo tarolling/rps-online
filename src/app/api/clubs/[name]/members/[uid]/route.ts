@@ -1,3 +1,4 @@
+import { getAuthedUid } from "@/lib/auth";
 import { getDriver } from "@/lib/neo4j";
 import { NextResponse, type NextRequest } from "next/server";
 
@@ -12,6 +13,12 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ n
   }
   if (!targetUid) {
     return NextResponse.json({ error: "Target ID is required." }, { status: 400 });
+  }
+
+  // authenticate so that only the ego user can leave their own club
+  const authedUid = await getAuthedUid(req);
+  if (!authedUid || authedUid !== uid) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const session = getDriver().session({ database: process.env.NEO4J_DATABASE });

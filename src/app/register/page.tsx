@@ -58,11 +58,10 @@ export default function RegisterPage() {
       const userInfo = await createUserWithEmailAndPassword(auth, email, password);
       await sendEmailVerification(userInfo.user);
 
-      await postJSON("/api/initPlayer", { uid: userInfo.user.uid, username });
-
-      // get session token
+      // establish the session cookie first so subsequent authenticated calls succeed
       const idToken = await userInfo.user.getIdToken();
       await postJSON("/api/login", { idToken });
+      await postJSON("/api/initPlayer", { uid: userInfo.user.uid, username });
 
       setMessage("Account created! Check your email to verify before logging in.");
     } catch (e: unknown) {
