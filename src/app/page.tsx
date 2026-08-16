@@ -6,14 +6,12 @@ import { formatRelativeTime } from "@/lib/time";
 import MatchCard from "@/components/MatchCard";
 import HeroButtons from "@/components/HeroButtons";
 import LiveMatches from "@/components/LiveMatches";
+import { getRecentGames } from "@/lib/recentGames";
 
+export const revalidate = 0;
 
 async function getRecentMatches() {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/fetchRecentGames`, {
-    next: { revalidate: 0 }, // refresh every 0 seconds
-  });
-  if (!res.ok) return [];
-  const data = await res.json();
+  const data = await getRecentGames(null, null);
   return data.map((record: any) => ({
     ...record,
     timestamp: formatRelativeTime(record.timestamp),
