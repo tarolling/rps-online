@@ -8,7 +8,7 @@ import { DateTime } from "neo4j-driver";
 
 export type ClubAvailability = "Open" | "Invite" | "Closed";
 export type ClubRole = "Member" | "Founder";
-export type GameMode = "ranked" | "casual" | "tournament" | "challenge";
+export type GameMode = "ranked" | "ranked_async" | "casual" | "tournament" | "challenge";
 export type TitleRarity = "common" | "rare" | "epic" | "legendary";
 export type TournamentPlayerCap = 8 | 16 | 32 | 64;
 export type Division = 1 | 2 | 3 | null; // null = Infinity rank
@@ -58,6 +58,7 @@ export interface Player {
     uid: string;
     username: string;
     rating: number;
+    asyncRating: number;
     created: number;
     lastSeen: number;
 };

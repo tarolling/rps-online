@@ -1,13 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import neo4j from "neo4j-driver";
 import { getDriver } from "@/lib/neo4j";
+import type { PlayMode } from "@/types";
 
 export async function POST(req: NextRequest) {
-  const { playerId } = await req.json();
+  const { playerId, mode = "blitz" } = await req.json();
 
   if (!playerId) {
     return NextResponse.json({ error: "Player ID is required." }, { status: 400 });
   }
+
+  if (mode !== "blitz" && mode !== "async") {
+    return NextResponse.json({ error: "Invalid mode." }, { status: 400 });
+  }
+  const matchMode = (mode as PlayMode) === "async" ? "ranked_async" : "ranked";
+  const ratingField = (mode as PlayMode) === "async" ? "asyncRating" : "rating";
 
   const driver = getDriver();
   const session = driver.session({ database: process.env.NEO4J_DATABASE });
@@ -15,8 +22,8 @@ export async function POST(req: NextRequest) {
   try {
     const response = await session.executeRead(async (tx) => {
       const data = await tx.run(`
-        MATCH (p:Player {uid: $playerId})-[r:PARTICIPATED_IN]->(m:Match)
-        WITH 
+        MATCH (p:Player {uid: $playerId})-[r:PARTICIPATED_IN]->(m:Match {mode: $matchMode})
+        WITH
           p,
           collect({result: r.result, timestamp: m.timestamp}) AS games
         WITH
@@ -58,7 +65,7 @@ export async function POST(req: NextRequest) {
               END
           ) AS streakStats
         RETURN
-          p.rating AS rating,
+          p.${ratingField} AS rating,
           totalGames,
           wins,
           losses,
@@ -67,6 +74,7 @@ export async function POST(req: NextRequest) {
           streakStats.best AS bestStreak
             `, {
         playerId,
+        matchMode,
       });
 
       if (data.records.length === 0) {

@@ -393,6 +393,12 @@
     margin: 0;
 }
 
+.hint {
+    text-align: center;
+    color: var(--color-text-muted);
+    font-size: 0.9rem;
+}
+
 /* ── Responsive ── */
 
 @media (max-width: 600px) {

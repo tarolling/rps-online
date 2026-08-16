@@ -276,6 +276,7 @@ function ProfilePage() {
                   <StatItem value="N/A" label="Rank" />
                 }
                 <StatItem value={profileData?.rating ?? "N/A"} label="Skill Rating" />
+                <StatItem value={profileData?.asyncRating ?? "N/A"} label="Async Rating" />
                 <StatItem value={gameStats.totalGames} label="Games Played" />
                 <StatItem value={gameStats.winRate} label="Win Rate" />
                 <StatItem value={gameStats.wins} label="Wins" />

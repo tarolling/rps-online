@@ -11,12 +11,11 @@ import Footer from "@/components/Footer";
 import Header from "@/components/Header";
 import styles from "@/styles/game.module.css";
 import config from "@/config/settings.json";
-import RankBadge from "@/components/RankBadge";
-import Avatar from "@/components/Avatar";
 import { getAvatarUrl } from "@/lib/avatar";
 import { getJSON, postJSON } from "@/lib/api";
-import { CHOICE_EMOJI, Game, RoundData, Tournament, UserClub } from "@/types";
+import { CHOICE_EMOJI, Game, Tournament, UserClub } from "@/types";
 import { Choice, MatchStatus } from "@/types/neo4j";
+import { PlayerPanel, RoundHistory } from "@/components/GamePanels";
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -50,6 +49,12 @@ function GamePage() {
 
   // Single ref to track per-round handling - mutations are synchronous so no stale closure issues
   const handledRound = useRef<{ round: number; resolveFired: boolean } | null>(null);
+
+  // Mirrors `game` for use inside the presence effect's cleanup below, which
+  // only depends on [gameId, playerId] and would otherwise close over a stale
+  // (null) `game` from its first render.
+  const latestGameRef = useRef<Game | null>(null);
+  latestGameRef.current = game;
 
   // Fetch avatars once we know both player IDs
   useEffect(() => {
@@ -168,6 +173,7 @@ function GamePage() {
   useEffect(() => {
     if (!gameId || !playerId) return;
     const presenceRef = ref(db, `games/${gameId}/presence/${playerId}`);
+    const gameRef = ref(db, `games/${gameId}`);
 
     const connectedRef = ref(db, ".info/connected");
     const unsubConnected = onValue(connectedRef, (snap) => {
@@ -176,12 +182,35 @@ function GamePage() {
         set(presenceRef, true).then(() => {
           onDisconnect(presenceRef).remove();
         });
+
+        // Bot opponents never hold a real connection, so the opponent-presence
+        // watcher below skips them entirely - nobody else is ever watching our
+        // presence in a bot game. Without this, closing the tab (or losing the
+        // connection) mid-game orphans the game node in RTDB forever. Only a
+        // real disconnect should trigger this, so it's registered against our
+        // own connection rather than done eagerly.
+        get(gameRef).then((gameSnap) => {
+          const g: Game | null = gameSnap.val();
+          if (g && (g.player1.id.startsWith("bot_") || g.player2.id.startsWith("bot_"))) {
+            onDisconnect(gameRef).remove();
+          }
+        });
       }
     });
 
     return () => {
       unsubConnected();
       remove(presenceRef);
+
+      // Covers leaving via in-app navigation (Header/Footer links), which
+      // unmounts this page without dropping the underlying connection, so the
+      // onDisconnect registered above never fires.
+      const g = latestGameRef.current;
+      const isBotGame = g && (g.player1.id.startsWith("bot_") || g.player2.id.startsWith("bot_"));
+      const unfinished = g && (g.state === MatchStatus.InProgress || g.state === MatchStatus.Waiting);
+      if (isBotGame && unfinished) {
+        remove(gameRef);
+      }
     };
   }, [gameId, playerId]);
 
@@ -461,65 +490,5 @@ function GamePage() {
     </div>
   );
 };
-
-// ── Sub-components ────────────────────────────────────────────────────────────
-
-type PlayerPanelProps = {
-    label: string;
-    name: string;
-    rating: number;
-    score: number;
-    choice: Choice | null;
-    clubTag?: string | null;
-    avatarUrl?: string | null;
-    reveal?: boolean;
-    hasChosen?: boolean;
-    disconnected?: boolean;
-};
-
-function PlayerPanel({ label, name, rating, score, choice, avatarUrl, clubTag, reveal = true, hasChosen = false, disconnected = false }: PlayerPanelProps) {
-  return (
-    <div className={styles.playerPanel}>
-      <span className={styles.playerLabel}>{label}</span>
-      <Avatar src={avatarUrl} username={name} size="md" />
-      <span className={styles.playerName}>
-        {clubTag && <span className={styles.playerClubTag}>[{clubTag}]</span>} {name} {disconnected && <span className={styles.disconnectedBadge}>● Disconnected</span>}
-      </span>
-      <RankBadge rating={rating} variant='compact' />
-      <span className={styles.playerScore}>{score}</span>
-      <div className={`${styles.choiceDisplay} ${(choice && reveal) || hasChosen ? styles.choiceVisible : ""}`}>
-        {choice && reveal ? CHOICE_EMOJI[choice] : hasChosen ? "✔️" : ""}
-      </div>
-    </div>
-  );
-}
-
-function RoundHistory({ rounds, isPlayer1 }: { rounds: Record<number, RoundData>; isPlayer1: boolean }) {
-  const entries = Object.entries(rounds).sort(([a], [b]) => Number(a) - Number(b));
-
-  return (
-    <div className={styles.roundHistory}>
-      <div className={styles.roundHistoryHeader}>
-        <span>You</span>
-        <span />
-        <span>Opponent</span>
-      </div>
-      {entries.map(([round, data]) => {
-        const myChoice = isPlayer1 ? data.player1Choice : data.player2Choice;
-        const theirChoice = isPlayer1 ? data.player2Choice : data.player1Choice;
-        const myKey = isPlayer1 ? "player1" : "player2";
-        const outcome = data.winner === myKey ? "win" : data.winner === "draw" ? "draw" : "loss";
-
-        return (
-          <div key={round} className={`${styles.roundHistoryRow} ${styles[outcome]}`}>
-            <span>{myChoice === null ? "⏱️" : CHOICE_EMOJI[myChoice]}</span>
-            <span className={styles.roundHistoryLabel}>R{round}</span>
-            <span>{theirChoice === null ? "⏱️" : CHOICE_EMOJI[theirChoice]}</span>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
 
 export default GamePage;

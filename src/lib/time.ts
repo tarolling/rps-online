@@ -52,3 +52,18 @@ export function formatTime(neoDateTime: DateTime) {
   const date = neo4j_datetime_to_date(neoDateTime);
   return date.toUTCString();
 }
+
+/** Formats the time remaining until a future unix-ms timestamp, e.g. "23h 14m", "42m", "past due". */
+export function formatCountdown(targetMs: number, nowMs: number = Date.now()): string {
+  const diffInSeconds = Math.floor((targetMs - nowMs) / 1000);
+  if (diffInSeconds <= 0) return "past due";
+
+  const days = Math.floor(diffInSeconds / 86400);
+  const hours = Math.floor((diffInSeconds % 86400) / 3600);
+  const minutes = Math.floor((diffInSeconds % 3600) / 60);
+
+  if (days > 0) return `${days}d ${hours}h`;
+  if (hours > 0) return `${hours}h ${minutes}m`;
+  if (minutes > 0) return `${minutes}m`;
+  return `${diffInSeconds}s`;
+}

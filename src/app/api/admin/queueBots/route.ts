@@ -24,16 +24,20 @@ export async function POST(req: NextRequest) {
   }
 
   // atomic read-modify-write so concurrent calls can't double-add the same bot
+  // Bots only ever play blitz, so they're always queued under the "blitz" mode key.
   let added = 0;
   await adminDb.ref("matchmaking_queue").transaction((queue) => {
     queue = queue || {};
     added = 0;
     for (const record of records) {
       const uid = record.get("uid");
-      if (!queue[uid]) {
-        queue[uid] = {
+      const queueKey = `blitz_${uid}`;
+      if (!queue[queueKey]) {
+        queue[queueKey] = {
+          uid,
           username: record.get("username"),
           rating: record.get("rating"),
+          mode: "blitz",
           timestamp: Date.now(),
           isBot: true,
         };

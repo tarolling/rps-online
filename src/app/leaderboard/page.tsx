@@ -9,7 +9,7 @@ import styles from "./LeaderboardPage.module.css";
 import RankBadge from "@/components/RankBadge";
 import { getJSON } from "@/lib/api";
 import { getRankNames } from "@/lib/ranks";
-import type { RankName } from "@/types";
+import type { PlayMode, RankName } from "@/types";
 
 type Player = {
   uid: string;
@@ -26,21 +26,27 @@ const LEADERBOARD_TABS: { type: LeaderboardType; label: string; colHeader: strin
   { type: "gamesPlayed", label: "Games Played",  colHeader: "Games"     },
 ];
 
+const MODE_TABS: { mode: PlayMode; label: string }[] = [
+  { mode: "blitz", label: "Blitz" },
+  { mode: "async", label: "Async" },
+];
+
 const RANK_ICON = ["👑", "🥈", "🥉"];
 
 function LeaderboardPage() {
+  const [activeMode, setActiveMode] = useState<PlayMode>("blitz");
   const [activeType, setActiveType] = useState<LeaderboardType>("rating");
   const [activeRank, setActiveRank] = useState<RankName | null>(null);
   const [playerData, setPlayerData] = useState<Player[] | null>(null);
   const router = useRouter();
 
   useEffect(() => {
-    const params = new URLSearchParams({ type: activeType });
+    const params = new URLSearchParams({ type: activeType, mode: activeMode });
     if (activeRank) params.set("rank", activeRank);
     getJSON<Player[]>(`/api/fetchLeaderboard?${params}`)
       .then(setPlayerData)
       .catch((err) => { console.error(err); setPlayerData([]); });
-  }, [activeType, activeRank]);
+  }, [activeType, activeRank, activeMode]);
 
   const colHeader = LEADERBOARD_TABS.find((t) => t.type === activeType)!.colHeader;
 
@@ -49,6 +55,19 @@ function LeaderboardPage() {
       <Header />
       <main className={styles.main}>
         <h1>Top 100 Players</h1>
+
+        {/* Mode tabs */}
+        <div className={styles.tabs}>
+          {MODE_TABS.map(({ mode, label }) => (
+            <button
+              key={mode}
+              className={`${styles.tab} ${activeMode === mode ? styles.tabActive : ""}`}
+              onClick={() => setActiveMode(mode)}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
 
         {/* Type tabs */}
         <div className={styles.tabs}>

@@ -7,6 +7,7 @@ import { MatchStatus } from "@/types/neo4j";
 export async function POST(req: NextRequest) {
   const {
     matchId,
+    gameMode = "ranked",
     playerOneId,
     playerTwoId,
     playerOneScore,
@@ -72,7 +73,7 @@ export async function POST(req: NextRequest) {
         })
         `, {
       matchId,
-      gameMode: "ranked",
+      gameMode,
       matchStatus: MatchStatus.Completed,
       playerOneId, playerTwoId,
       playerOneScore: neo4j.int(playerOneScore),

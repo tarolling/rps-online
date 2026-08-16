@@ -1,10 +1,18 @@
 import { getDatabase, ref, set, get, update, remove, onValue, off, runTransaction } from "firebase/database";
-import { Game } from "../types";
-import calculateRating from "./calculateRating";
+import { Game, PlayMode } from "../types";
 import { advanceWinner } from "./tournaments";
 import config from "@/config/settings.json";
 import { postJSON } from "./api";
-import { Choice, MatchStatus } from "@/types/neo4j";
+import { MatchStatus } from "@/types/neo4j";
+import { computeRoundOutcome, recordRankedGame, FIRST_TO } from "./gameLogic";
+
+// Re-exported so existing consumers (game/[gameId]/page.tsx, playAI/page.tsx,
+// tournaments.ts) don't need to change their import paths. The underlying
+// logic lives in gameLogic.ts because it must be importable from server-only
+// code too (see matchmakingServer.ts) without pulling in the Firebase client SDK.
+export { FIRST_TO, computeRoundOutcome, recordRankedGame };
+export { determineRoundWinner, calculateGameStats } from "./gameLogic";
+export type { RoundOutcome } from "./gameLogic";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -13,31 +21,33 @@ interface TournamentInfo {
     matchId: string;
 }
 
-interface GameStats {
-    playerOneChoices: { ROCK: number; PAPER: number; SCISSORS: number };
-    playerTwoChoices: { ROCK: number; PAPER: number; SCISSORS: number };
-}
-
-type MatchResult = { gameID: string } | { error: string } | { gameID: string, opponent: any };
-
-/** Number of rounds a player must win to win the game. */
-export const FIRST_TO = 4;
+type MatchResult = { gameID: string } | { error: string } | { gameID: string, opponent: any } | { queued: true };
 
 const db = getDatabase();
 
 // ── Internal helpers ──────────────────────────────────────────────────────────
 
 /**
- * Returns the ID of an in-progress game the given player is currently in,
- * or null if none exists.
+ * The matchmaking queue is keyed by mode + uid (not bare uid) so a player can
+ * have an independent blitz search and async search in flight at the same
+ * time without one overwriting the other.
  */
-async function checkExistingGame(uid: string): Promise<string | null> {
+export function matchmakingQueueKey(uid: string, mode: PlayMode = "blitz"): string {
+  return `${mode}_${uid}`;
+}
+
+/**
+ * Returns the ID of an in-progress game the given player is currently in
+ * (for that mode), or null if none exists.
+ */
+async function checkExistingGame(uid: string, mode: PlayMode = "blitz"): Promise<string | null> {
   const snapshot = await get(ref(db, "games"));
   const games = snapshot.val() || {};
 
   for (const game of Object.values(games) as Game[]) {
     if (
-      (game.state === MatchStatus.InProgress || game.state === MatchStatus.Waiting) &&
+      (game.mode ?? "blitz") === mode &&
+            (game.state === MatchStatus.InProgress || game.state === MatchStatus.Waiting) &&
             (game.player1.id === uid || game.player2.id === uid)
     ) {
       return game.id;
@@ -51,63 +61,90 @@ async function checkExistingGame(uid: string): Promise<string | null> {
 /**
  * Attempts to find a match for the given player.
  *
- * - If the player is already in a game, returns that game ID immediately.
- * - If a suitable opponent (within 200 rating) is in the queue, creates a game.
+ * Blitz mode (default):
+ * - If the player is already in a blitz game, returns that game ID immediately.
+ * - If a suitable opponent (within `matchmakingRatingRange`) is in the queue, creates a game.
  * - Otherwise, adds the player to the queue and waits up to 90 seconds for an
  *   opponent to match with them.
  *
- * @returns `{ gameID }` on success, or `{ error: 'Match timeout' }` on timeout.
+ * Async mode:
+ * - Players may have several concurrent async games, so no "already in a game"
+ *   short-circuit is applied.
+ * - If a suitable opponent is already queued for async, matches immediately.
+ * - Otherwise, enqueues the player and returns right away — no blocking wait,
+ *   since an async opponent may not show up for a long time. The match happens
+ *   passively the next time another async player calls `findMatch`.
+ *
+ * @returns `{ gameID }` on an immediate match, `{ queued: true }` if enqueued
+ * for async with no immediate match, or `{ error: 'Match timeout' }` if a
+ * blitz search timed out.
  */
-export async function findMatch(uid: string, username: string, userRating: number): Promise<MatchResult> {
+export async function findMatch(uid: string, username: string, userRating: number, mode: PlayMode = "blitz"): Promise<MatchResult> {
   const queueRef = ref(db, "matchmaking_queue");
+  const myQueueKey = matchmakingQueueKey(uid, mode);
 
   try {
-    const existingGameId = await checkExistingGame(uid);
-    if (existingGameId) return { gameID: existingGameId };
+    if (mode === "blitz") {
+      const existingGameId = await checkExistingGame(uid, mode);
+      if (existingGameId) return { gameID: existingGameId };
+    }
 
     const snapshot = await get(queueRef);
     const queue = snapshot.val() || {};
 
-    // Clear any stale queue entry for this user before searching
-    await remove(ref(db, `matchmaking_queue/${uid}`));
+    // Clear any stale queue entry for this user+mode before searching
+    await remove(ref(db, `matchmaking_queue/${myQueueKey}`));
 
-    for (const [playerId, playerData] of Object.entries(queue) as [string, any][]) {
+    for (const [queueKey, playerData] of Object.entries(queue) as [string, any][]) {
+      const candidateUid: string = playerData.uid;
+      const sameMode = (playerData.mode ?? "blitz") === mode;
       const ratingClose = Math.abs(playerData.rating - userRating) <= config.matchmakingRatingRange;
-      if (playerId === uid || !ratingClose) continue;
+      if (candidateUid === uid || !sameMode || !ratingClose) continue;
 
       // atomically claim this candidate's queue slot so no other
       // concurrent matchmaking attempt can also grab them
-      const candidateRef = ref(db, `matchmaking_queue/${playerId}`);
+      const candidateRef = ref(db, `matchmaking_queue/${queueKey}`);
       const { committed } = await runTransaction(candidateRef, (current) => (current === null ? undefined : null));
       if (!committed) continue; // another search already claimed this candidate
 
-      const opponentInGame = await checkExistingGame(playerId);
-      if (opponentInGame) {
-        await set(candidateRef, playerData); // shouldn't normally happen, but put them back
-        continue;
+      if (mode === "blitz") {
+        const opponentInGame = await checkExistingGame(candidateUid, mode);
+        if (opponentInGame) {
+          await set(candidateRef, playerData); // shouldn't normally happen, but put them back
+          continue;
+        }
       }
-      
+
       const gameId = await createGame(
-        playerId, playerData.username, playerData.rating,
+        candidateUid, playerData.username, playerData.rating,
         uid, username, userRating,
+        null, mode,
       );
       if (playerData.isBot) {
-        await set(ref(db, `games/${gameId}/presence/${playerId}`), true);
+        await set(ref(db, `games/${gameId}/presence/${candidateUid}`), true);
         // bot plays the game server-side
-        postJSON("/api/botPlay", { gameId: gameId, botId: playerId });
+        postJSON("/api/botPlay", { gameId: gameId, botId: candidateUid });
       }
       return { gameID: gameId, opponent: playerData };
     }
 
-    // No match found — add to queue and wait
-    await set(ref(db, `matchmaking_queue/${uid}`), {
+    // No match found — add to queue
+    await set(ref(db, `matchmaking_queue/${myQueueKey}`), {
+      uid,
       username,
       rating: userRating,
+      mode,
       timestamp: Date.now(),
     });
 
+    // Async: don't block the caller waiting for a match that may take a while
+    // to show up — the player can navigate away and check back later.
+    if (mode === "async") {
+      return { queued: true };
+    }
+
     return new Promise((resolve) => {
-      const userQueueRef = ref(db, `matchmaking_queue/${uid}`);
+      const userQueueRef = ref(db, `matchmaking_queue/${myQueueKey}`);
       let timeoutID: NodeJS.Timeout;
       let done = false;
 
@@ -116,7 +153,7 @@ export async function findMatch(uid: string, username: string, userRating: numbe
 
         // Entry removed means an opponent matched us
         if (!snapshot.exists()) {
-          const gameID = await checkExistingGame(uid);
+          const gameID = await checkExistingGame(uid, mode);
           if (gameID) {
             done = true;
             clearTimeout(timeoutID);
@@ -129,7 +166,7 @@ export async function findMatch(uid: string, username: string, userRating: numbe
       timeoutID = setTimeout(() => {
         done = true;
         off(userQueueRef);
-        remove(ref(db, `matchmaking_queue/${uid}`));
+        remove(ref(db, `matchmaking_queue/${myQueueKey}`));
         resolve({ error: "Match timeout" });
       }, 90_000);
 
@@ -162,17 +199,28 @@ export async function createGame(
   playerTwoUsername: string,
   playerTwoRating: number,
   tournamentInfo: TournamentInfo | null = null,
+  mode: PlayMode = "blitz",
 ): Promise<string> {
   const gameId = crypto.randomUUID();
+  const roundDurationSeconds = mode === "async" ? config.async.roundTimeoutSeconds : config.roundTimeout;
+
+  // Blitz waits in the WAITING state until both players' live presence is
+  // detected (see game/[gameId]/page.tsx) before starting the round clock.
+  // Async players are never simultaneously "present" for a 24h round, so the
+  // match starts immediately and the first round's clock begins right away.
+  const startsImmediately = mode === "async";
 
   const game: Game = {
     id: gameId,
-    state: MatchStatus.Waiting,
+    state: startsImmediately ? MatchStatus.InProgress : MatchStatus.Waiting,
+    mode,
+    roundDurationSeconds,
     player1: { id: playerOneId, username: playerOneUsername, score: 0, rating: playerOneRating, choice: null, submitted: false },
     player2: { id: playerTwoId, username: playerTwoUsername, score: 0, rating: playerTwoRating, choice: null, submitted: false },
     rounds: [],
     currentRound: 1,
     timestamp: Date.now(),
+    ...(startsImmediately && { roundStartTimestamp: Date.now() }),
     ...(tournamentInfo && {
       tournamentId: tournamentInfo.tournamentId,
       matchId: tournamentInfo.matchId,
@@ -194,9 +242,12 @@ export async function createGame(
   }
 }
 
+// ── Round resolution (client-driven blitz path — pure decision logic lives in gameLogic.ts) ───
+
 /**
  * Resolves the current round of a game once both players have submitted choices.
  * Updates scores and, if a player has reached FIRST_TO wins, marks the game finished.
+ * Client-driven (blitz only) — async rounds are resolved server-side, see `matchmakingServer.ts`.
  *
  * @returns `{ winner: uid }` if the game just ended, otherwise null.
  */
@@ -210,53 +261,20 @@ export async function resolveRound(gameId: string, playerId: string) {
     // prevent duplicate writes
     if (playerId !== game.player1.id) return null;
 
-    // roundStartTimestamp should never be undefined here
-    const elapsed = Date.now() - game.roundStartTimestamp!;
-    const timeExpired = elapsed >= config.roundTimeout * 1000;
-    const neitherSubmitted = !game.player1.submitted && !game.player2.submitted;
-    if (neitherSubmitted) {
+    const outcome = computeRoundOutcome(game, Date.now());
+    if (outcome.action === "noop") return null;
+
+    if (outcome.action === "cancel") {
       await update(gameRef, { state: MatchStatus.Cancelled });
       await endGame(gameId);
       return null;
     }
 
-    const bothSubmitted = game.player1.submitted && game.player2.submitted;
-    if (!bothSubmitted && !timeExpired) return null;
+    await update(gameRef, outcome.updates!);
 
-    const winner = determineRoundWinner(game.player1.choice, game.player2.choice);
-    const isGameOver = winner && (game[winner].score + 1) >= FIRST_TO;
-
-    const updates: Record<string, any> = {
-      "player1/choice": null,
-      "player1/submitted": false,
-      "player2/choice": null,
-      "player2/submitted": false,
-      "player1/score": game.player1.score,
-      "player2/score": game.player2.score,
-      [`rounds/${game.currentRound}`]: {
-        player1Choice: game.player1.choice ?? "none",
-        player2Choice: game.player2.choice ?? "none",
-        winner: winner ?? "draw",
-      },
-      currentRound: isGameOver ? game.currentRound : game.currentRound + 1,
-      roundStartTimestamp: Date.now(),
-    };
-
-    if (winner) {
-      const newScore = game[winner].score + 1;
-      updates[`${winner}/score`] = newScore;
-      if (newScore >= FIRST_TO) {
-        updates.state = MatchStatus.Completed;
-        updates.winner = game[winner].id;
-        updates.endTimestamp = Date.now();
-      }
-    }
-
-    await update(gameRef, updates);
-
-    if (updates.state === MatchStatus.Completed) {
+    if (outcome.updates!.state === MatchStatus.Completed) {
       await endGame(gameId);
-      return { winner: updates.winner };
+      return { winner: outcome.updates!.winner };
     }
     return null;
   } catch (error) {
@@ -265,45 +283,6 @@ export async function resolveRound(gameId: string, playerId: string) {
   }
 }
 
-/**
- * Determines the winner of a single round given two choices.
- *
- * @returns `'player1'`, `'player2'`, or `null` for a draw / no choices.
- */
-export function determineRoundWinner(choice1: Choice | null, choice2: Choice | null): "player1" | "player2" | null {
-  if (choice1 === null && choice2 === null) return null;
-  if (!choice1) return "player2";
-  if (!choice2) return "player1";
-  if (choice1 === choice2) return null;
-
-  const beats: Partial<Record<Choice, Choice>> = {
-    [Choice.Rock]: Choice.Scissors,
-    [Choice.Paper]: Choice.Rock,
-    [Choice.Scissors]: Choice.Paper,
-  };
-
-  return beats[choice1] === choice2 ? "player1" : "player2";
-}
-
-// ── Stats ─────────────────────────────────────────────────────────────────────
-
-/**
- * Aggregates choice counts across all rounds from the perspective of a given player.
- *
- * @param mainPlayer - `'p1'` or `'p2'` — which side to treat as "the player".
- */
-export const calculateGameStats = (game: Game): GameStats => {
-  const p1Choices = { ROCK: 0, PAPER: 0, SCISSORS: 0 };
-  const p2Choices = { ROCK: 0, PAPER: 0, SCISSORS: 0 };
-
-  game.rounds?.forEach((round) => {
-    if (round.player1Choice) p1Choices[round.player1Choice]++;
-    if (round.player2Choice) p2Choices[round.player2Choice]++;
-  });
-
-  return { playerOneChoices: p1Choices, playerTwoChoices: p2Choices };
-};
-
 // ── End game ──────────────────────────────────────────────────────────────────
 
 /**
@@ -311,6 +290,9 @@ export const calculateGameStats = (game: Game): GameStats => {
  * - For ranked games: records stats and adjusts both players' ratings.
  * - For tournament games: advances the winner to the next match.
  * - Removes the game from the database.
+ *
+ * Client-driven (blitz only) — async games are finalised server-side, see
+ * `matchmakingServer.ts`'s `endGameServer`.
  */
 export async function endGame(gameId: string): Promise<void> {
   const gameRef = ref(db, `games/${gameId}`);
@@ -321,9 +303,9 @@ export async function endGame(gameId: string): Promise<void> {
     if (!game) return;
 
     // if no winner, both players didn't respond or both dc'd
-    // don't record 
+    // don't record
     if (game.state !== MatchStatus.Cancelled) {
-      await recordRankedGame(game);
+      await recordRankedGame(game, game.mode ?? "blitz");
       if (game.tournamentId) {
         await advanceWinner(game.tournamentId, game.matchId!, game.winner!);
       }
@@ -342,55 +324,10 @@ export async function endGame(gameId: string): Promise<void> {
 };
 
 /**
- * Records stats and adjusts ratings for a completed ranked game.
- * Always called from the perspective of the player who triggered `endGame`,
- * which is player 1.
- */
-async function recordRankedGame(game: Game): Promise<void> {
-  if (!game.player1 || !game.player2) return;
-  const { player1: { id: playerOneId, rating: playerOneRating }, player2: { id: playerTwoId, rating: playerTwoRating }, winner } = game;
-
-  const gameStats = calculateGameStats(game);
-
-  // calculate both players' new ratings
-  const playerOneNewRating = calculateRating(playerOneRating, playerTwoRating, playerOneId === winner);
-  const playerTwoNewRating = calculateRating(playerTwoRating, playerOneRating, playerTwoId === winner);
-
-  try {
-    await Promise.all([
-      postJSON("/api/postGameStats", {
-        matchId: game.id,
-        playerOneId,
-        playerTwoId,
-        playerOneScore: game.player1.score,
-        playerOneRating,
-        playerOneNewRating,
-        playerOneRocks: gameStats.playerOneChoices.ROCK,
-        playerOnePapers: gameStats.playerOneChoices.PAPER,
-        playerOneScissors: gameStats.playerOneChoices.SCISSORS,
-        playerTwoScore: game.player2.score,
-        playerTwoRating,
-        playerTwoNewRating,
-        playerTwoRocks: gameStats.playerTwoChoices.ROCK,
-        playerTwoPapers: gameStats.playerTwoChoices.PAPER,
-        playerTwoScissors: gameStats.playerTwoChoices.SCISSORS,
-        winnerId: winner,
-        // filter out blank rounds that are created when match ends 
-        rounds: game.rounds.filter((r) => r.player1Choice !== null && r.player2Choice !== null),
-      }),
-      postJSON("/api/adjustRating", { uid: playerOneId, newRating: playerOneNewRating }),
-      postJSON("/api/adjustRating", { uid: playerTwoId, newRating: playerTwoNewRating }),
-    ]);
-  } catch (error) {
-    console.error("Error recording ranked game:", error);
-  }
-}
-
-/**
  * Award one player a win if the other disconnects
  * @param gameId The game ID as it exists in Firebase
  * @param winnerId The winner's user ID
- * @returns 
+ * @returns
  */
 export async function awardWinByDisconnect(gameId: string, winnerId: string): Promise<void> {
   const gameRef = ref(db, `games/${gameId}`);

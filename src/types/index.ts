@@ -14,6 +14,7 @@ export interface Player {
     uid: string;
     username: string;
     rating: number;
+    asyncRating: number;
     created: number;
     lastSeen: number;
 }
@@ -21,7 +22,11 @@ export interface Player {
 export interface ProfileData {
     username: string;
     rating: number;
+    asyncRating: number;
 }
+
+/** Which timing variant a game/queue entry belongs to. */
+export type PlayMode = "blitz" | "async";
 
 export interface Club {
     name: string;
@@ -86,6 +91,10 @@ export interface Game {
     winner?: string;
     endTimestamp?: number;
     roundStartTimestamp?: number;
+    // Optional (missing on games created before this field existed) — treat
+    // a missing value as "blitz" / the legacy 30s round timeout everywhere.
+    mode?: PlayMode;
+    roundDurationSeconds?: number;
     // Optional: only present for tournament games
     tournamentId?: string;
     matchId?: string;

@@ -1,0 +1,161 @@
+/* AsyncGamesPage.module.css */
+
+.main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 2.5rem 1.5rem;
+    gap: 1.75rem;
+}
+
+.header {
+    width: 100%;
+    max-width: 720px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.title {
+    font-size: 1.5rem;
+    font-weight: 800;
+    margin: 0;
+}
+
+.backLink {
+    font-size: 0.85rem;
+    color: var(--color-text-muted);
+    text-decoration: none;
+}
+
+.backLink:hover {
+    color: var(--color-primary);
+}
+
+.section {
+    width: 100%;
+    max-width: 720px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.sectionTitle {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+    margin: 0;
+}
+
+.queueCard {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    background: color-mix(in srgb, var(--color-primary) 6%, var(--color-surface));
+    border: 1px solid color-mix(in srgb, var(--color-primary) 20%, transparent);
+    border-radius: var(--radius);
+    padding: 0.85rem 1.25rem;
+    font-size: 0.9rem;
+    color: var(--color-text-muted);
+}
+
+.cancelBtn {
+    background: transparent;
+    color: var(--color-text-muted);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    padding: 0.4rem 0.9rem;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+    min-height: 34px;
+}
+
+.cancelBtn:hover {
+    background: var(--color-bg-secondary);
+    color: var(--color-text);
+}
+
+.gameList {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.gameRow {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    align-items: center;
+    gap: 1rem;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    padding: 0.85rem 1.25rem;
+    cursor: pointer;
+    transition: border-color 0.15s, transform 0.15s;
+}
+
+.gameRow:hover {
+    border-color: var(--color-primary);
+    transform: translateY(-1px);
+}
+
+.opponent {
+    font-weight: 600;
+    color: var(--color-text);
+}
+
+.score {
+    font-variant-numeric: tabular-nums;
+    color: var(--color-text-muted);
+    font-size: 0.9rem;
+}
+
+.deadline {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--color-text-muted);
+    background: var(--color-bg-secondary);
+    border-radius: var(--radius);
+    padding: 0.3rem 0.6rem;
+    white-space: nowrap;
+}
+
+.empty {
+    color: var(--color-text-muted);
+    font-size: 0.9rem;
+    padding: 1.5rem;
+    text-align: center;
+    background: var(--color-surface);
+    border: 1px dashed var(--color-border);
+    border-radius: var(--radius);
+}
+
+.findMoreBtn {
+    align-self: flex-start;
+    background: var(--color-primary);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius);
+    padding: 0.65rem 1.5rem;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    min-height: 44px;
+}
+
+.findMoreBtn:hover {
+    background: var(--color-primary-hover);
+}
+
+@media (max-width: 560px) {
+    .gameRow {
+        grid-template-columns: 1fr;
+        gap: 0.4rem;
+        text-align: left;
+    }
+}
