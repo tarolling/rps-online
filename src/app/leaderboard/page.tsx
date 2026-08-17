@@ -10,6 +10,7 @@ import RankBadge from "@/components/RankBadge";
 import { getJSON } from "@/lib/api";
 import { getRankNames } from "@/lib/ranks";
 import type { PlayMode, RankName } from "@/types";
+import { GAME_MODES, PLAY_MODES } from "@/lib/gameModes";
 
 type Player = {
   uid: string;
@@ -26,10 +27,7 @@ const LEADERBOARD_TABS: { type: LeaderboardType; label: string; colHeader: strin
   { type: "gamesPlayed", label: "Games Played",  colHeader: "Games"     },
 ];
 
-const MODE_TABS: { mode: PlayMode; label: string }[] = [
-  { mode: "blitz", label: "Blitz" },
-  { mode: "async", label: "Async" },
-];
+const MODE_TABS: { mode: PlayMode; label: string }[] = PLAY_MODES.map((mode) => ({ mode, label: GAME_MODES[mode].label }));
 
 const RANK_ICON = ["👑", "🥈", "🥉"];
 

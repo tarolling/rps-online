@@ -6,7 +6,8 @@ import { getRankTierIndex } from "@/lib/ranks";
 import { getAuthedUid } from "@/lib/auth";
 import { withErrorHandling } from "@/lib/apiHandler";
 
-const COUNTER: Record<Choice, Choice> = {
+// Bots only ever play plain Rock/Paper/Scissors, never Wildcard's A/B.
+const COUNTER: Record<Choice.Rock | Choice.Paper | Choice.Scissors, Choice> = {
   [Choice.Rock]: Choice.Paper,
   [Choice.Paper]: Choice.Scissors,
   [Choice.Scissors]: Choice.Rock,
@@ -24,7 +25,8 @@ function toRoundsArray(rounds: Record<string, RoundData> | RoundData[]): RoundDa
 function getBotChoice(round: number, botStrength: number, oppLastChoice?: Choice): Choice {
   const rng = [Choice.Rock, Choice.Paper, Choice.Scissors];
   if (round <= botStrength || !oppLastChoice) return rng[Math.floor(Math.random() * 3)];
-  return COUNTER[oppLastChoice];
+  // Bots only ever play blitz, where choices are always plain Rock/Paper/Scissors.
+  return COUNTER[oppLastChoice as Choice.Rock | Choice.Paper | Choice.Scissors];
 }
 
 export const POST = withErrorHandling("botPlay", async (req: NextRequest) => {

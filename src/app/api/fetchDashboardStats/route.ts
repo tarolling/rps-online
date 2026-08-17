@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import neo4j from "neo4j-driver";
 import { runQuery } from "@/lib/neo4j";
-import type { PlayMode } from "@/types";
+import { GAME_MODES, isValidPlayMode } from "@/lib/gameModes";
+import config from "@/config/settings.json";
 
 export async function POST(req: NextRequest) {
   const { playerId, mode = "blitz" } = await req.json();
@@ -10,11 +11,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Player ID is required." }, { status: 400 });
   }
 
-  if (mode !== "blitz" && mode !== "async") {
+  if (!isValidPlayMode(mode)) {
     return NextResponse.json({ error: "Invalid mode." }, { status: 400 });
   }
-  const matchMode = (mode as PlayMode) === "async" ? "ranked_async" : "ranked";
-  const ratingField = (mode as PlayMode) === "async" ? "asyncRating" : "rating";
+  const matchMode = GAME_MODES[mode].matchMode;
 
   try {
     const data = await runQuery(`
@@ -60,8 +60,9 @@ export async function POST(req: NextRequest) {
                   }
               END
           ) AS streakStats
+        OPTIONAL MATCH (p)-[:HAS_RATING]->(rt:Rating {mode: $mode})
         RETURN
-          p.${ratingField} AS rating,
+          coalesce(rt.value, $defaultRating) AS rating,
           totalGames,
           wins,
           losses,
@@ -71,6 +72,8 @@ export async function POST(req: NextRequest) {
             `, {
       playerId,
       matchMode,
+      mode,
+      defaultRating: config.defaultRating,
     });
 
     if (data.records.length === 0) {

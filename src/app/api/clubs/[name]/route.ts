@@ -2,6 +2,7 @@ import { getDriver } from "@/lib/neo4j";
 import { NextResponse, type NextRequest } from "next/server";
 import neo4j from "neo4j-driver";
 import { getAuthedUid } from "@/lib/auth";
+import config from "@/config/settings.json";
 
 /**
  * Get club members/info 
@@ -17,14 +18,15 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ nam
 
   const session = getDriver().session({ database: process.env.NEO4J_DATABASE });
   try {
-    // Returns club info + all members sorted by rating desc
+    // Returns club info + all members sorted by (blitz) rating desc
     const result = await session.executeRead((tx) =>
       tx.run(`
         MATCH (p:Player)-[r:MEMBER]->(c:Club {name: $clubName})
-        RETURN p.uid AS uid, p.username AS username, p.rating AS rating, r.role AS role
-        ORDER BY p.rating DESC
+        OPTIONAL MATCH (p)-[:HAS_RATING]->(rt:Rating {mode: "blitz"})
+        RETURN p.uid AS uid, p.username AS username, coalesce(rt.value, $defaultRating) AS rating, r.role AS role
+        ORDER BY rating DESC
         `,
-      { clubName },
+      { clubName, defaultRating: config.defaultRating },
       ),
     );
     const clubResult = await session.executeRead((tx) =>

@@ -1,21 +1,22 @@
 import neo4j from "neo4j-driver";
 import { runQuery } from "@/lib/neo4j";
 import { NextResponse, type NextRequest } from "next/server";
+import { GAME_MODES, isValidPlayMode } from "@/lib/gameModes";
 
 export async function GET(req: NextRequest) {
   const viewerId = req.nextUrl.searchParams.get("viewerId");
   const targetId = req.nextUrl.searchParams.get("targetId");
-  const mode = req.nextUrl.searchParams.get("mode"); // "blitz" | "async" | omitted (combined, lifetime)
+  const mode = req.nextUrl.searchParams.get("mode"); // a PlayMode value, or omitted (combined, lifetime)
   if (!viewerId) {
     return NextResponse.json({ error: "Viewer ID is required." }, { status: 400 });
   }
   if (!targetId) {
     return NextResponse.json({ error: "Target ID is required." }, { status: 400 });
   }
-  if (mode !== null && mode !== "blitz" && mode !== "async") {
+  if (mode !== null && !isValidPlayMode(mode)) {
     return NextResponse.json({ error: "Invalid mode." }, { status: 400 });
   }
-  const matchMode = mode === "async" ? "ranked_async" : mode === "blitz" ? "ranked" : null;
+  const matchMode = mode === null ? null : GAME_MODES[mode].matchMode;
 
   try {
     const data = await runQuery(`

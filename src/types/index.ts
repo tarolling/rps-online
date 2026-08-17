@@ -13,20 +13,19 @@ import { Choice, ClubAvailability, ClubRole, Division, Match, MatchStatus, Parti
 export interface Player {
     uid: string;
     username: string;
-    rating: number;
-    asyncRating: number;
+    /** Per-mode Elo ratings, e.g. `{ blitz: 1000, async: 1050, wildcard: 1000 }`. */
+    ratings: Partial<Record<PlayMode, number>>;
     created: number;
     lastSeen: number;
 }
 
 export interface ProfileData {
     username: string;
-    rating: number;
-    asyncRating: number;
+    ratings: Partial<Record<PlayMode, number>>;
 }
 
 /** Which timing variant a game/queue entry belongs to. */
-export type PlayMode = "blitz" | "async";
+export type PlayMode = "blitz" | "async" | "wildcard";
 
 export interface Club {
     name: string;
@@ -71,6 +70,12 @@ export interface PlayerState {
     rating: number;
     choice: Choice | null;
     submitted: boolean;
+    /** Wildcard only: this player's secret pregame config — the two plain
+     *  choices their own Wildcard-A beats. Never sent to the opponent's client. */
+    aBeats?: [Choice, Choice];
+    /** Wildcard only: remaining shared A+B plays, starts at
+     *  config.wildcard.abStartingPoints and decrements on each A/B submission. */
+    abRemaining?: number;
 }
 
 export interface RoundData {
@@ -95,6 +100,10 @@ export interface Game {
     // a missing value as "blitz" / the legacy 30s round timeout everywhere.
     mode?: PlayMode;
     roundDurationSeconds?: number;
+    // Wildcard only: true while both players are still picking their pregame
+    // A-config. The round timer doesn't start (no roundStartTimestamp) until
+    // this flips false.
+    configPhase?: boolean;
     // Optional: only present for tournament games
     tournamentId?: string;
     matchId?: string;
@@ -170,4 +179,6 @@ export const CHOICE_EMOJI: Record<Choice, string> = {
   [Choice.Rock]: "✊",
   [Choice.Paper]: "✋",
   [Choice.Scissors]: "✌️",
+  [Choice.WildcardA]: "🅰️",
+  [Choice.WildcardB]: "🅱️",
 };

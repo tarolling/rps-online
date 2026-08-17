@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { runQuery } from "@/lib/neo4j";
-import type { PlayMode } from "@/types";
+import { isValidPlayMode } from "@/lib/gameModes";
 
 export async function POST(req: NextRequest) {
   const { uid, newRating, mode = "blitz" } = await req.json();
@@ -13,16 +13,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Rating is required." }, { status: 400 });
   }
 
-  if (mode !== "blitz" && mode !== "async") {
+  if (!isValidPlayMode(mode)) {
     return NextResponse.json({ error: "Invalid mode." }, { status: 400 });
   }
-  const ratingField = (mode as PlayMode) === "async" ? "asyncRating" : "rating";
 
   try {
     await runQuery(`
       MATCH (p:Player {uid: $uid})
-      SET p.${ratingField} = $newRating
-      `, { uid, newRating }, "write");
+      MERGE (p)-[:HAS_RATING]->(r:Rating {mode: $mode})
+      SET r.value = $newRating
+      `, { uid, newRating, mode }, "write");
 
     return NextResponse.json({ success: true });
   } catch (err) {

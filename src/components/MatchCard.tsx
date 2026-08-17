@@ -3,6 +3,7 @@ import Link from "next/link";
 import styles from "@/app/page.module.css";
 import { useRouter } from "next/navigation";
 import type { PlayMode } from "@/types";
+import { GAME_MODES } from "@/lib/gameModes";
 
 type RecentMatch = {
   id: string;
@@ -23,7 +24,7 @@ export default function MatchCard({ match, index }: { match: RecentMatch; index:
     <div key={index} className={styles.matchCard} onClick={() => router.push(`/match/${match.id}`)} style={{ cursor: "pointer" }}>
       <div className={styles.matchHeader}>
         <span className={styles.matchTime}>{match.timestamp}</span>
-        <span className={styles.modeBadge}>{match.mode === "async" ? "Async" : "Blitz"}</span>
+        <span className={styles.modeBadge}>{GAME_MODES[match.mode].label}</span>
       </div>
       <div className={styles.matchContent}>
         <Link href={`/profile/${match.playerOneId}`} onClick={(e) => e.stopPropagation()} className={styles.player}>
