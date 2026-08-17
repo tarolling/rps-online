@@ -1,6 +1,7 @@
 import neo4j, { DateTime } from "neo4j-driver";
 import { getDriver } from "@/lib/neo4j";
 import { Choice, MatchStatus, type GameMode } from "@/types/neo4j";
+import { toPlayMode } from "@/lib/gameModes";
 
 export interface MatchDetail {
   match: {
@@ -65,7 +66,6 @@ export async function getMatchDetail(matchId: string): Promise<MatchDetail | nul
           m.status        AS status,
           p1.uid          AS p1Id,
           p1.username     AS p1Username,
-          p1.rating       AS p1Rating,
           r1.score        AS p1Score,
           r1.ratingBefore AS p1RatingBefore,
           r1.ratingAfter  AS p1RatingAfter,
@@ -74,7 +74,6 @@ export async function getMatchDetail(matchId: string): Promise<MatchDetail | nul
           r1.scissors     AS p1Scissors,
           p2.uid          AS p2Id,
           p2.username     AS p2Username,
-          p2.rating       AS p2Rating,
           r2.score        AS p2Score,
           r2.ratingBefore AS p2RatingBefore,
           r2.ratingAfter  AS p2RatingAfter,
@@ -86,6 +85,19 @@ export async function getMatchDetail(matchId: string): Promise<MatchDetail | nul
 
       if (matchResult.records.length === 0) return null;
       const m = matchResult.records[0];
+
+      // Current ratings shown alongside ratingBefore/ratingAfter are scoped to
+      // whichever mode this match was played in.
+      const playMode = toPlayMode(m.get("mode"));
+      const ratingsResult = await tx.run(`
+        MATCH (p1:Player {uid: $p1Id})
+        OPTIONAL MATCH (p1)-[:HAS_RATING]->(r1:Rating {mode: $playMode})
+        MATCH (p2:Player {uid: $p2Id})
+        OPTIONAL MATCH (p2)-[:HAS_RATING]->(r2:Rating {mode: $playMode})
+        RETURN r1.value AS p1Rating, r2.value AS p2Rating`,
+      { p1Id: m.get("p1Id"), p2Id: m.get("p2Id"), playMode },
+      );
+      const ratings = ratingsResult.records[0];
 
       const roundsResult = await tx.run(
         `MATCH (m:Match {id: $matchId})-[:HAD_ROUND]->(r:Round)
@@ -114,7 +126,7 @@ export async function getMatchDetail(matchId: string): Promise<MatchDetail | nul
         player1: {
           uid: m.get("p1Id"),
           username: m.get("p1Username"),
-          rating: toInt(m.get("p1Rating")),
+          rating: toInt(ratings.get("p1Rating")),
           score: toInt(m.get("p1Score")),
           ratingBefore: toInt(m.get("p1RatingBefore")),
           ratingAfter: toInt(m.get("p1RatingAfter")),
@@ -125,7 +137,7 @@ export async function getMatchDetail(matchId: string): Promise<MatchDetail | nul
         player2: {
           uid: m.get("p2Id"),
           username: m.get("p2Username"),
-          rating: toInt(m.get("p2Rating")),
+          rating: toInt(ratings.get("p2Rating")),
           score: toInt(m.get("p2Score")),
           ratingBefore: toInt(m.get("p2RatingBefore")),
           ratingAfter: toInt(m.get("p2RatingAfter")),

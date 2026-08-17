@@ -3,6 +3,7 @@ import { runQuery } from "@/lib/neo4j";
 import config from "@/config/settings.json";
 import { getAuthedUid } from "@/lib/auth";
 import { Neo4jError } from "neo4j-driver";
+import { PLAY_MODES } from "@/lib/gameModes";
 
 export async function POST(req: NextRequest) {
   const { uid, username = "random" } = await req.json();
@@ -24,15 +25,18 @@ export async function POST(req: NextRequest) {
       ON CREATE
           SET p.username = $username,
               p.usernameLower = toLower($username),
-              p.rating = $defaultRating,
-              p.asyncRating = $defaultRating,
               p.created = datetime(),
               p.lastSeen = datetime()
       ON MATCH
           SET p.lastSeen = datetime()
+      WITH p
+      UNWIND $modes AS mode
+      MERGE (p)-[:HAS_RATING]->(r:Rating {mode: mode})
+      ON CREATE SET r.value = $defaultRating
+      WITH p, count(r) AS ratingsEnsured
       RETURN p.username AS username
       `,
-      { uid, username, defaultRating: config.defaultRating },
+      { uid, username, defaultRating: config.defaultRating, modes: PLAY_MODES },
       "write",
     );
 

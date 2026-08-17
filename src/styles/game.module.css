@@ -157,6 +157,21 @@
     }
 }
 
+/* ── Wildcard: A/B points remaining readout ── */
+
+.wildcardPoints {
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+}
+
+.wildcardPoints strong {
+    color: var(--color-text);
+    font-variant-numeric: tabular-nums;
+}
+
 .spectatorCount {
     font-size: 0.7rem;
     font-weight: 600;

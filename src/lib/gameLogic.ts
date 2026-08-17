@@ -3,6 +3,8 @@ import calculateRating from "./calculateRating";
 import config from "@/config/settings.json";
 import { postJSON } from "./api";
 import { Choice, MatchStatus } from "@/types/neo4j";
+import { determineWildcardRoundWinner } from "./wildcardLogic";
+import { GAME_MODES } from "./gameModes";
 
 /**
  * Pure round/game logic shared by the client-driven blitz path
@@ -18,8 +20,8 @@ import { Choice, MatchStatus } from "@/types/neo4j";
  */
 
 interface GameStats {
-    playerOneChoices: { ROCK: number; PAPER: number; SCISSORS: number };
-    playerTwoChoices: { ROCK: number; PAPER: number; SCISSORS: number };
+    playerOneChoices: Record<Choice, number>;
+    playerTwoChoices: Record<Choice, number>;
 }
 
 /** Number of rounds a player must win to win the game. */
@@ -52,7 +54,9 @@ export function computeRoundOutcome(game: Game, now: number): RoundOutcome {
   const bothSubmitted = game.player1.submitted && game.player2.submitted;
   if (!bothSubmitted && !timeExpired) return { action: "noop" };
 
-  const winner = determineRoundWinner(game.player1.choice, game.player2.choice);
+  const winner = game.mode === "wildcard"
+    ? determineWildcardRoundWinner(game.player1.choice, game.player2.choice, game.player1.aBeats, game.player2.aBeats)
+    : determineRoundWinner(game.player1.choice, game.player2.choice);
   const isGameOver = winner && (game[winner].score + 1) >= FIRST_TO;
 
   const updates: Record<string, unknown> = {
@@ -112,8 +116,9 @@ export function determineRoundWinner(choice1: Choice | null, choice2: Choice | n
  * @param mainPlayer - `'p1'` or `'p2'` — which side to treat as "the player".
  */
 export const calculateGameStats = (game: Game): GameStats => {
-  const p1Choices = { ROCK: 0, PAPER: 0, SCISSORS: 0 };
-  const p2Choices = { ROCK: 0, PAPER: 0, SCISSORS: 0 };
+  const empty = () => Object.fromEntries(Object.values(Choice).map((c) => [c, 0])) as Record<Choice, number>;
+  const p1Choices = empty();
+  const p2Choices = empty();
 
   game.rounds?.forEach((round) => {
     if (round.player1Choice) p1Choices[round.player1Choice]++;
@@ -138,7 +143,7 @@ export async function recordRankedGame(game: Game, mode: PlayMode = "blitz"): Pr
   const playerOneNewRating = calculateRating(playerOneRating, playerTwoRating, playerOneId === winner);
   const playerTwoNewRating = calculateRating(playerTwoRating, playerOneRating, playerTwoId === winner);
 
-  const gameMode = mode === "async" ? "ranked_async" : "ranked";
+  const gameMode = GAME_MODES[mode].matchMode;
 
   try {
     await Promise.all([

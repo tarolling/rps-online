@@ -17,6 +17,7 @@ import { ProfileData } from "@/types";
 import type { ClubAvailability } from "@/types/neo4j";
 import FriendButton from "@/components/FriendButton";
 import { fetchFriends, FriendEntry } from "@/lib/friends";
+import { GAME_MODES } from "@/lib/gameModes";
 
 type GameStats = {
   totalGames: number;
@@ -271,12 +272,13 @@ function ProfilePage() {
             <h2>Statistics</h2>
             {gameStats ? (
               <div className={styles.statsGrid}>
-                {profileData ?
-                  <StatItem value={`${getRankTier(profileData.rating).rank} ${getDivisionLabel(getRankTier(profileData.rating).division)}`} label="Rank" /> :
+                {profileData?.ratings.blitz !== undefined ?
+                  <StatItem value={`${getRankTier(profileData.ratings.blitz).rank} ${getDivisionLabel(getRankTier(profileData.ratings.blitz).division)}`} label="Rank" /> :
                   <StatItem value="N/A" label="Rank" />
                 }
-                <StatItem value={profileData?.rating ?? "N/A"} label="Skill Rating" />
-                <StatItem value={profileData?.asyncRating ?? "N/A"} label="Async Rating" />
+                <StatItem value={profileData?.ratings.blitz ?? "N/A"} label="Skill Rating" />
+                <StatItem value={profileData?.ratings.async ?? "N/A"} label="Async Rating" />
+                <StatItem value={profileData?.ratings.wildcard ?? "N/A"} label="Wildcard Rating" />
                 <StatItem value={gameStats.totalGames} label="Games Played" />
                 <StatItem value={gameStats.winRate} label="Win Rate" />
                 <StatItem value={gameStats.wins} label="Wins" />
@@ -302,7 +304,7 @@ function ProfilePage() {
                     <div className={styles.matchDetails}>
                       <span>{match.playerScore} - {match.opponentScore}</span>
                       <span className={styles.matchDate}>
-                        {match.mode === "async" ? "Async" : "Blitz"} · {formatRelativeTime(match.date)}
+                        {GAME_MODES[match.mode].label} · {formatRelativeTime(match.date)}
                       </span>
                     </div>
                   </div>

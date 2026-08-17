@@ -67,10 +67,12 @@ async function seedBots() {
         MERGE (p:Player {uid: $uid})
         ON CREATE SET
           p.username = $username,
-          p.rating = $rating,
           p.isBot = true,
           p.created = datetime(),
           p.lastSeen = datetime()
+        WITH p
+        MERGE (p)-[:HAS_RATING]->(r:Rating {mode: "blitz"})
+        ON CREATE SET r.value = $rating
       `, {
         uid,
         username: name,

@@ -4,18 +4,26 @@ import { adminDb } from "@/lib/firebaseAdmin";
 import { createGame } from "@/lib/matchmaking.server";
 import { getDriver } from "@/lib/neo4j";
 import { getAuthedUid } from "@/lib/auth";
+import config from "@/config/settings.json";
 
 type Action = "send" | "accept" | "reject" | "clear";
 
+// Challenges always create a blitz-style game (matchmaking.server.ts's createGame
+// has no mode parameter), so the blitz rating is what's relevant here.
 async function fetchPlayer(uid: string): Promise<{ username: string; rating: number }> {
   const session = getDriver().session({ database: process.env.NEO4J_DATABASE });
   try {
     const result = await session.executeRead((tx) =>
-      tx.run("MATCH (p:Player {uid: $uid}) RETURN p.username AS username, p.rating AS rating", { uid }),
+      tx.run(`
+        MATCH (p:Player {uid: $uid})
+        OPTIONAL MATCH (p)-[:HAS_RATING]->(rt:Rating {mode: "blitz"})
+        RETURN p.username AS username, rt.value AS rating
+      `, { uid }),
     );
     if (result.records.length === 0) throw new Error(`Player ${uid} not found`);
     const r = result.records[0];
-    return { username: r.get("username"), rating: neo4j.integer.toNumber(r.get("rating")) };
+    const rating = r.get("rating");
+    return { username: r.get("username"), rating: rating !== null ? neo4j.integer.toNumber(rating) : config.defaultRating };
   } finally {
     await session.close();
   }

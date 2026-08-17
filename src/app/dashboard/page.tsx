@@ -130,8 +130,12 @@ export default function DashboardPage() {
                 <span className={styles.statLabel}>Skill Rating</span>
               </div>
               <div className={styles.statItem}>
-                <span className={styles.statValue}>{playerData?.asyncRating ?? config.defaultRating}</span>
+                <span className={styles.statValue}>{playerData?.ratings.async ?? config.defaultRating}</span>
                 <span className={styles.statLabel}>Async Rating</span>
+              </div>
+              <div className={styles.statItem}>
+                <span className={styles.statValue}>{playerData?.ratings.wildcard ?? config.defaultRating}</span>
+                <span className={styles.statLabel}>Wildcard Rating</span>
               </div>
               <div className={styles.statItem}>
                 <span className={styles.statValue}>{gameStats.totalGames}</span>

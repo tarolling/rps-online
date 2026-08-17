@@ -2,6 +2,7 @@ import { NextResponse, NextRequest } from "next/server";
 import { getDriver } from "@/lib/neo4j";
 import { adminDb } from "@/lib/firebaseAdmin";
 import { getAuthedUid } from "@/lib/auth";
+import config from "@/config/settings.json";
 
 export async function POST(req: NextRequest) {
   const authedUid = await getAuthedUid(req);
@@ -14,9 +15,13 @@ export async function POST(req: NextRequest) {
 
   let records;
   try {
-    // Fetch some bots from Neo4j
+    // Fetch some bots from Neo4j (bots only ever play blitz)
     const result = await session.executeRead((tx) =>
-      tx.run("MATCH (p:Player {isBot: true}) RETURN p.uid AS uid, p.username AS username, p.rating AS rating LIMIT 100"),
+      tx.run(`
+        MATCH (p:Player {isBot: true})
+        OPTIONAL MATCH (p)-[:HAS_RATING]->(rt:Rating {mode: "blitz"})
+        RETURN p.uid AS uid, p.username AS username, coalesce(rt.value, $defaultRating) AS rating LIMIT 100
+      `, { defaultRating: config.defaultRating }),
     );
     records = result.records;
   } finally {
