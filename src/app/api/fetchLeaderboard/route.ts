@@ -11,14 +11,15 @@ const QUERIES = {
   rating: (ratingFilter: string) => `
     MATCH (p:Player)-[:HAS_RATING]->(rt:Rating {mode: $mode}) ${ratingFilter}
     RETURN p.uid AS uid, p.username AS username, rt.value AS rating,
-           rt.value AS statValue
+           p.isPremium AS isPremium, rt.value AS statValue
     ORDER BY statValue DESC LIMIT 100
   `,
   gamesPlayed: (ratingFilter: string) => `
     MATCH (p:Player)-[:HAS_RATING]->(rt:Rating {mode: $mode}) ${ratingFilter}
     OPTIONAL MATCH (p)-[:PARTICIPATED_IN]->(m:Match {mode: $matchMode})
     WITH p, rt, count(m) AS statValue
-    RETURN p.uid AS uid, p.username AS username, rt.value AS rating, statValue
+    RETURN p.uid AS uid, p.username AS username, rt.value AS rating,
+           p.isPremium AS isPremium, statValue
     ORDER BY statValue DESC LIMIT 100
   `,
   winStreak: (ratingFilter: string) => `
@@ -36,7 +37,7 @@ const QUERIES = {
       END
     ) AS streakStats
     RETURN p.uid AS uid, p.username AS username, rt.value AS rating,
-          streakStats.best AS statValue
+          p.isPremium AS isPremium, streakStats.best AS statValue
     ORDER BY statValue DESC LIMIT 100
   `,
 };
@@ -74,6 +75,7 @@ export async function GET(req: Request) {
       uid: r.get("uid"),
       username: r.get("username"),
       rating: neo4j.integer.toNumber(r.get("rating")),
+      isPremium: r.get("isPremium") ?? false,
       statValue: neo4j.integer.toNumber(r.get("statValue")),
     }));
     return NextResponse.json(data);

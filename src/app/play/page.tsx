@@ -28,6 +28,7 @@ function MatchmakingPage() {
   const [wildcardStatus, setWildcardStatus] = useState<MatchmakingStatus>("idle");
   const [onlineCount, setOnlineCount] = useState(0);
   const [playerInfo, setPlayerInfo] = useState<ProfileData | null>(null);
+  const [asyncErrorMessage, setAsyncErrorMessage] = useState("");
 
   useEffect(() => {
     if (!user) return;
@@ -111,16 +112,20 @@ function MatchmakingPage() {
   const handleFindAsyncMatch = async () => {
     if (!user) return;
     setAsyncStatus("queueing");
+    setAsyncErrorMessage("");
     try {
       const info = await postJSON<ProfileData>("/api/fetchPlayer", { uid: user?.uid });
       if (!playerInfo) setPlayerInfo(info);
-      const result = await findMatch(user?.uid, info.username, info.ratings.async ?? config.defaultRating, "async");
+      const result = await findMatch(user?.uid, info.username, info.ratings.async ?? config.defaultRating, "async", info.isPremium);
 
       if ("gameID" in result) {
         setAsyncStatus("matched");
         router.push(`/game/async/${result.gameID}`);
       } else if ("queued" in result) {
         setAsyncStatus("queued");
+      } else if ("error" in result) {
+        setAsyncErrorMessage(result.error);
+        setAsyncStatus("error");
       }
     } catch (err) {
       await remove(ref(db, `matchmaking_queue/${matchmakingQueueKey(user?.uid ?? "", "async")}`));
@@ -196,7 +201,7 @@ function MatchmakingPage() {
 
               {playerInfo && (
                 <div className={styles.playerSnapshot}>
-                  <RankBadge rating={playerInfo.ratings.blitz ?? config.defaultRating} variant="full" />
+                  <RankBadge rating={playerInfo.ratings.blitz ?? config.defaultRating} variant="full" premium={playerInfo.isPremium} />
                 </div>
               )}
 
@@ -250,7 +255,7 @@ function MatchmakingPage() {
 
               {playerInfo && (
                 <div className={styles.playerSnapshot}>
-                  <RankBadge rating={playerInfo.ratings.async ?? config.defaultRating} variant="full" />
+                  <RankBadge rating={playerInfo.ratings.async ?? config.defaultRating} variant="full" premium={playerInfo.isPremium} />
                 </div>
               )}
 
@@ -293,8 +298,15 @@ function MatchmakingPage() {
 
                 {asyncStatus === "error" && (
                   <div className={styles.statusBlock}>
-                    <p className={styles.errorText}>Something went wrong.</p>
-                    <button className={styles.primaryBtn} onClick={handleFindAsyncMatch}>Retry</button>
+                    <p className={styles.errorText}>{asyncErrorMessage || "Something went wrong."}</p>
+                    {!asyncErrorMessage && (
+                      <button className={styles.primaryBtn} onClick={handleFindAsyncMatch}>Retry</button>
+                    )}
+                    {asyncErrorMessage && (
+                      <button className={styles.primaryBtn} onClick={() => router.push(`/profile/${user?.uid}`)}>
+                        Upgrade to Premium
+                      </button>
+                    )}
                   </div>
                 )}
               </div>
@@ -315,7 +327,7 @@ function MatchmakingPage() {
 
               {playerInfo && (
                 <div className={styles.playerSnapshot}>
-                  <RankBadge rating={playerInfo.ratings.wildcard ?? config.defaultRating} variant="full" />
+                  <RankBadge rating={playerInfo.ratings.wildcard ?? config.defaultRating} variant="full" premium={playerInfo.isPremium} />
                 </div>
               )}
 

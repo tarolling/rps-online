@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { runQuery } from "@/lib/neo4j";
 import { getAuthedUid } from "@/lib/auth";
+import { getStripe } from "@/lib/stripe";
 
 export async function POST(req: NextRequest) {
   const { uid } = await req.json();
@@ -16,6 +17,18 @@ export async function POST(req: NextRequest) {
   }
 
   try {
+    // Cancel any active subscription first — otherwise deleting the Player
+    // node destroys the only stripeCustomerId -> uid mapping, leaving Stripe
+    // billing a now-account-less customer indefinitely.
+    const existing = await runQuery(
+      "MATCH (p:Player {uid: $uid}) RETURN p.stripeSubscriptionId AS stripeSubscriptionId",
+      { uid },
+    );
+    const stripeSubscriptionId: string | null = existing.records[0]?.get("stripeSubscriptionId") ?? null;
+    if (stripeSubscriptionId) {
+      await getStripe().subscriptions.cancel(stripeSubscriptionId);
+    }
+
     await runQuery(`
       MATCH (p:Player {uid: $uid})
       DETACH DELETE p

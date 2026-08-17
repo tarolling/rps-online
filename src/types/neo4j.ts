@@ -61,6 +61,9 @@ export interface Player {
     username: string;
     created: number;
     lastSeen: number;
+    isPremium: boolean;
+    stripeCustomerId: string | null;
+    stripeSubscriptionId: string | null;
 };
 
 /** On (Player)-[:HAS_RATING]->(Rating) — one per PlayMode the player has a rating in. */

@@ -5,7 +5,8 @@
     "defaultRating": 1000,
     "roundTimeout": 30,
     "async": {
-        "roundTimeoutSeconds": 86400
+        "roundTimeoutSeconds": 86400,
+        "freeConcurrentGameLimit": 3
     },
     "wildcard": {
         "roundTimeoutSeconds": 30,
