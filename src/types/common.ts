@@ -1,4 +1,4 @@
-import { DateTime } from "neo4j-driver";
+import type { DateTime } from "neo4j-driver";
 import type { PlayMode } from "@/types";
 
 

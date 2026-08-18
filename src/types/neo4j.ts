@@ -1,6 +1,6 @@
 // these are supposed to align with the nodes stored in neo4j
 
-import { DateTime } from "neo4j-driver";
+import type { DateTime } from "neo4j-driver";
 
 ////////////////////////////////////////////////////////////////
 // Types
