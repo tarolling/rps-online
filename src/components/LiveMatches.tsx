@@ -8,20 +8,11 @@ import { MatchStatus } from "@/types/neo4j";
 import styles from "@/app/page.module.css";
 import { useRouter } from "next/navigation";
 import { GAME_MODES } from "@/lib/gameModes";
+import type { LiveGame } from "@/lib/liveGames";
 
-type LiveGame = {
-  id: string;
-  player1Id: string;
-  player1Username: string;
-  player2Id: string;
-  player2Username: string;
-  score: string;
-  round: number;
-};
-
-export default function LiveMatches() {
+export default function LiveMatches({ initialLiveGames }: { initialLiveGames: LiveGame[] }) {
   const router = useRouter();
-  const [liveGames, setLiveGames] = useState<LiveGame[]>([]);
+  const [liveGames, setLiveGames] = useState<LiveGame[]>(initialLiveGames);
 
   useEffect(() => {
     const db = getDatabase();

@@ -7,6 +7,7 @@ import MatchCard from "@/components/MatchCard";
 import HeroButtons from "@/components/HeroButtons";
 import LiveMatches from "@/components/LiveMatches";
 import { getRecentGames, GlobalRecentMatch } from "@/lib/recentGames";
+import { getLiveGames } from "@/lib/liveGames";
 
 export const revalidate = 0;
 
@@ -46,7 +47,7 @@ const FEATURES = [
 ];
 
 export default async function Home() {
-  const recentMatches = await getRecentMatches();
+  const [recentMatches, liveGames] = await Promise.all([getRecentMatches(), getLiveGames()]);
 
   return (
     <div className={styles.homePage}>
@@ -119,7 +120,7 @@ export default async function Home() {
       </section>
 
       {/* ── Live matches ── */}
-      <LiveMatches />
+      <LiveMatches initialLiveGames={liveGames} />
 
       {/* ── Recent matches ── */}
       <section className={styles.recentSection}>
