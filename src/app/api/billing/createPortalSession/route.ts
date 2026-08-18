@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { runQuery } from "@/lib/neo4j";
 import { getAuthedUid } from "@/lib/auth";
-import { getStripe } from "@/lib/stripe";
+import { getStripe, customerExists } from "@/lib/stripe";
 
 export async function POST(req: NextRequest) {
   const uid = await getAuthedUid(req);
@@ -19,7 +19,20 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "No billing account found." }, { status: 400 });
     }
 
-    const session = await getStripe().billingPortal.sessions.create({
+    const stripe = getStripe();
+    if (!(await customerExists(stripe, customerId))) {
+      // Stale — the account/key changed, or the customer was deleted in the
+      // Dashboard. There's no subscription to manage either way; clear it so
+      // the profile page stops offering "Manage Subscription" for a dead ID.
+      await runQuery(
+        "MATCH (p:Player {uid: $uid}) SET p.stripeCustomerId = null, p.isPremium = false",
+        { uid },
+        "write",
+      );
+      return NextResponse.json({ error: "No billing account found." }, { status: 400 });
+    }
+
+    const session = await stripe.billingPortal.sessions.create({
       customer: customerId,
       return_url: `${process.env.NEXT_PUBLIC_BASE_URL}/profile/${uid}`,
     });

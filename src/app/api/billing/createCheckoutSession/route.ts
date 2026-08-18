@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { runQuery } from "@/lib/neo4j";
 import { getAuthedUid } from "@/lib/auth";
-import { getStripe } from "@/lib/stripe";
+import { getStripe, customerExists } from "@/lib/stripe";
 
 export async function POST(req: NextRequest) {
   const uid = await getAuthedUid(req);
@@ -20,6 +20,10 @@ export async function POST(req: NextRequest) {
 
     const stripe = getStripe();
     let customerId: string | null = result.records[0].get("stripeCustomerId");
+
+    if (customerId && !(await customerExists(stripe, customerId))) {
+      customerId = null;
+    }
 
     if (!customerId) {
       const customer = await stripe.customers.create({ metadata: { uid } });
