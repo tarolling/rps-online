@@ -21,6 +21,13 @@ export async function POST(req: NextRequest) {
   }
 
   try {
+    // Re-derive premium status server-side from the authenticated uid — never
+    // trust a client-supplied flag for this.
+    const player = await runQuery("MATCH (p:Player {uid: $uid}) RETURN p.isPremium AS isPremium", { uid: authedUid });
+    if (!(player.records[0]?.get("isPremium") ?? false)) {
+      return NextResponse.json({ error: "Changing your username requires Premium." }, { status: 403 });
+    }
+
     await runQuery(`
       MATCH (p:Player {uid: $uid})
       SET p.username = $newUsername,

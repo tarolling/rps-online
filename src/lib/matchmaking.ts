@@ -66,6 +66,31 @@ async function checkExistingGame(uid: string, mode: PlayMode = "blitz"): Promise
   return null;
 }
 
+/**
+ * Counts the given player's in-progress async games, for the free-tier
+ * concurrency cap. Known limitation: this only gates the `findMatch` call
+ * path — since matchmaking runs client-side against Firebase RTDB with no
+ * server-side authorization layer (same trust model as the rest of this
+ * file, e.g. `userRating` is likewise client-supplied), a motivated free
+ * user could write directly to `matchmaking_queue` and bypass this. It's a
+ * UI-level speed bump, not real enforcement.
+ */
+async function countActiveAsyncGames(uid: string): Promise<number> {
+  const snapshot = await get(ref(db, "games"));
+  const games = snapshot.val() || {};
+  let count = 0;
+  for (const game of Object.values(games) as Game[]) {
+    if (
+      game.mode === "async" &&
+            (game.state === MatchStatus.InProgress || game.state === MatchStatus.Waiting) &&
+            (game.player1.id === uid || game.player2.id === uid)
+    ) {
+      count += 1;
+    }
+  }
+  return count;
+}
+
 // ── Matchmaking ───────────────────────────────────────────────────────────────
 
 /**
@@ -86,10 +111,11 @@ async function checkExistingGame(uid: string, mode: PlayMode = "blitz"): Promise
  *   passively the next time another async player calls `findMatch`.
  *
  * @returns `{ gameID }` on an immediate match, `{ queued: true }` if enqueued
- * for async with no immediate match, or `{ error: 'Match timeout' }` if a
- * blitz search timed out.
+ * for async with no immediate match, `{ error: 'Match timeout' }` if a blitz
+ * search timed out, or `{ error: ... }` if a free-tier async player is at
+ * their concurrent game limit.
  */
-export async function findMatch(uid: string, username: string, userRating: number, mode: PlayMode = "blitz"): Promise<MatchResult> {
+export async function findMatch(uid: string, username: string, userRating: number, mode: PlayMode = "blitz", isPremium = false): Promise<MatchResult> {
   const queueRef = ref(db, "matchmaking_queue");
   const myQueueKey = matchmakingQueueKey(uid, mode);
 
@@ -97,6 +123,13 @@ export async function findMatch(uid: string, username: string, userRating: numbe
     if (GAME_MODES[mode].live) {
       const existingGameId = await checkExistingGame(uid, mode);
       if (existingGameId) return { gameID: existingGameId };
+    }
+
+    if (mode === "async" && !isPremium) {
+      const activeCount = await countActiveAsyncGames(uid);
+      if (activeCount >= config.async.freeConcurrentGameLimit) {
+        return { error: `Free accounts are limited to ${config.async.freeConcurrentGameLimit} concurrent async games. Upgrade to Premium for unlimited games.` };
+      }
     }
 
     const snapshot = await get(queueRef);

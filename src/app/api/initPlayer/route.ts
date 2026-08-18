@@ -26,7 +26,8 @@ export async function POST(req: NextRequest) {
           SET p.username = $username,
               p.usernameLower = toLower($username),
               p.created = datetime(),
-              p.lastSeen = datetime()
+              p.lastSeen = datetime(),
+              p.isPremium = false
       ON MATCH
           SET p.lastSeen = datetime()
       WITH p

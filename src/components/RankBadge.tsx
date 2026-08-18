@@ -6,6 +6,8 @@ interface Props {
     rating: number;
     /** "full" = icon + name + division (default), "compact" = icon + division only */
     variant?: "full" | "compact";
+    /** Premium-only cosmetic shimmer border. No effect on rank/rating logic. */
+    premium?: boolean;
 }
 
 // Shield SVG — complexity increases slightly per rank tier index
@@ -58,7 +60,7 @@ function ShieldIcon({ tier }: { tier: RankTier }) {
   );
 }
 
-export default function RankBadge({ rating, variant = "full" }: Props) {
+export default function RankBadge({ rating, variant = "full", premium = false }: Props) {
   const tier = getRankTier(rating);
   const divLabel = getDivisionLabel(tier.division);
   const isInfinity = tier.rank === "Infinity";
@@ -70,7 +72,7 @@ export default function RankBadge({ rating, variant = "full" }: Props) {
 
   return (
     <div
-      className={`${styles.badge} ${isInfinity ? styles.infinity : ""} ${styles[variant]}`}
+      className={`${styles.badge} ${isInfinity ? styles.infinity : ""} ${premium ? styles.premium : ""} ${styles[variant]}`}
       style={badgeStyle}
     >
       <ShieldIcon tier={tier} />

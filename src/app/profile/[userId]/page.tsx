@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { useRouter, useParams } from "next/navigation";
+import { useRouter, useParams, useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
@@ -42,7 +42,9 @@ const USERNAME_REGEX = /^[a-zA-Z0-9_]{3,20}$/;
 function ProfilePage() {
   const { userId } = useParams<{ userId: string }>();
   const router = useRouter();
-  const { user, avatarUrl: contextAvatarUrl, setAvatarUrl: setContextAvatarUrl } = useAuth();
+  const searchParams = useSearchParams();
+  const { user, avatarUrl: contextAvatarUrl, setAvatarUrl: setContextAvatarUrl, isPremium } = useAuth();
+  const [billingLoading, setBillingLoading] = useState(false);
 
   const [profileData, setProfileData] = useState<ProfileData | null>(null);
   const [gameStats, setGameStats] = useState<GameStats | null>(null);
@@ -143,6 +145,24 @@ function ProfilePage() {
     }
   }, [userId]);
 
+  // Coming back from Checkout: the webhook that flips isPremium may land a
+  // beat after the redirect, so poll briefly instead of showing stale status.
+  const checkoutStatus = searchParams.get("checkout");
+  useEffect(() => {
+    if (checkoutStatus !== "success" || !isOwnProfile) return;
+    let attempts = 0;
+    const interval = setInterval(async () => {
+      attempts += 1;
+      const data = await postJSON<ProfileData>("/api/fetchPlayer", { uid: userId });
+      setProfileData(data);
+      if (data.isPremium || attempts >= 5) {
+        clearInterval(interval);
+        router.replace(`/profile/${userId}`);
+      }
+    }, 1500);
+    return () => clearInterval(interval);
+  }, [checkoutStatus, isOwnProfile, userId, router]);
+
   // friends
   useEffect(() => {
     if (!isOwnProfile || !user) return;
@@ -177,13 +197,35 @@ function ProfilePage() {
     }
   };
 
+  const handleUpgrade = async () => {
+    setBillingLoading(true);
+    try {
+      const { url } = await postJSON<{ url: string }>("/api/billing/createCheckoutSession", {});
+      window.location.href = url;
+    } catch (err: unknown) {
+      setError((err as Error).message);
+      setBillingLoading(false);
+    }
+  };
+
+  const handleManageSubscription = async () => {
+    setBillingLoading(true);
+    try {
+      const { url } = await postJSON<{ url: string }>("/api/billing/createPortalSession", {});
+      window.location.href = url;
+    } catch (err: unknown) {
+      setError((err as Error).message);
+      setBillingLoading(false);
+    }
+  };
+
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file || !user) return;
+    if (!file || !user || !isPremium) return;
     setAvatarError("");
     setAvatarUploading(true);
     try {
-      const url = await uploadAvatar(user.uid, file);
+      const url = await uploadAvatar(file);
       setContextAvatarUrl(url); // updates header + this page simultaneously
     } catch (err: unknown) {
       setAvatarError((err as Error).message);
@@ -203,7 +245,7 @@ function ProfilePage() {
         <section className={styles.profileHeader}>
           <div className={styles.avatarWrapper}>
             <Avatar src={avatarUrl} username={profileData?.username} size="lg" />
-            {isOwnProfile && (
+            {isOwnProfile && isPremium && (
               <>
                 <button
                   className={styles.avatarEditButton}
@@ -221,6 +263,15 @@ function ProfilePage() {
                   onChange={handleAvatarChange}
                 />
               </>
+            )}
+            {isOwnProfile && !isPremium && (
+              <button
+                className={styles.avatarEditButton}
+                onClick={handleUpgrade}
+                title="Upgrade to Premium to change your profile picture"
+              >
+                🔒
+              </button>
             )}
           </div>
           <div className={styles.profileInfo}>
@@ -245,8 +296,13 @@ function ProfilePage() {
             {avatarError && <span className={styles.fieldError}>{avatarError}</span>}
             {isOwnProfile && (
               <div className={styles.actions}>
-                {!isEditing && (
+                {!isEditing && isPremium && (
                   <button onClick={() => setIsEditing(true)} className={styles.editButton}>Edit Username</button>
+                )}
+                {!isEditing && !isPremium && (
+                  <button onClick={handleUpgrade} className={styles.editButton} title="Upgrade to Premium to change your username">
+                    🔒 Edit Username
+                  </button>
                 )}
                 <button onClick={handleDeleteAccount} className={styles.deleteButton}>Delete Account</button>
               </div>
@@ -258,6 +314,26 @@ function ProfilePage() {
         </section>
 
         <div className={styles.grid}>
+          {isOwnProfile && (
+            <section className={styles.card}>
+              <h2>Premium</h2>
+              {isPremium ? (
+                <>
+                  <p className={styles.emptyState}>You&apos;re subscribed to Premium — unlimited async games, rank flair, and custom username/avatar.</p>
+                  <button onClick={handleManageSubscription} disabled={billingLoading} className={styles.editButton}>
+                    {billingLoading ? "Loading…" : "Manage Subscription"}
+                  </button>
+                </>
+              ) : (
+                <>
+                  <p className={styles.emptyState}>$5/mo: unlimited async games, exclusive rank flair, and the ability to change your username and avatar.</p>
+                  <button onClick={handleUpgrade} disabled={billingLoading} className={styles.editButton}>
+                    {billingLoading ? "Loading…" : "Upgrade to Premium"}
+                  </button>
+                </>
+              )}
+            </section>
+          )}
           {!isOwnProfile && h2hStats && (
             <section className={styles.card}>
               <h2>Head-to-Head</h2>

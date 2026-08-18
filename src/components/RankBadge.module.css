@@ -138,3 +138,33 @@
         filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.8));
     }
 }
+
+/* ── Premium — animated gold shimmer border ── */
+
+.premium {
+    position: relative;
+}
+
+.premium::after {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    border-radius: 11px;
+    z-index: -1;
+    background: linear-gradient(120deg,
+            rgba(255, 215, 0, 0.2),
+            rgba(255, 215, 0, 0.9),
+            rgba(255, 215, 0, 0.2));
+    background-size: 200% 100%;
+    animation: goldShimmer 2.5s linear infinite;
+}
+
+@keyframes goldShimmer {
+    0% {
+        background-position: 200% 0;
+    }
+
+    100% {
+        background-position: -200% 0;
+    }
+}

@@ -17,11 +17,16 @@ export interface Player {
     ratings: Partial<Record<PlayMode, number>>;
     created: number;
     lastSeen: number;
+    isPremium: boolean;
+    stripeCustomerId: string | null;
+    stripeSubscriptionId: string | null;
 }
 
 export interface ProfileData {
     username: string;
     ratings: Partial<Record<PlayMode, number>>;
+    /** Never includes stripeCustomerId/stripeSubscriptionId — fetchPlayer is a public, unauthenticated route. */
+    isPremium: boolean;
 }
 
 /** Which timing variant a game/queue entry belongs to. */
