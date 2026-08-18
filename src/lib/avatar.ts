@@ -1,8 +1,14 @@
 import { firestore } from "@/lib/firebase";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { doc, getDoc } from "firebase/firestore";
+import { postJSON } from "@/lib/api";
 
-const MAX_SIZE_MB = 1;
+export const MAX_SIZE_MB = 1;
 const ANIMATED_TYPES = ["image/gif", "image/webp"];
+
+/** Shared with the server-side re-validation in /api/updateAvatar. */
+export function isDataUrlImage(dataUrl: string): boolean {
+  return /^data:image\/[a-zA-Z0-9.+-]+;base64,/.test(dataUrl);
+}
 
 function resizeAndEncode(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -32,7 +38,7 @@ function encodeRaw(file: File): Promise<string> {
   });
 }
 
-export async function uploadAvatar(uid: string, file: File): Promise<string> {
+export async function uploadAvatar(file: File): Promise<string> {
   if (file.size > MAX_SIZE_MB * 1024 * 1024) {
     throw new Error(`Image must be under ${MAX_SIZE_MB}MB.`);
   }
@@ -45,7 +51,9 @@ export async function uploadAvatar(uid: string, file: File): Promise<string> {
     ? await encodeRaw(file)
     : await resizeAndEncode(file);
 
-  await setDoc(doc(firestore, "avatars", uid), { base64, updatedAt: Date.now() });
+  // Written server-side (not a direct client Firestore write) so the
+  // Premium gate and size/type checks are actually enforced, not just UI.
+  await postJSON("/api/updateAvatar", { base64 });
   return base64;
 }
 

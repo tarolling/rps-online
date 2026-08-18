@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
     const result = await runQuery(`
       MATCH (p:Player {uid: $uid})
       OPTIONAL MATCH (p)-[:HAS_RATING]->(r:Rating)
-      RETURN p.username AS username, collect({mode: r.mode, value: r.value}) AS ratings
+      RETURN p.username AS username, p.isPremium AS isPremium, collect({mode: r.mode, value: r.value}) AS ratings
       `, { uid });
 
     if (result.records.length === 0) {
@@ -37,6 +37,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       username: read.get("username"),
       ratings,
+      // Boolean only — this route is public/unauthenticated, never leak Stripe IDs here.
+      isPremium: read.get("isPremium") ?? false,
     });
   } catch (err) {
     console.error("fetchPlayer error:", err);

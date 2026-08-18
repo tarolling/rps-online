@@ -16,6 +16,7 @@ type Player = {
   uid: string;
   username: string;
   rating: number;
+  isPremium: boolean;
   statValue: number;
 };
 
@@ -127,7 +128,7 @@ function LeaderboardPage() {
                       <Link href={`/profile/${player.uid}`} onClick={(e) => e.stopPropagation()}>
                         {player.username}
                       </Link>
-                      <RankBadge rating={player.rating} variant="compact" />
+                      <RankBadge rating={player.rating} variant="compact" premium={player.isPremium} />
                     </td>
                     <td className={styles.rating}>{player.statValue}</td>
                   </tr>

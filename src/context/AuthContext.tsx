@@ -13,9 +13,10 @@ interface AuthContextType {
     username: string | null;
     avatarUrl: string | null;
     setAvatarUrl: (url: string | null) => void;
+    isPremium: boolean;
 }
 
-const AuthContext = createContext<AuthContextType>({ user: null, loading: true, username: null, avatarUrl: null, setAvatarUrl: () => { } });
+const AuthContext = createContext<AuthContextType>({ user: null, loading: true, username: null, avatarUrl: null, setAvatarUrl: () => { }, isPremium: false });
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
@@ -28,6 +29,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const [username, setUsername] = useState<string | null>(null);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [isPremium, setIsPremium] = useState(false);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -35,19 +37,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setLoading(false);
       if (user) {
         getAvatarUrl(user.uid).then(setAvatarUrl);
-        postJSON<{ username: string }>("/api/fetchPlayer", { uid: user.uid })
-          .then((d) => setUsername(d.username))
+        postJSON<{ username: string; isPremium: boolean }>("/api/fetchPlayer", { uid: user.uid })
+          .then((d) => { setUsername(d.username); setIsPremium(d.isPremium); })
           .catch(() => { });
       } else {
         setAvatarUrl(null);
         setUsername(null);
+        setIsPremium(false);
       }
     });
     return () => unsubscribe();
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, loading, username, avatarUrl, setAvatarUrl }}>
+    <AuthContext.Provider value={{ user, loading, username, avatarUrl, setAvatarUrl, isPremium }}>
       {!loading && children}
     </AuthContext.Provider>
   );
