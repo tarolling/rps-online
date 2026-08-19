@@ -10,10 +10,11 @@ import Header from "@/components/Header";
 import RankBadge from "@/components/RankBadge";
 import styles from "./MatchmakingPage.module.css";
 import { postJSON } from "@/lib/api";
-import { Game, ProfileData } from "@/types";
+import { Game, PlayMode, ProfileData } from "@/types";
 import { getRankTier } from "@/lib/ranks";
 import { MatchStatus } from "@/types/neo4j";
 import config from "@/config/settings.json";
+import { PLAY_MODES } from "@/lib/gameModes";
 
 type MatchmakingStatus = "idle" | "searching" | "matched" | "error";
 type AsyncQueueStatus = "idle" | "queueing" | "queued" | "matched" | "error";
@@ -26,7 +27,9 @@ function MatchmakingPage() {
   const [matchStatus, setMatchStatus] = useState<MatchmakingStatus>("idle");
   const [asyncStatus, setAsyncStatus] = useState<AsyncQueueStatus>("idle");
   const [wildcardStatus, setWildcardStatus] = useState<MatchmakingStatus>("idle");
-  const [onlineCount, setOnlineCount] = useState(0);
+  const [onlineCounts, setOnlineCounts] = useState<Record<PlayMode, number>>(
+    () => Object.fromEntries(PLAY_MODES.map((m) => [m, 0])) as Record<PlayMode, number>,
+  );
   const [playerInfo, setPlayerInfo] = useState<ProfileData | null>(null);
   const [asyncErrorMessage, setAsyncErrorMessage] = useState("");
 
@@ -48,9 +51,16 @@ function MatchmakingPage() {
 
     const unsubscribe = onValue(queueRef, (queueSnap) => {
       onValue(gamesRef, (gamesSnap) => {
-        const queueCount = Object.keys(queueSnap.val() || {}).length;
-        const gameCount = Object.keys(gamesSnap.val() || {}).length;
-        setOnlineCount(queueCount + gameCount * 2);
+        const queue = Object.values(queueSnap.val() || {}) as { mode?: PlayMode }[];
+        const games = Object.values(gamesSnap.val() || {}) as Game[];
+
+        const counts = Object.fromEntries(PLAY_MODES.map((mode) => {
+          const queueCount = queue.filter((entry) => (entry.mode ?? "blitz") === mode).length;
+          const gameCount = games.filter((game) => (game.mode ?? "blitz") === mode).length;
+          return [mode, queueCount + gameCount * 2];
+        })) as Record<PlayMode, number>;
+
+        setOnlineCounts(counts);
       });
     });
 
@@ -179,10 +189,6 @@ function MatchmakingPage() {
 
         <div className={styles.pageHeader}>
           <h1 className={styles.pageTitle}>Select Mode</h1>
-          <div className={styles.onlineCount}>
-            <span className={styles.onlineDot} />
-            <span>{onlineCount} online</span>
-          </div>
         </div>
 
         <div className={styles.grid}>
@@ -195,7 +201,13 @@ function MatchmakingPage() {
             >
               <div className={styles.cardBg} aria-hidden />
 
-              <div className={styles.modeTag}>Competitive</div>
+              <div className={styles.cardTopRow}>
+                <div className={styles.modeTag}>Competitive</div>
+                <div className={styles.onlineCount}>
+                  <span className={styles.onlineDot} />
+                  <span>{onlineCounts.blitz} online</span>
+                </div>
+              </div>
               <h2 className={styles.cardTitle}>Blitz</h2>
               <p className={styles.cardDesc}>Climb the leaderboard. Your rating is on the line.</p>
 
@@ -249,7 +261,13 @@ function MatchmakingPage() {
             >
               <div className={styles.cardBg} aria-hidden />
 
-              <div className={styles.modeTag}>Correspondence</div>
+              <div className={styles.cardTopRow}>
+                <div className={styles.modeTag}>Correspondence</div>
+                <div className={styles.onlineCount}>
+                  <span className={styles.onlineDot} />
+                  <span>{onlineCounts.async} online</span>
+                </div>
+              </div>
               <h2 className={styles.cardTitle}>Async</h2>
               <p className={styles.cardDesc}>24 hours per round. Play several games at once, check in whenever.</p>
 
@@ -321,7 +339,13 @@ function MatchmakingPage() {
             >
               <div className={styles.cardBg} aria-hidden />
 
-              <div className={styles.modeTag}>Mind Games</div>
+              <div className={styles.cardTopRow}>
+                <div className={styles.modeTag}>Mind Games</div>
+                <div className={styles.onlineCount}>
+                  <span className={styles.onlineDot} />
+                  <span>{onlineCounts.wildcard} online</span>
+                </div>
+              </div>
               <h2 className={styles.cardTitle}>Wildcard</h2>
               <p className={styles.cardDesc}>Blitz rules, plus two bluff moves you configure before the match.</p>
 
