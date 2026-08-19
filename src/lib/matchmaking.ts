@@ -29,6 +29,7 @@ interface QueueEntry {
     mode: PlayMode;
     timestamp: number;
     isBot?: boolean;
+    claimed?: boolean;
 }
 
 type MatchResult = { gameID: string } | { error: string } | { gameID: string, opponent: QueueEntry } | { queued: true };
@@ -144,10 +145,19 @@ export async function findMatch(uid: string, username: string, userRating: numbe
       const ratingClose = Math.abs(playerData.rating - userRating) <= config.matchmakingRatingRange;
       if (candidateUid === uid || !sameMode || !ratingClose) continue;
 
-      // atomically claim this candidate's queue slot so no other
-      // concurrent matchmaking attempt can also grab them
+      // Atomically claim this candidate's queue slot so no other concurrent
+      // matchmaking attempt can also grab them. This marks the entry rather
+      // than deleting it outright — deletion is deferred until after the game
+      // is actually created (below). The candidate's own findMatch call is
+      // waiting on this entry to disappear as its "you've been matched"
+      // signal, then looks up the new game; deleting it here, before
+      // games/{gameId} is written, left a window where that lookup could run
+      // before the game existed, with no retry — so the candidate never got
+      // pulled in and just sat until the 90s timeout.
       const candidateRef = ref(db, `matchmaking_queue/${queueKey}`);
-      const { committed } = await runTransaction(candidateRef, (current) => (current === null ? undefined : null));
+      const { committed } = await runTransaction(candidateRef, (current) => (
+        current === null || current.claimed ? undefined : { ...current, claimed: true }
+      ));
       if (!committed) continue; // another search already claimed this candidate
 
       if (GAME_MODES[mode].live) {
@@ -168,6 +178,10 @@ export async function findMatch(uid: string, username: string, userRating: numbe
         // bot plays the game server-side
         postJSON("/api/botPlay", { gameId: gameId, botId: candidateUid });
       }
+
+      // Now that games/{gameId} is durably written, it's safe to remove the
+      // candidate's queue entry — their listener will find the game on lookup.
+      await remove(candidateRef);
       return { gameID: gameId, opponent: playerData };
     }
 
@@ -274,13 +288,11 @@ export async function createGame(
   };
 
   try {
-    await Promise.all([
-      set(ref(db, `games/${gameId}`), game),
-      ...(!tournamentInfo ? [
-        remove(ref(db, `matchmaking_queue/${playerOneId}`)),
-        remove(ref(db, `matchmaking_queue/${playerTwoId}`)),
-      ] : []),
-    ]);
+    // Queue cleanup for the matched pair is the caller's responsibility (see
+    // findMatch) — it happens with mode-prefixed keys and, for the queued
+    // candidate, only after this write is confirmed, since their listener
+    // treats queue-entry removal as the "your game is ready" signal.
+    await set(ref(db, `games/${gameId}`), game);
     return gameId;
   } catch (error) {
     console.error("Error creating game:", error);
