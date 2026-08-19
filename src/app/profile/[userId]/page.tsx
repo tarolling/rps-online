@@ -315,19 +315,19 @@ function ProfilePage() {
 
         <div className={styles.grid}>
           {isOwnProfile && (
-            <section className={styles.card}>
-              <h2>Premium</h2>
+            <section className={`${styles.card} ${styles.premiumCard}`}>
+              <h2>⭐ Premium</h2>
               {isPremium ? (
                 <>
-                  <p className={styles.emptyState}>You&apos;re subscribed to Premium — unlimited async games, rank flair, and custom username/avatar.</p>
-                  <button onClick={handleManageSubscription} disabled={billingLoading} className={styles.editButton}>
+                  <p className={styles.premiumBody}>You&apos;re subscribed to Premium — unlimited async games, rank flair, and custom username/avatar.</p>
+                  <button onClick={handleManageSubscription} disabled={billingLoading} className={styles.premiumButton}>
                     {billingLoading ? "Loading…" : "Manage Subscription"}
                   </button>
                 </>
               ) : (
                 <>
-                  <p className={styles.emptyState}>$5/mo: unlimited async games, exclusive rank flair, and the ability to change your username and avatar.</p>
-                  <button onClick={handleUpgrade} disabled={billingLoading} className={styles.editButton}>
+                  <p className={styles.premiumBody}>$5/mo: unlimited async games, exclusive rank flair, and the ability to change your username and avatar.</p>
+                  <button onClick={handleUpgrade} disabled={billingLoading} className={styles.premiumButton}>
                     {billingLoading ? "Loading…" : "Upgrade to Premium"}
                   </button>
                 </>

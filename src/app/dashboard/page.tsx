@@ -110,12 +110,14 @@ export default function DashboardPage() {
       <div className={styles.dashboardContainer}>
         <section className={styles.welcomeSection}>
           <h1>Welcome back, {playerData?.username || "Player"}!</h1>
-          <Link className={styles.playButton} href='/play'>
+          <div className={styles.playButtons}>
+            <Link className={styles.playButton} href='/play'>
                         Quick Play
-          </Link>
-          <Link className={styles.playButton} href='/asyncGames'>
+            </Link>
+            <Link className={styles.playButton} href='/asyncGames'>
                         Async Games
-          </Link>
+            </Link>
+          </div>
         </section>
         <div className={styles.dashboardGrid}>
           <section className={styles.statsCard}>

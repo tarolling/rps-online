@@ -11,6 +11,7 @@
 
 .logo {
     height: 60px;
+    width: auto;
     cursor: pointer;
 }
 
@@ -74,6 +75,11 @@
     display: none;
     position: absolute;
     top: calc(100% + 8px);
+    /* Right-edge-anchored, not centered under the trigger — the avatar sits
+       close to the header's right edge (padding: 10px 20px), and body has
+       overflow-x: hidden (see global.css), so a wider centered dropdown would
+       get clipped off-screen with no way to scroll to it. The caret below
+       gives it a visual anchor to the avatar instead. */
     right: 0;
     background: var(--color-surface);
     border: 1px solid var(--color-border);
@@ -81,19 +87,46 @@
     box-shadow: var(--shadow);
     min-width: 150px;
     z-index: 1000;
-    overflow: hidden;
-    /* clips items to border-radius */
+    overflow: visible;
+}
+
+/* Caret pointing at the avatar's horizontal center (40px wide, flush with
+   the dropdown's right edge) so the menu reads as anchored to it. */
+.dropdownContent::before {
+    content: "";
+    position: absolute;
+    top: -6px;
+    right: 14px;
+    width: 12px;
+    height: 12px;
+    background: var(--color-surface);
+    border-left: 1px solid var(--color-border);
+    border-top: 1px solid var(--color-border);
+    transform: rotate(45deg);
+}
+
+.dropdownContent .dropdownItem:first-child {
+    border-top-left-radius: var(--radius);
+    border-top-right-radius: var(--radius);
+}
+
+.dropdownContent .dropdownItem:last-child {
+    border-bottom-left-radius: var(--radius);
+    border-bottom-right-radius: var(--radius);
 }
 
 .dropdownContent.show {
     display: block;
 }
 
-/* Single rule covers both <a> and <button> dropdown items */
+/* Single rule covers both <a> and <button> dropdown items. margin: 0 matters
+   here — the global `button` rule sets margin: 5px, which otherwise insets
+   the Log Out <button> relative to the flush Profile <a> and breaks alignment. */
 .dropdownItem {
     background: none;
     border: none;
     width: 100%;
+    margin: 0;
     padding: 12px 15px;
     cursor: pointer;
     color: var(--color-text);
@@ -169,6 +202,7 @@
 
     .logo {
         height: 40px;
+        width: auto;
     }
 
     .headerNav {
