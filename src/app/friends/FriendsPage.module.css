@@ -1,7 +1,17 @@
 .container {
     max-width: 700px;
+    width: 100%;
     margin: 0 auto;
     padding: 2rem 1rem;
+    /* .app (global.css) is display:flex, flex-direction:column, making this
+       its flex item. Two things were needed for this to actually shrink to
+       the viewport instead of overflowing it on mobile: margin: auto on a
+       flex item's cross axis opts it out of align-items: stretch, falling
+       back to shrink-to-fit sizing — hence the explicit width: 100%. And
+       min-width: 0 overrides the automatic min-content-based minimum size,
+       which otherwise gets set by any non-wrapping descendant (a long
+       username, a button pair) further down the tree. */
+    min-width: 0;
 }
 
 .container h1 {
@@ -35,6 +45,9 @@
     padding: 0.5rem 0.75rem;
     border-radius: calc(var(--radius) / 2);
     background: var(--color-bg-secondary);
+    /* Same automatic-min-width issue as .container — .list is a column flex
+       container, so each row needs this to actually shrink to fit. */
+    min-width: 0;
 }
 
 .challengeRow {
@@ -61,6 +74,10 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    /* .userInfo is itself display:flex, so username (a flex item there too)
+       needs this or its nowrap text sets an unshrinkable min width and the
+       ellipsis above never actually gets a chance to engage. */
+    min-width: 0;
 }
 
 .challengeLabel {
@@ -166,5 +183,22 @@
 @media (max-width: 480px) {
     .challengeLabel {
         display: none;
+    }
+
+    /* The action buttons (Accept/Decline, Challenge/Remove) otherwise eat
+       most of the row's width on a phone, squeezing usernames down to a
+       character or two before the ellipsis kicks in. Give username the
+       full first line and drop actions to their own line underneath. */
+    .row {
+        flex-wrap: wrap;
+    }
+
+    .userInfo {
+        flex-basis: 100%;
+    }
+
+    .actions {
+        flex-basis: 100%;
+        justify-content: flex-end;
     }
 }

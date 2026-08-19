@@ -2,7 +2,7 @@
  * Enums
  */
 
-import { DateTime } from "neo4j-driver";
+import type { DateTime } from "neo4j-driver";
 import { Choice, ClubAvailability, ClubRole, Division, Match, MatchStatus, ParticipatedIn, Round, TournamentPlayerCap, TournamentStatus, type TournamentMatchStatus } from "./neo4j";
 
 

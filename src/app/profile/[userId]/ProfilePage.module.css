@@ -2,9 +2,19 @@
 
 .container {
     max-width: 1100px;
+    width: 100%;
     margin: 2rem auto;
     padding: 0 1.5rem 3rem;
     flex: 1;
+    /* .app (global.css) is display:flex, flex-direction:column, making this
+       its flex item. Two things were needed for this to actually shrink to
+       the viewport instead of overflowing it on mobile: margin: auto on a
+       flex item's cross axis opts it out of align-items: stretch, falling
+       back to shrink-to-fit sizing — hence the explicit width: 100%. And
+       min-width: 0 overrides the automatic min-content-based minimum size,
+       which otherwise gets set by any non-wrapping descendant (long match
+       rows, button groups) further down the tree. */
+    min-width: 0;
 }
 
 /* ── Profile Header ── */
@@ -43,32 +53,40 @@
 /* avatar */
 
 .avatarWrapper {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.5rem;
+    position: relative;
+    display: inline-flex;
     flex-shrink: 0;
 }
 
+/* Hidden until the avatar is hovered/focused, then covers it as a circular
+   scrim with a centered icon — matches the edit-avatar pattern on most
+   profile pages instead of sitting as a separate button below the picture. */
 .avatarEditButton {
-    background: var(--color-primary);
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
     color: #fff;
     border: none;
-    border-radius: var(--radius);
-    padding: 0.3rem 0.75rem;
-    font-size: 0.75rem;
+    border-radius: 50%;
+    font-size: 1.5rem;
     cursor: pointer;
-    white-space: nowrap;
-    transition: background 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    margin: 0;
+    padding: 0;
     min-height: unset;
 }
 
-.avatarEditButton:hover {
-    background: var(--color-primary-hover);
+.avatarWrapper:hover .avatarEditButton,
+.avatarEditButton:focus-visible {
+    opacity: 1;
 }
 
 .avatarEditButton:disabled {
-    opacity: 0.5;
+    opacity: 1;
     cursor: not-allowed;
 }
 
@@ -170,6 +188,47 @@
     margin-bottom: 1.25rem;
 }
 
+/* ── Premium card ── */
+/* Distinct treatment from the plain stat cards below — it's the site's only
+   upsell, so it needs to read as one at a glance instead of blending in. */
+
+.premiumCard {
+    border-color: var(--color-primary);
+    background: linear-gradient(color-mix(in srgb, var(--color-primary) 8%, var(--color-surface)), var(--color-surface));
+    display: flex;
+    flex-direction: column;
+}
+
+.premiumCard h2 {
+    color: var(--color-primary);
+}
+
+.premiumBody {
+    color: var(--color-text);
+    font-size: 0.95rem;
+    line-height: 1.5;
+    text-align: left;
+    margin: 0 0 1.25rem;
+}
+
+.premiumButton {
+    background: var(--color-primary);
+    padding: 0.75rem 1.25rem;
+    font-size: 0.95rem;
+    font-weight: 600;
+    align-self: flex-start;
+    margin: 0;
+}
+
+.premiumButton:hover:not(:disabled) {
+    background: var(--color-primary-hover);
+}
+
+.premiumButton:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
 .emptyState {
     color: var(--color-text-muted);
     font-size: 0.9rem;
@@ -225,6 +284,9 @@
     border-left: 4px solid var(--color-border);
     gap: 0.5rem;
     text-decoration: none;
+    /* Same automatic-min-width issue as .container — .matchList is a column
+       flex container, so each row needs this to actually shrink to fit. */
+    min-width: 0;
 }
 
 .matchItem.win {
@@ -315,13 +377,33 @@
 /* ── Responsive ── */
 
 @media (max-width: 600px) {
+    /* .profileHeader ({display:flex, no wrap}) never adapted — avatarWrapper
+       and profileInfo stayed side by side, and .actions' two buttons never
+       wrapped either, forcing the row wider than the viewport. With body's
+       overflow-x: hidden (global.css) that overflow isn't scrollable, so
+       Delete Account was partly or fully unreachable on a phone. */
+    .profileHeader {
+        flex-direction: column;
+        align-items: center;
+    }
+
     .profileInfo {
+        width: 100%;
         flex-direction: column;
         align-items: flex-start;
     }
 
     .profileInfo h1 {
         font-size: 1.5rem;
+    }
+
+    .actions {
+        width: 100%;
+        flex-wrap: wrap;
+    }
+
+    .actions button {
+        flex: 1 1 140px;
     }
 
     .statsGrid {

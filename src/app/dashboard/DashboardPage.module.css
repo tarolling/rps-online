@@ -20,6 +20,13 @@
     margin-bottom: 1.5rem;
 }
 
+.playButtons {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
 .playButton {
     background: var(--color-primary);
     color: white;
@@ -28,6 +35,9 @@
     border-radius: 8px;
     transition: all 0.3s ease;
     text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .playButton:hover {
@@ -158,5 +168,14 @@
 
     .welcomeSection h1 {
         font-size: 2rem;
+    }
+
+    .playButtons {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .playButton {
+        padding: 1rem;
     }
 }

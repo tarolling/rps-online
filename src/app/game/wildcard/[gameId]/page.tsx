@@ -54,6 +54,9 @@ function WildcardGamePage() {
   const [spectatorCount, setSpectatorCount] = useState(0);
   const [selectedConfig, setSelectedConfig] = useState<Choice[]>([]);
   const [configSubmitted, setConfigSubmitted] = useState(false);
+  // Frozen until the round resolves, so the opponent's live abRemaining decrement
+  // (written the instant they submit) can't be used to infer they played A/B early.
+  const [displayedOpponentAB, setDisplayedOpponentAB] = useState<number | null>(null);
 
   const playerId = user?.uid;
   const isPlayer1 = game?.player1.id === playerId;
@@ -126,6 +129,8 @@ function WildcardGamePage() {
           setChoice(null);
           setTimeLeft(data.roundDurationSeconds ?? config.wildcard.roundTimeoutSeconds);
           setRoundOver(false);
+          const oppKey = playerId === data.player1.id ? "player2" : "player1";
+          setDisplayedOpponentAB(data[oppKey]?.abRemaining ?? config.wildcard.abStartingPoints);
           handledRound.current = { round: data.currentRound, resolveFired: false };
         }
         return data;
@@ -147,6 +152,8 @@ function WildcardGamePage() {
       ) {
         handled.resolveFired = true;
         setRoundOver(true);
+        const oppKey = playerId === data.player1.id ? "player2" : "player1";
+        setDisplayedOpponentAB(data[oppKey]?.abRemaining ?? config.wildcard.abStartingPoints);
         if (iAmResolver) setTimeout(() => resolveRound(gameId, resolverPlayerId), 1000);
       }
     });
@@ -451,7 +458,7 @@ function WildcardGamePage() {
               {!isFinished && (
                 <div className={styles.wildcardPoints}>
                   <span>Your Wildcard plays left: <strong>{playerData?.abRemaining ?? 0}</strong></span>
-                  <span>Opponent&apos;s left: <strong>{opponentData?.abRemaining ?? 0}</strong></span>
+                  <span>Opponent&apos;s left: <strong>{displayedOpponentAB ?? config.wildcard.abStartingPoints}</strong></span>
                 </div>
               )}
 
