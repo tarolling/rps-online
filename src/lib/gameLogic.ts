@@ -1,10 +1,8 @@
-import { Game, PlayMode } from "../types";
-import calculateRating from "./calculateRating";
+import { Game } from "../types";
 import config from "@/config/settings.json";
 import { postJSON } from "./api";
 import { Choice, MatchStatus } from "@/types/neo4j";
 import { determineWildcardRoundWinner } from "./wildcardLogic";
-import { GAME_MODES } from "./gameModes";
 
 /**
  * Pure round/game logic shared by the client-driven blitz path
@@ -27,6 +25,9 @@ interface GameStats {
 /** Number of rounds a player must win to win the game. */
 export const FIRST_TO = 4;
 
+/** Consecutive rounds with zero submissions from either player before the game is cancelled. */
+export const AFK_ROUND_LIMIT = 3;
+
 export interface RoundOutcome {
     action: "cancel" | "noop" | "resolve";
     updates?: Record<string, unknown>;
@@ -48,7 +49,25 @@ export function computeRoundOutcome(game: Game, now: number): RoundOutcome {
   const timeExpired = elapsed >= roundDurationSeconds * 1000;
   const neitherSubmitted = !game.player1.submitted && !game.player2.submitted;
   if (neitherSubmitted) {
-    return { action: "cancel" };
+    const missedRounds = (game.missedRounds ?? 0) + 1;
+    if (missedRounds >= AFK_ROUND_LIMIT) {
+      return { action: "cancel" };
+    }
+    // Grace period: void this round (nobody scores) and give the game
+    // another AFK_ROUND_LIMIT - missedRounds rounds before cancelling.
+    return {
+      action: "resolve",
+      updates: {
+        missedRounds,
+        roundStartTimestamp: now,
+        [`rounds/${game.currentRound}`]: {
+          player1Choice: "none",
+          player2Choice: "none",
+          winner: "draw",
+        },
+        currentRound: game.currentRound + 1,
+      },
+    };
   }
 
   const bothSubmitted = game.player1.submitted && game.player2.submitted;
@@ -60,6 +79,7 @@ export function computeRoundOutcome(game: Game, now: number): RoundOutcome {
   const isGameOver = winner && (game[winner].score + 1) >= FIRST_TO;
 
   const updates: Record<string, unknown> = {
+    missedRounds: 0,
     "player1/choice": null,
     "player1/submitted": false,
     "player2/choice": null,
@@ -120,7 +140,7 @@ export const calculateGameStats = (game: Game): GameStats => {
   const p1Choices = empty();
   const p2Choices = empty();
 
-  game.rounds?.forEach((round) => {
+  Object.values(game.rounds ?? {}).forEach((round) => {
     if (round.player1Choice) p1Choices[round.player1Choice]++;
     if (round.player2Choice) p2Choices[round.player2Choice]++;
   });
@@ -130,47 +150,24 @@ export const calculateGameStats = (game: Game): GameStats => {
 
 /**
  * Records stats and adjusts ratings for a completed ranked game (either mode).
- * Always called from the perspective of the player who triggered `endGame`,
- * which is player 1.
+ * Only tells the server *which* game to record — `/api/postGameStats` treats
+ * the Firebase game record as the sole source of truth and recomputes scores,
+ * choice tallies, and rating changes itself rather than trusting values from
+ * this call, since this function (and the client-driven blitz/wildcard path
+ * that reaches it) is not a trusted boundary.
  */
-export async function recordRankedGame(game: Game, mode: PlayMode = "blitz"): Promise<void> {
+export async function recordRankedGame(game: Game): Promise<void> {
   if (!game.player1 || !game.player2) return;
-  const { player1: { id: playerOneId, rating: playerOneRating }, player2: { id: playerTwoId, rating: playerTwoRating }, winner } = game;
 
-  const gameStats = calculateGameStats(game);
-
-  // calculate both players' new ratings
-  const playerOneNewRating = calculateRating(playerOneRating, playerTwoRating, playerOneId === winner);
-  const playerTwoNewRating = calculateRating(playerTwoRating, playerOneRating, playerTwoId === winner);
-
-  const gameMode = GAME_MODES[mode].matchMode;
+  // Server-side callers (the async mode's `matchmakingServer.ts`) have no
+  // browser session to authenticate with, so they attach a shared secret
+  // instead — mirroring the `CRON_SECRET` pattern used by this app's cron
+  // routes. Evaluates to undefined (and is never sent) in the browser bundle.
+  const internalSecret = typeof window === "undefined" ? process.env.INTERNAL_API_SECRET : undefined;
+  const headers = internalSecret ? { "x-internal-secret": internalSecret } : undefined;
 
   try {
-    await Promise.all([
-      postJSON("/api/postGameStats", {
-        matchId: game.id,
-        gameMode,
-        playerOneId,
-        playerTwoId,
-        playerOneScore: game.player1.score,
-        playerOneRating,
-        playerOneNewRating,
-        playerOneRocks: gameStats.playerOneChoices.ROCK,
-        playerOnePapers: gameStats.playerOneChoices.PAPER,
-        playerOneScissors: gameStats.playerOneChoices.SCISSORS,
-        playerTwoScore: game.player2.score,
-        playerTwoRating,
-        playerTwoNewRating,
-        playerTwoRocks: gameStats.playerTwoChoices.ROCK,
-        playerTwoPapers: gameStats.playerTwoChoices.PAPER,
-        playerTwoScissors: gameStats.playerTwoChoices.SCISSORS,
-        winnerId: winner,
-        // filter out blank rounds that are created when match ends
-        rounds: game.rounds.filter((r) => r.player1Choice !== null && r.player2Choice !== null),
-      }),
-      postJSON("/api/adjustRating", { uid: playerOneId, newRating: playerOneNewRating, mode }),
-      postJSON("/api/adjustRating", { uid: playerTwoId, newRating: playerTwoNewRating, mode }),
-    ]);
+    await postJSON("/api/postGameStats", { matchId: game.id }, headers);
   } catch (error) {
     console.error("Error recording ranked game:", error);
   }

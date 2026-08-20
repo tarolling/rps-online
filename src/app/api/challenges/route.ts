@@ -4,6 +4,7 @@ import { adminDb } from "@/lib/firebaseAdmin";
 import { createGame } from "@/lib/matchmaking.server";
 import { getDriver } from "@/lib/neo4j";
 import { getAuthedUid } from "@/lib/auth";
+import { withErrorHandling } from "@/lib/apiHandler";
 import config from "@/config/settings.json";
 
 type Action = "send" | "accept" | "reject" | "clear";
@@ -29,7 +30,7 @@ async function fetchPlayer(uid: string): Promise<{ username: string; rating: num
   }
 }
 
-export async function POST(req: NextRequest) {
+export const POST = withErrorHandling("challenges", async (req: NextRequest) => {
   const { action, fromId, fromUsername, toId } = await req.json() as {
     action: Action;
     fromId: string;
@@ -61,19 +62,37 @@ export async function POST(req: NextRequest) {
   }
 
   case "accept": {
-    const snap = await challengeRef.get();
-    if (!snap.exists()) return NextResponse.json({ error: "No pending challenge" }, { status: 404 });
-    
-    // Fetch both players' data for game creation
-    const [p1, p2] = await Promise.all([fetchPlayer(fromId), fetchPlayer(toId)]);
+    // Atomically claim the challenge before doing any of the slower game-creation
+    // work below, so two concurrent accepts (double-click, two tabs) can't both
+    // pass the check and both call createGame. Only the caller whose transaction
+    // actually flips pending -> accepting "wins"; a racing second caller's
+    // update function reruns against the now-"accepting" value and aborts.
+    const txResult = await challengeRef.transaction((current) => {
+      if (!current || current.status !== "pending") return undefined;
+      return { ...current, status: "accepting" };
+    });
 
-    const gameId = await createGame(
-      fromId, p1.username, p1.rating,
-      toId, p2.username, p2.rating,
-    );
+    if (!txResult.committed || !txResult.snapshot.exists()) {
+      return NextResponse.json({ error: "No pending challenge" }, { status: 404 });
+    }
 
-    await challengeRef.update({ status: "accepted", gameId });
-    return NextResponse.json({ ok: true, gameId });
+    try {
+      // Fetch both players' data for game creation
+      const [p1, p2] = await Promise.all([fetchPlayer(fromId), fetchPlayer(toId)]);
+
+      const gameId = await createGame(
+        fromId, p1.username, p1.rating,
+        toId, p2.username, p2.rating,
+      );
+
+      await challengeRef.update({ status: "accepted", gameId });
+      return NextResponse.json({ ok: true, gameId });
+    } catch (error) {
+      // Game creation failed after we claimed the challenge — revert so it's
+      // not stuck in "accepting" forever and the players can retry.
+      await challengeRef.update({ status: "pending" });
+      throw error;
+    }
   }
 
   case "reject":
@@ -84,4 +103,4 @@ export async function POST(req: NextRequest) {
   default:
     return NextResponse.json({ error: "Unknown action" }, { status: 400 });
   }
-}
+});

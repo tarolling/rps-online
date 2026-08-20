@@ -38,7 +38,7 @@ function applyFlatUpdates<T extends object>(obj: T, updates: Record<string, unkn
 /** Finalises a completed/cancelled async game: records stats, removes the RTDB node. */
 export async function endGameServer(game: Game): Promise<void> {
   if (game.state !== MatchStatus.Cancelled) {
-    await recordRankedGame(game, "async");
+    await recordRankedGame(game);
   }
   await adminDb.ref(`games/${game.id}`).remove();
 }

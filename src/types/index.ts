@@ -95,7 +95,9 @@ export interface Game {
     state: MatchStatus;
     player1: PlayerState;
     player2: PlayerState;
-    rounds: RoundData[];
+    // Stored in Firebase RTDB keyed by round number starting at 1, so it
+    // serializes back as a plain object map, never a real array.
+    rounds: Record<number, RoundData>;
     currentRound: number;
     timestamp: number;
     winner?: string;
@@ -105,6 +107,10 @@ export interface Game {
     // a missing value as "blitz" / the legacy 30s round timeout everywhere.
     mode?: PlayMode;
     roundDurationSeconds?: number;
+    // Consecutive rounds where neither player submitted a choice before the
+    // deadline. Resets to 0 whenever either player acts; the game is only
+    // cancelled once this reaches AFK_ROUND_LIMIT (see gameLogic.ts).
+    missedRounds?: number;
     // Wildcard only: true while both players are still picking their pregame
     // A-config. The round timer doesn't start (no roundStartTimestamp) until
     // this flips false.

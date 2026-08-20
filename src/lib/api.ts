@@ -2,21 +2,28 @@
 type QueryParamValue = string | number | boolean | null | undefined;
 
 /**
- * Builds a relative URL (path + query string) for same-origin requests from
- * the browser. Deliberately not an absolute URL: these calls run client-side,
- * where a relative path resolves against the current origin automatically —
- * no base URL needed, and no risk of it pointing somewhere unintended.
+ * Builds a same-origin URL (path + query string). In the browser, a relative
+ * path resolves against the current origin automatically. Node's `fetch`
+ * (used when these helpers run server-side, e.g. the async game mode's
+ * server-driven `recordRankedGame` self-calling its own API routes) has no
+ * such notion and throws on a relative URL, so server-side callers get an
+ * absolute URL prefixed with `NEXT_PUBLIC_BASE_URL` instead.
  * @param url - The absolute path without the domain prefix
  * @param params - Optional query parameters to append
  */
 function buildUrl(url: string, params?: Record<string, QueryParamValue>): string {
-  if (!params) return url;
-  const searchParams = new URLSearchParams();
-  Object.entries(params).forEach(([k, v]) => {
-    if (v !== null) searchParams.set(k, String(v));
-  });
-  const qs = searchParams.toString();
-  return qs ? `${url}?${qs}` : url;
+  const base = typeof window === "undefined" ? process.env.NEXT_PUBLIC_BASE_URL ?? "" : "";
+  const path = params
+    ? (() => {
+      const searchParams = new URLSearchParams();
+      Object.entries(params).forEach(([k, v]) => {
+        if (v !== null) searchParams.set(k, String(v));
+      });
+      const qs = searchParams.toString();
+      return qs ? `${url}?${qs}` : url;
+    })()
+    : url;
+  return `${base}${path}`;
 }
 
 /**
@@ -47,11 +54,11 @@ export async function getJSON<T = unknown>(url: string, params?: Record<string, 
  * @param body - The request body, serialized as JSON
  * @returns The parsed JSON response
  */
-export async function postJSON<T = unknown>(url: string, body: Record<string, unknown>): Promise<T> {
+export async function postJSON<T = unknown>(url: string, body: Record<string, unknown>, headers?: Record<string, string>): Promise<T> {
   const fullUrl = buildUrl(url);
   const res = await fetch(fullUrl, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...headers },
     body: JSON.stringify(body),
   });
   return handleResponse<T>(res, url);
