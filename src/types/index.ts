@@ -95,7 +95,9 @@ export interface Game {
     state: MatchStatus;
     player1: PlayerState;
     player2: PlayerState;
-    rounds: RoundData[];
+    // Stored in Firebase RTDB keyed by round number starting at 1, so it
+    // serializes back as a plain object map, never a real array.
+    rounds: Record<number, RoundData>;
     currentRound: number;
     timestamp: number;
     winner?: string;

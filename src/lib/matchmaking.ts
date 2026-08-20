@@ -363,14 +363,16 @@ export async function endGame(gameId: string): Promise<void> {
     // if no winner, both players didn't respond or both dc'd
     // don't record
     if (game.state !== MatchStatus.Cancelled) {
-      await recordRankedGame(game, game.mode ?? "blitz");
+      await recordRankedGame(game);
       if (game.tournamentId) {
         await advanceWinner(game.tournamentId, game.matchId!, game.winner!);
       }
     } else {
-      // advance random player
+      // Both players disconnected — no fault-based winner, so advance one at random
+      // rather than always favoring whichever participant happened to land in player1.
       if (game.tournamentId) {
-        await advanceWinner(game.tournamentId, game.matchId!, game.player1.id);
+        const advancedId = Math.random() < 0.5 ? game.player1.id : game.player2.id;
+        await advanceWinner(game.tournamentId, game.matchId!, advancedId);
       }
     }
 
