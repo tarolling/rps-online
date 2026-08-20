@@ -27,6 +27,9 @@ interface GameStats {
 /** Number of rounds a player must win to win the game. */
 export const FIRST_TO = 4;
 
+/** Consecutive rounds with zero submissions from either player before the game is cancelled. */
+export const AFK_ROUND_LIMIT = 3;
+
 export interface RoundOutcome {
     action: "cancel" | "noop" | "resolve";
     updates?: Record<string, unknown>;
@@ -48,7 +51,25 @@ export function computeRoundOutcome(game: Game, now: number): RoundOutcome {
   const timeExpired = elapsed >= roundDurationSeconds * 1000;
   const neitherSubmitted = !game.player1.submitted && !game.player2.submitted;
   if (neitherSubmitted) {
-    return { action: "cancel" };
+    const missedRounds = (game.missedRounds ?? 0) + 1;
+    if (missedRounds >= AFK_ROUND_LIMIT) {
+      return { action: "cancel" };
+    }
+    // Grace period: void this round (nobody scores) and give the game
+    // another AFK_ROUND_LIMIT - missedRounds rounds before cancelling.
+    return {
+      action: "resolve",
+      updates: {
+        missedRounds,
+        roundStartTimestamp: now,
+        [`rounds/${game.currentRound}`]: {
+          player1Choice: "none",
+          player2Choice: "none",
+          winner: "draw",
+        },
+        currentRound: game.currentRound + 1,
+      },
+    };
   }
 
   const bothSubmitted = game.player1.submitted && game.player2.submitted;
@@ -60,6 +81,7 @@ export function computeRoundOutcome(game: Game, now: number): RoundOutcome {
   const isGameOver = winner && (game[winner].score + 1) >= FIRST_TO;
 
   const updates: Record<string, unknown> = {
+    missedRounds: 0,
     "player1/choice": null,
     "player1/submitted": false,
     "player2/choice": null,

@@ -6,7 +6,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { DISCONNECT_TIMEOUT, WAITING_TIMEOUT } from "@/lib/common";
-import { resolveRound, awardWinByDisconnect } from "@/lib/matchmaking";
+import { resolveRound, resolveDisconnect } from "@/lib/matchmaking";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
 import styles from "@/styles/game.module.css";
@@ -254,11 +254,7 @@ function WildcardGamePage() {
         const timeout = game.state === MatchStatus.Waiting ? WAITING_TIMEOUT * 1000 : DISCONNECT_TIMEOUT * 1000;
         disconnectTimer = setTimeout(async () => {
           const myPresence = await get(ref(db, `games/${gameId}/presence/${playerId}`));
-          if (!myPresence.exists()) {
-            await update(ref(db, `games/${gameId}`), { state: MatchStatus.Cancelled });
-          } else {
-            awardWinByDisconnect(gameId, playerId);
-          }
+          await resolveDisconnect(gameId, playerId, myPresence.exists());
         }, timeout);
       } else {
         if (disconnectTimer) {

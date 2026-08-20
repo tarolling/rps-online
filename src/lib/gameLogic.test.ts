@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { Game, PlayerState, RoundData } from "@/types";
 import { Choice, MatchStatus } from "@/types/neo4j";
-import { calculateGameStats, computeRoundOutcome, determineRoundWinner, FIRST_TO } from "./gameLogic";
+import { AFK_ROUND_LIMIT, calculateGameStats, computeRoundOutcome, determineRoundWinner, FIRST_TO } from "./gameLogic";
 
 function buildPlayer(overrides: Partial<PlayerState> = {}): PlayerState {
   return {
@@ -83,9 +83,29 @@ describe("calculateGameStats", () => {
 });
 
 describe("computeRoundOutcome", () => {
-  it("cancels the round when neither player has submitted", () => {
+  it("voids the round (rather than cancelling the game) the first time neither player submits", () => {
     const game = buildGame({ roundStartTimestamp: 0 });
+    const outcome = computeRoundOutcome(game, 0);
+    expect(outcome.action).toBe("resolve");
+    expect(outcome.updates?.missedRounds).toBe(1);
+    expect(outcome.updates?.currentRound).toBe(1);
+  });
+
+  it("cancels the game once AFK_ROUND_LIMIT consecutive rounds pass with no submissions", () => {
+    const game = buildGame({ roundStartTimestamp: 0, missedRounds: AFK_ROUND_LIMIT - 1 });
     expect(computeRoundOutcome(game, 0).action).toBe("cancel");
+  });
+
+  it("resets the missed-round counter once a round actually resolves", () => {
+    const game = buildGame({
+      roundStartTimestamp: 0,
+      missedRounds: AFK_ROUND_LIMIT - 1,
+      player1: buildPlayer({ id: "p1", choice: Choice.Rock, submitted: true }),
+      player2: buildPlayer({ id: "p2", choice: Choice.Scissors, submitted: true }),
+    });
+    const outcome = computeRoundOutcome(game, 0);
+    expect(outcome.action).toBe("resolve");
+    expect(outcome.updates?.missedRounds).toBe(0);
   });
 
   it("does nothing while only one player has submitted and time hasn't expired", () => {
