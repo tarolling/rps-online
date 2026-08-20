@@ -147,12 +147,18 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ n
   try {
     const check = await session.executeRead((tx) =>
       tx.run(
-        "MATCH (p:Player {uid: $uid})-[r:MEMBER]->(c:Club {name: $clubName}) RETURN r.role AS role",
+        `MATCH (p:Player {uid: $uid})-[r:MEMBER]->(c:Club {name: $clubName})
+         OPTIONAL MATCH (:Player)-[allMembers:MEMBER]->(c)
+         RETURN r.role AS role, count(allMembers) AS memberCount`,
         { uid: authedUid, clubName },
       ),
     );
     if (check.records.length === 0 || check.records[0].get("role") !== "Founder") {
       return NextResponse.json({ error: "Only the founder can delete this club." }, { status: 403 });
+    }
+    const memberCount = neo4j.integer.toNumber(check.records[0].get("memberCount"));
+    if (memberCount > 1) {
+      return NextResponse.json({ error: "Cannot delete a club that still has other members." }, { status: 409 });
     }
     await session.executeWrite((tx) =>
       tx.run(`

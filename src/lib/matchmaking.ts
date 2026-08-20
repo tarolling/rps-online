@@ -363,14 +363,16 @@ export async function endGame(gameId: string): Promise<void> {
     // if no winner, both players didn't respond or both dc'd
     // don't record
     if (game.state !== MatchStatus.Cancelled) {
-      await recordRankedGame(game, game.mode ?? "blitz");
+      await recordRankedGame(game);
       if (game.tournamentId) {
         await advanceWinner(game.tournamentId, game.matchId!, game.winner!);
       }
     } else {
-      // advance random player
+      // Both players disconnected — no fault-based winner, so advance one at random
+      // rather than always favoring whichever participant happened to land in player1.
       if (game.tournamentId) {
-        await advanceWinner(game.tournamentId, game.matchId!, game.player1.id);
+        const advancedId = Math.random() < 0.5 ? game.player1.id : game.player2.id;
+        await advanceWinner(game.tournamentId, game.matchId!, advancedId);
       }
     }
 
@@ -382,25 +384,34 @@ export async function endGame(gameId: string): Promise<void> {
 };
 
 /**
- * Award one player a win if the other disconnects
+ * Resolves a game once the opponent's presence has been missing past the
+ * disconnect timeout — either awarding the still-connected player the win, or
+ * cancelling the game if both players' presence is gone.
+ *
+ * Runs as a transaction on the game node (not a plain read-then-write) so that
+ * if both players' clients race to resolve the same disconnect at once — e.g.
+ * a shared network blip drops both connections around the same time, so each
+ * client's own timer fires independently — only one write ever commits. The
+ * loser's update function observes the game has already left `InProgress` and
+ * aborts, so `endGame` (which posts rating adjustments and removes the game
+ * node) can't fire twice for the same match.
+ *
  * @param gameId The game ID as it exists in Firebase
- * @param winnerId The winner's user ID
- * @returns
+ * @param myId This client's own uid
+ * @param amIStillConnected Whether *my own* presence is still up. If not,
+ *   both sides are gone and the game is cancelled instead of awarded.
  */
-export async function awardWinByDisconnect(gameId: string, winnerId: string): Promise<void> {
+export async function resolveDisconnect(gameId: string, myId: string, amIStillConnected: boolean): Promise<void> {
   const gameRef = ref(db, `games/${gameId}`);
-  const snapshot = await get(gameRef);
-  if (!snapshot.exists()) return;
 
-  const game: Game = snapshot.val();
-  if (game.state !== MatchStatus.InProgress) return; // already resolved
+  const { committed } = await runTransaction(gameRef, (current: Game | null) => {
+    if (!current || current.state !== MatchStatus.InProgress) return undefined; // already resolved elsewhere
 
-  await update(gameRef, {
-    state: MatchStatus.Completed,
-    winner: winnerId,
-    endTimestamp: Date.now(),
-    disconnectWin: true,
+    return amIStillConnected
+      ? { ...current, state: MatchStatus.Completed, winner: myId, endTimestamp: Date.now(), disconnectWin: true }
+      : { ...current, state: MatchStatus.Cancelled };
   });
 
+  if (!committed) return; // another client's transaction already resolved this game
   await endGame(gameId);
 }
