@@ -1,0 +1,135 @@
+.wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.divider {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: var(--color-text-muted);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.divider::before,
+.divider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--color-border);
+}
+
+.oauthButton {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    background: var(--color-surface);
+    color: var(--color-text);
+    border: 1px solid var(--color-border);
+}
+
+.oauthButton:hover:not(:disabled) {
+    background: var(--color-bg-secondary);
+}
+
+.oauthButton:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Apple's own guidelines call for a solid black (light mode) / white (dark
+   mode) button rather than the neutral outlined style used for other
+   providers, so it stays recognizable as "Sign in with Apple". */
+.appleButton {
+    background: #000;
+    color: #fff;
+    border-color: #000;
+}
+
+.appleButton:hover:not(:disabled) {
+    background: #1a1a1a;
+}
+
+@media (prefers-color-scheme: dark) {
+    .appleButton {
+        background: #fff;
+        color: #000;
+        border-color: #fff;
+    }
+
+    .appleButton:hover:not(:disabled) {
+        background: #e6e6e6;
+    }
+}
+
+.usernameForm {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    text-align: left;
+    margin-top: 1rem;
+}
+
+.label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+}
+
+.submitButton {
+    width: 100%;
+    margin: 0.25rem 0 0;
+    background: var(--color-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.submitButton:hover:not(:disabled) {
+    background: var(--color-primary-hover);
+}
+
+.submitButton:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.errorBanner {
+    font-size: 0.85rem;
+    color: var(--color-danger);
+    background: color-mix(in srgb, var(--color-danger) 10%, transparent);
+    border: 1px solid color-mix(in srgb, var(--color-danger) 30%, transparent);
+    border-radius: var(--radius);
+    padding: 0.6rem 0.85rem;
+    margin: 0;
+    text-align: left;
+}
+
+.spinner {
+    width: 18px;
+    height: 18px;
+    border: 2px solid rgba(255, 255, 255, 0.35);
+    border-top-color: #fff;
+    display: inline-block;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+}
+
+.oauthButton .spinner {
+    border-color: color-mix(in srgb, currentColor 25%, transparent);
+    border-top-color: currentColor;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
