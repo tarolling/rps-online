@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { auth } from "@/lib/firebase";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import OAuthSignInButtons from "@/components/OAuthSignInButtons";
 import styles from "./LoginPage.module.css";
 import { EyeIcon, EyeOffIcon } from "@/components/icons";
 import { postJSON } from "@/lib/api";
@@ -60,6 +61,11 @@ export default function LoginPage() {
     } catch (e: unknown) {
       setError((e as Error).message);
     }
+  };
+
+  const handleOAuthSuccess = () => {
+    router.refresh();
+    router.push("/dashboard");
   };
 
   return (
@@ -121,6 +127,8 @@ export default function LoginPage() {
               {loading ? <span className={styles.spinner} /> : "Log In"}
             </button>
           </form>
+
+          <OAuthSignInButtons onSuccess={handleOAuthSuccess} />
 
           <p className={styles.registerLink}>
                         Don&#39;t have an account? <Link href="/register">Sign up</Link>

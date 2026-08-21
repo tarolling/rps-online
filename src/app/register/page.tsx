@@ -3,9 +3,11 @@
 import { createUserWithEmailAndPassword, sendEmailVerification } from "firebase/auth";
 import React, { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { auth } from "@/lib/firebase";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
+import OAuthSignInButtons from "@/components/OAuthSignInButtons";
 import styles from "./RegisterPage.module.css";
 import { EyeIcon, EyeOffIcon } from "@/components/icons";
 import { postJSON } from "@/lib/api";
@@ -34,6 +36,7 @@ export default function RegisterPage() {
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
   const strength = getPasswordStrength(password);
   const usernameError = username && !USERNAME_REGEX.test(username)
@@ -69,6 +72,11 @@ export default function RegisterPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleOAuthSuccess = () => {
+    router.refresh();
+    router.push("/dashboard");
   };
 
   return (
@@ -181,6 +189,8 @@ export default function RegisterPage() {
               {loading ? <span className={styles.spinner} /> : "Create Account"}
             </button>
           </form>
+
+          <OAuthSignInButtons onSuccess={handleOAuthSuccess} />
 
           <p className={styles.loginLink}>
                         Already have an account? <Link href="/login">Log in</Link>
