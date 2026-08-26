@@ -4,12 +4,13 @@ import Link from "next/link";
 import styles from "./MatchDetailPage.module.css";
 import { getMatchDetail } from "@/lib/matchDetail";
 import { Choice } from "@/types/neo4j";
-import { formatTime } from "@/lib/time";
+import { formatTime, neoDateTimeToMillis } from "@/lib/time";
 import { getAvatarUrl } from "@/lib/avatar";
 import Avatar from "@/components/Avatar";
 import RankBadge from "@/components/RankBadge";
 import { CHOICE_EMOJI } from "@/types";
 import { toPlayMode } from "@/lib/gameModes";
+import LocalTime from "@/components/LocalTime";
 
 function formatMoveText(move: Choice): string {
   return (move as string) === "none" ? "No Pick" : move;
@@ -21,6 +22,7 @@ async function getGameDetail(id: string) {
   return {
     id: data.match.id,
     playedAt: formatTime(data.match.timestamp),
+    playedAtMs: neoDateTimeToMillis(data.match.timestamp),
     totalRounds: data.match.totalRounds,
     isWildcard: toPlayMode(data.match.mode) === "wildcard",
     winner: data.match.winnerId === data.player1.uid ? data.player1.username : data.player2.username,
@@ -63,7 +65,7 @@ export default async function MatchDetailPage({ params }: { params: Promise<{ id
         {/* Result Banner */}
         <section className={styles.resultBanner}>
           <div className={styles.bannerGlow} />
-          <p className={styles.matchMeta}>{game.playedAt}</p>
+          <LocalTime ms={game.playedAtMs} fallback={game.playedAt} className={styles.matchMeta} />
           <div className={styles.scoreboard}>
             <div className={`${styles.playerBlock} ${isP1Winner ? styles.winner : styles.loser}`}>
               <Avatar src={player1.avatar} username={player1.name} size="lg" />

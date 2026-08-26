@@ -25,7 +25,7 @@ export default function RulesPage() {
             <li>Rock beats Scissors, Scissors beats Paper, Paper beats Rock.</li>
             <li>Matches are first to 4 round wins.</li>
             <li>If you don&apos;t submit a choice before the round timer runs out, you forfeit that round.</li>
-            <li>Blitz, Async, and Wildcard games each track separate ratings — climbing one doesn&apos;t affect the others.</li>
+            <li>Blitz, Async, and Wildcard games each track separate ratings, so climbing one doesn&apos;t affect the others.</li>
           </ol>
         </section>
 
@@ -36,14 +36,14 @@ export default function RulesPage() {
               <dt className={styles.modeName}>Blitz</dt>
               <dd className={styles.modeDesc}>
                 Real-time, head-to-head matches. You and your opponent are both online at once, so keep
-                the tab open — you have 30 seconds to make each choice. One Blitz match at a time.
+                the tab open. You have 30 seconds to make each choice. One Blitz match at a time.
               </dd>
             </div>
             <div className={styles.modeItem}>
               <dt className={styles.modeName}>Async</dt>
               <dd className={styles.modeDesc}>
                 Play at your own pace. You have up to 24 hours to respond each round, and you can have
-                several async games going at once — check in whenever it&apos;s convenient. A round resolves
+                several async games going at once (up to 2 for non-premium users). A round resolves
                 automatically once both players have chosen, or when the timer runs out.
               </dd>
             </div>
@@ -51,7 +51,7 @@ export default function RulesPage() {
               <dt className={styles.modeName}>Wildcard</dt>
               <dd className={styles.modeDesc}>
                 Real-time like Blitz, with two extra moves: A and B. Before the match starts, you secretly
-                pick 2 of Rock/Paper/Scissors that your A will beat — the one you don&apos;t pick beats your A
+                pick 2 of Rock/Paper/Scissors that your A will beat. The one you don&apos;t pick beats your A
                 instead, and B beats only A. A and B tie themselves, and B always loses to Rock, Paper, and
                 Scissors. You get 3 total plays of A and B combined for the whole match, so use them wisely
                 and watch for patterns in your opponent&apos;s picks.
@@ -70,7 +70,7 @@ export default function RulesPage() {
           <h2 className={styles.sectionTitle}>Rank System</h2>
           <p className={styles.rankIntro}>
                         Your skill rating determines your rank and division. Each rank has three
-                        divisions — <strong>I</strong>, <strong>II</strong>, and <strong>III</strong> —
+                        divisions: <strong>I</strong>, <strong>II</strong>, and <strong>III</strong>,
                         where III is the highest. Reach <strong>Infinity</strong> to join the elite.
           </p>
 

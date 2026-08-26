@@ -386,7 +386,7 @@ function WildcardGamePage() {
             <div className={styles.result}>
               <p className={styles.resultLabel}>Choose Your Wildcard</p>
               <p className={styles.hint}>
-                Pick 2 of Rock/Paper/Scissors — these are what your Wildcard-A will beat.
+                Pick 2 of Rock/Paper/Scissors; these are what your Wildcard-A will beat.
                 The one you don&apos;t pick beats your A instead, and B always beats A.
               </p>
               <div className={styles.choices}>

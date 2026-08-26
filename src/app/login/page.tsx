@@ -31,7 +31,7 @@ export default function LoginPage() {
 
       if (!userInfo.user.emailVerified) {
         await sendEmailVerification(userInfo.user);
-        setError("Email not verified. We've resent the verification link — check your inbox.");
+        setError("Email not verified. We've resent the verification link; please check your inbox.");
         return;
       }
 

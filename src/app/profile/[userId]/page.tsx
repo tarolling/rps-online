@@ -319,7 +319,7 @@ function ProfilePage() {
               <h2>⭐ Premium</h2>
               {isPremium ? (
                 <>
-                  <p className={styles.premiumBody}>You&apos;re subscribed to Premium — unlimited async games, rank flair, and custom username/avatar.</p>
+                  <p className={styles.premiumBody}>You&apos;re subscribed to Premium: unlimited async games, rank flair, and custom username/avatar.</p>
                   <button onClick={handleManageSubscription} disabled={billingLoading} className={styles.premiumButton}>
                     {billingLoading ? "Loading…" : "Manage Subscription"}
                   </button>
