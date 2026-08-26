@@ -4,11 +4,17 @@ import Link from "next/link";
 import styles from "./MatchDetailPage.module.css";
 import { getMatchDetail } from "@/lib/matchDetail";
 import { Choice } from "@/types/neo4j";
-import { formatTime } from "@/lib/time";
+import { formatTime, neoDateTimeToMillis } from "@/lib/time";
 import { getAvatarUrl } from "@/lib/avatar";
 import Avatar from "@/components/Avatar";
 import RankBadge from "@/components/RankBadge";
 import { CHOICE_EMOJI } from "@/types";
+import { toPlayMode } from "@/lib/gameModes";
+import LocalTime from "@/components/LocalTime";
+
+function formatMoveText(move: Choice): string {
+  return (move as string) === "none" ? "No Pick" : move;
+}
 
 async function getGameDetail(id: string) {
   const data = (await getMatchDetail(id))!;
@@ -16,7 +22,9 @@ async function getGameDetail(id: string) {
   return {
     id: data.match.id,
     playedAt: formatTime(data.match.timestamp),
+    playedAtMs: neoDateTimeToMillis(data.match.timestamp),
     totalRounds: data.match.totalRounds,
+    isWildcard: toPlayMode(data.match.mode) === "wildcard",
     winner: data.match.winnerId === data.player1.uid ? data.player1.username : data.player2.username,
     player1: {
       id: data.player1.uid,
@@ -46,7 +54,7 @@ async function getGameDetail(id: string) {
 export default async function MatchDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const game = await getGameDetail(id);
-  const { player1, player2, rounds } = game;
+  const { player1, player2, rounds, isWildcard } = game;
   const isP1Winner = game.winner === player1.name;
 
   return (
@@ -57,7 +65,7 @@ export default async function MatchDetailPage({ params }: { params: Promise<{ id
         {/* Result Banner */}
         <section className={styles.resultBanner}>
           <div className={styles.bannerGlow} />
-          <p className={styles.matchMeta}>{game.playedAt}</p>
+          <LocalTime ms={game.playedAtMs} fallback={game.playedAt} className={styles.matchMeta} />
           <div className={styles.scoreboard}>
             <div className={`${styles.playerBlock} ${isP1Winner ? styles.winner : styles.loser}`}>
               <Avatar src={player1.avatar} username={player1.name} size="lg" />
@@ -132,6 +140,18 @@ export default async function MatchDetailPage({ params }: { params: Promise<{ id
                   p1: rounds.filter((r) => r.p1Move === Choice.Scissors).length,
                   p2: rounds.filter((r) => r.p2Move === Choice.Scissors).length,
                 },
+                ...(isWildcard ? [
+                  {
+                    label: "A played",
+                    p1: rounds.filter((r) => r.p1Move === Choice.WildcardA).length,
+                    p2: rounds.filter((r) => r.p2Move === Choice.WildcardA).length,
+                  },
+                  {
+                    label: "B played",
+                    p1: rounds.filter((r) => r.p1Move === Choice.WildcardB).length,
+                    p2: rounds.filter((r) => r.p2Move === Choice.WildcardB).length,
+                  },
+                ] : []),
               ].map(({ label, p1, p2 }) => {
                 return (
                   <div key={label} className={styles.statRow}>
@@ -163,13 +183,13 @@ export default async function MatchDetailPage({ params }: { params: Promise<{ id
                   <span className={styles.roundNum}>Round {round.round}</span>
                   <div className={styles.roundMoves}>
                     <div className={`${styles.moveBlock} ${round.result === "player1" ? styles.moveWin : ""}`}>
-                      <span className={styles.moveEmoji}>{CHOICE_EMOJI[round.p1Move]}</span>
-                      <span className={styles.moveText}>{round.p1Move}</span>
+                      <span className={styles.moveEmoji}>{CHOICE_EMOJI[round.p1Move] ?? "❔"}</span>
+                      <span className={styles.moveText}>{formatMoveText(round.p1Move)}</span>
                     </div>
                     <span className={styles.roundVs}>vs</span>
                     <div className={`${styles.moveBlock} ${round.result === "player2" ? styles.moveWin : ""}`}>
-                      <span className={styles.moveEmoji}>{CHOICE_EMOJI[round.p2Move]}</span>
-                      <span className={styles.moveText}>{round.p2Move}</span>
+                      <span className={styles.moveEmoji}>{CHOICE_EMOJI[round.p2Move] ?? "❔"}</span>
+                      <span className={styles.moveText}>{formatMoveText(round.p2Move)}</span>
                     </div>
                   </div>
                   <span className={styles.roundResult}>
@@ -179,45 +199,6 @@ export default async function MatchDetailPage({ params }: { params: Promise<{ id
                   </span>
                 </div>
               ))}
-            </div>
-          </section>
-
-          {/* Match Timeline */}
-          <section className={`${styles.card} ${styles.fullWidth}`}>
-            <h2 className={styles.cardTitle}>Match Timeline</h2>
-            <div className={styles.timeline}>
-              {rounds.map((round, i) => (
-                <div key={round.round} className={styles.timelineItem}>
-                  <div className={styles.timelineDot}
-                    data-result={round.result === "player1" ? "win" : round.result === "player2" ? "loss" : "draw"}
-                  />
-                  {i < rounds.length - 1 && (
-                    <div className={styles.timelineLine} />
-                  )}
-                  <div className={styles.timelineContent}>
-                    <strong>Round {round.round}</strong>
-                    <span>
-                      {CHOICE_EMOJI[round.p1Move]} {round.p1Move} vs {CHOICE_EMOJI[round.p2Move]} {round.p2Move}
-                      {" · "}
-                      {round.result === "draw" ? "Draw" :
-                        round.result === "player1" ? `${player1.name} takes it` :
-                          `${player2.name} takes it`}
-                    </span>
-                    <span className={styles.timelineScore}>
-                        Score: {rounds.slice(0, i + 1).filter((r) => r.result === "player1").length}
-                      {" - "}
-                      {rounds.slice(0, i + 1).filter((r) => r.result === "player2").length}
-                    </span>
-                  </div>
-                </div>
-              ))}
-              <div className={styles.timelineItem}>
-                <div className={styles.timelineDot} data-result="final" />
-                <div className={styles.timelineContent}>
-                  <strong>Match Over</strong>
-                  <span>🏆 {game.winner} wins {player1.wins}-{player2.wins}</span>
-                </div>
-              </div>
             </div>
           </section>
 

@@ -228,7 +228,7 @@ function MatchmakingPage() {
                   <div className={styles.statusBlock}>
                     <div className={styles.searchingRow}>
                       <div className={styles.spinner} />
-                      <span className={styles.statusText}>Searching for opponent…</span>
+                      <span className={styles.statusText}>Searching for opponent...</span>
                     </div>
                     <button className={styles.cancelBtn} onClick={handleCancel}>Cancel</button>
                   </div>
@@ -238,7 +238,7 @@ function MatchmakingPage() {
                   <div className={styles.statusBlock}>
                     <div className={styles.matchedRow}>
                       <span className={styles.successIcon}>✓</span>
-                      <span className={styles.successText}>Match Found — Joining…</span>
+                      <span className={styles.successText}>Match Found! Joining...</span>
                     </div>
                   </div>
                 )}
@@ -296,7 +296,7 @@ function MatchmakingPage() {
                 {asyncStatus === "queued" && (
                   <div className={styles.statusBlock}>
                     <div className={styles.searchingRow}>
-                      <span className={styles.statusText}>Queued — you&apos;ll be matched whenever another async player queues up.</span>
+                      <span className={styles.statusText}>Queued. You&apos;ll be matched whenever another async player queues up.</span>
                     </div>
                     <button className={styles.cancelBtn} onClick={handleCancelAsync}>Cancel</button>
                     <button className={styles.secondaryBtn} onClick={() => router.push("/asyncGames")}>
@@ -309,7 +309,7 @@ function MatchmakingPage() {
                   <div className={styles.statusBlock}>
                     <div className={styles.matchedRow}>
                       <span className={styles.successIcon}>✓</span>
-                      <span className={styles.successText}>Match Found — Joining…</span>
+                      <span className={styles.successText}>Match Found! Joining...</span>
                     </div>
                   </div>
                 )}
@@ -366,7 +366,7 @@ function MatchmakingPage() {
                   <div className={styles.statusBlock}>
                     <div className={styles.searchingRow}>
                       <div className={styles.spinner} />
-                      <span className={styles.statusText}>Searching for opponent…</span>
+                      <span className={styles.statusText}>Searching for opponent...</span>
                     </div>
                     <button className={styles.cancelBtn} onClick={handleCancelWildcard}>Cancel</button>
                   </div>
@@ -376,7 +376,7 @@ function MatchmakingPage() {
                   <div className={styles.statusBlock}>
                     <div className={styles.matchedRow}>
                       <span className={styles.successIcon}>✓</span>
-                      <span className={styles.successText}>Match Found — Joining…</span>
+                      <span className={styles.successText}>Match Found! Joining...</span>
                     </div>
                   </div>
                 )}

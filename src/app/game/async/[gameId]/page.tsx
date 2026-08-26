@@ -203,7 +203,7 @@ function AsyncGamePage() {
             </div>
           )}
           {choice && !isFinished && (
-            <p className={styles.hint}>Choice locked in — waiting on your opponent (or the deadline).</p>
+            <p className={styles.hint}>Choice locked in. Waiting on your opponent (or the deadline).</p>
           )}
 
           {/* Round History */}

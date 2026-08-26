@@ -85,7 +85,7 @@ export default function RegisterPage() {
       <main className={styles.main}>
         <div className="card">
           <h2>Create Account</h2>
-          <p className={styles.subtitle}>Join us — it only takes a minute.</p>
+          <p className={styles.subtitle}>Join us. It only takes a minute.</p>
 
           <form onSubmit={handleRegister} className={styles.form} noValidate>
             {/* Username */}
