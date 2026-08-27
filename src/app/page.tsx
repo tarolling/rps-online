@@ -1,54 +1,44 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import styles from "./page.module.css";
-import { formatRelativeTime } from "@/lib/time";
-import MatchCard from "@/components/MatchCard";
 import HeroButtons from "@/components/HeroButtons";
-import LiveMatches from "@/components/LiveMatches";
-import { getRecentGames, GlobalRecentMatch } from "@/lib/recentGames";
-import { getLiveGames } from "@/lib/liveGames";
+import LiveMatchesSection from "@/components/LiveMatchesSection";
+import RecentMatchesGrid from "@/components/RecentMatchesGrid";
+import MatchesGridSkeleton from "@/components/MatchesGridSkeleton";
+import { RankedIcon, ClubsIcon, PracticeIcon, AnalyticsIcon } from "@/components/icons/FeatureIcons";
 
 export const revalidate = 0;
 
-async function getRecentMatches() {
-  const data = await getRecentGames(null, null) as GlobalRecentMatch[];
-  return data.map((record) => ({
-    ...record,
-    timestamp: formatRelativeTime(record.timestamp),
-  }));
-}
-
 const FEATURES = [
   {
-    icon: "⚔️",
+    icon: RankedIcon,
     label: "01",
     title: "Ranked Matches",
     desc: "Every game counts. Climb divisions, earn your rank, prove you belong at the top.",
   },
   {
-    icon: "🛡️",
+    icon: ClubsIcon,
     label: "02",
     title: "Clubs & Community",
     desc: "Form squads, challenge rivals, and build a reputation on the global stage.",
   },
   {
-    icon: "🤖",
+    icon: PracticeIcon,
     label: "03",
     title: "AI Practice",
     desc: "Train without pressure. Refine your reads and sharpen your instincts.",
   },
   {
-    icon: "📈",
+    icon: AnalyticsIcon,
     label: "04",
     title: "Deep Analytics",
     desc: "Track win rates, streaks, and match history. Know your game inside out.",
   },
 ];
 
-export default async function Home() {
-  const [recentMatches, liveGames] = await Promise.all([getRecentMatches(), getLiveGames()]);
-
+export default function Home() {
   return (
     <div className={styles.homePage}>
       <Header />
@@ -64,9 +54,8 @@ export default async function Home() {
         <div className={styles.heroContent}>
           <p className={styles.heroEyebrow}>Competitive Rock Paper Scissors</p>
           <h1 className={styles.heroHeadline}>
-            Rise.<br />
-            Outplay.<br />
-            <span className={styles.heroAccent}>Dominate.</span>
+            Prove your reads.<br />
+            <span className={styles.heroAccent}>Earn your rank.</span>
           </h1>
           <p className={styles.heroSub}>
             Real rankings. Real stakes. The world&#39;s most underestimated game, taken seriously.
@@ -82,17 +71,17 @@ export default async function Home() {
         <div className={styles.tickerTrack}>
           {Array.from({ length: 3 }).map((_, i) => (
             <span key={i} className={styles.tickerItems}>
-              <span>✊ Ranked Matchmaking</span>
+              <span>Ranked Matchmaking</span>
               <span className={styles.tickerDot}>✦</span>
-              <span>✋ Global Leaderboard</span>
+              <span>Global Leaderboard</span>
               <span className={styles.tickerDot}>✦</span>
-              <span>✌️ Live Spectating</span>
+              <span>Live Spectating</span>
               <span className={styles.tickerDot}>✦</span>
-              <span>🏆 Competitive Clubs</span>
+              <span>Clubs &amp; Rivalries</span>
               <span className={styles.tickerDot}>✦</span>
-              <span>🤖 AI Training</span>
+              <span>AI Practice Mode</span>
               <span className={styles.tickerDot}>✦</span>
-              <span>🏆 Exciting Tournaments</span>
+              <span>Tournaments</span>
               <span className={styles.tickerDot}>✦</span>
             </span>
           ))}
@@ -107,10 +96,10 @@ export default async function Home() {
             <h2 className={styles.sectionTitle}>Built for competitors.</h2>
           </div>
           <div className={styles.featuresGrid}>
-            {FEATURES.map(({ icon, label, title, desc }) => (
+            {FEATURES.map(({ icon: Icon, label, title, desc }) => (
               <div key={title} className={styles.featureCard}>
                 <span className={styles.featureLabel}>{label}</span>
-                <span className={styles.featureIcon}>{icon}</span>
+                <Icon className={styles.featureIcon} />
                 <h3 className={styles.featureTitle}>{title}</h3>
                 <p className={styles.featureDesc}>{desc}</p>
               </div>
@@ -120,7 +109,9 @@ export default async function Home() {
       </section>
 
       {/* ── Live matches ── */}
-      <LiveMatches initialLiveGames={liveGames} />
+      <Suspense fallback={null}>
+        <LiveMatchesSection />
+      </Suspense>
 
       {/* ── Recent matches ── */}
       <section className={styles.recentSection}>
@@ -129,11 +120,9 @@ export default async function Home() {
             <p className={styles.sectionEyebrow}>Match feed</p>
             <h2 className={styles.sectionTitle}>Recent battles.</h2>
           </div>
-          <div className={styles.matchesGrid}>
-            {recentMatches.map((match, index) => (
-              <MatchCard key={index} match={match} index={index} />
-            ))}
-          </div>
+          <Suspense fallback={<MatchesGridSkeleton />}>
+            <RecentMatchesGrid />
+          </Suspense>
           <div className={styles.leaderboardCta}>
             <Link href="/leaderboard" className={styles.leaderboardLink}>
               View Full Leaderboard →
@@ -145,9 +134,9 @@ export default async function Home() {
       {/* ── Bottom CTA ── */}
       <section className={styles.bottomCta}>
         <div className={styles.bottomCtaInner}>
-          <h2 className={styles.bottomCtaTitle}>Your rank awaits.</h2>
-          <p className={styles.bottomCtaSub}>Every champion started at zero. What&apos;s your excuse?</p>
-          <Link href="/dashboard" className={styles.bottomCtaBtn}>Start Climbing</Link>
+          <h2 className={styles.bottomCtaTitle}>Think you&apos;d have called it?</h2>
+          <p className={styles.bottomCtaSub}>Ranked matchmaking finds you an opponent in seconds. Go see where you actually rank.</p>
+          <Link href="/play" className={styles.bottomCtaBtn}>Find a Match</Link>
         </div>
       </section>
 
