@@ -1,8 +1,12 @@
+import type { CSSProperties } from "react";
 import styles from "@/styles/game.module.css";
 import RankBadge from "@/components/RankBadge";
 import Avatar from "@/components/Avatar";
 import { CHOICE_EMOJI, RoundData } from "@/types";
 import { Choice } from "@/types/neo4j";
+import { getTitle, RARITY_COLOR } from "@/lib/titles";
+
+type RoundOutcome = "win" | "loss" | "draw" | null;
 
 type PlayerPanelProps = {
     label: string;
@@ -11,23 +15,39 @@ type PlayerPanelProps = {
     score: number;
     choice: Choice | null;
     clubTag?: string | null;
+    titleId?: string | null;
     avatarUrl?: string | null;
     reveal?: boolean;
     hasChosen?: boolean;
     disconnected?: boolean;
+    /** Result of the just-revealed round, from this panel's own perspective. Drives the reveal glow/shake. */
+    outcome?: RoundOutcome;
 };
 
-export function PlayerPanel({ label, name, rating, score, choice, avatarUrl, clubTag, reveal = true, hasChosen = false, disconnected = false }: PlayerPanelProps) {
+const OUTCOME_CLASS: Record<NonNullable<RoundOutcome>, string> = {
+  win: styles.outcomeWin,
+  loss: styles.outcomeLoss,
+  draw: styles.outcomeDraw,
+};
+
+export function PlayerPanel({ label, name, rating, score, choice, avatarUrl, clubTag, titleId, reveal = true, hasChosen = false, disconnected = false, outcome = null }: PlayerPanelProps) {
+  const revealed = !!choice && reveal;
+  const title = titleId ? getTitle(titleId) : null;
   return (
     <div className={styles.playerPanel}>
       <span className={styles.playerLabel}>{label}</span>
       <Avatar src={avatarUrl} username={name} size="md" />
       <span className={styles.playerName}>
         {clubTag && <span className={styles.playerClubTag}>[{clubTag}]</span>} {name} {disconnected && <span className={styles.disconnectedBadge}>● Disconnected</span>}
+        {title && (
+          <span className={styles.playerTitle} style={{ "--title-color": RARITY_COLOR[title.rarity] } as CSSProperties}>
+            {title.name}
+          </span>
+        )}
       </span>
       <RankBadge rating={rating} variant='compact' />
       <span className={styles.playerScore}>{score}</span>
-      <div className={`${styles.choiceDisplay} ${(choice && reveal) || hasChosen ? styles.choiceVisible : ""}`}>
+      <div className={`${styles.choiceDisplay} ${revealed || hasChosen ? styles.choiceVisible : ""} ${revealed && outcome ? OUTCOME_CLASS[outcome] : ""}`}>
         {choice && reveal ? CHOICE_EMOJI[choice] : hasChosen ? "✔️" : ""}
       </div>
     </div>

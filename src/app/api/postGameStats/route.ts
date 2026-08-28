@@ -7,6 +7,7 @@ import { withErrorHandling } from "@/lib/apiHandler";
 import { calculateGameStats } from "@/lib/gameLogic";
 import calculateRating from "@/lib/calculateRating";
 import { GAME_MODES, isValidPlayMode } from "@/lib/gameModes";
+import { checkAndAwardMatchTitles } from "@/lib/titles.server";
 import { MatchStatus } from "@/types/neo4j";
 import type { Game, RoundData } from "@/types";
 
@@ -156,6 +157,11 @@ export const POST = withErrorHandling("postGameStats", async (req: NextRequest) 
         playerTwoNewRating: neo4j.int(playerTwoNewRating),
       });
     });
+
+    await Promise.all([
+      checkAndAwardMatchTitles(player1.id, playerOneNewRating),
+      checkAndAwardMatchTitles(player2.id, playerTwoNewRating),
+    ]);
 
     return NextResponse.json({ success: true });
   } finally {

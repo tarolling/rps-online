@@ -38,9 +38,12 @@ const PLAYABLE_CHOICES = [Choice.Rock, Choice.Paper, Choice.Scissors];
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
+type RoundOutcome = "win" | "loss" | "draw" | null;
+
 export default function PlayAIPage() {
   const [playerChoice, setPlayerChoice] = useState<Choice | null>(null);
   const [aiChoice, setAIChoice] = useState<Choice | null>(null);
+  const [roundOutcome, setRoundOutcome] = useState<RoundOutcome>(null);
   const [gameData, setGameData] = useState<GameData>({
     playerScore: 0,
     aiScore: 0,
@@ -58,6 +61,7 @@ export default function PlayAIPage() {
     setAIChoice(aiResponse);
 
     const roundWinner = determineRoundWinner(selected, aiResponse);
+    setRoundOutcome(roundWinner === null ? "draw" : roundWinner === "player1" ? "win" : "loss");
 
     setGameData((prev) => {
       const playerScore = roundWinner === "player1" ? prev.playerScore + 1 : prev.playerScore;
@@ -81,6 +85,7 @@ export default function PlayAIPage() {
     setTimeout(() => {
       setPlayerChoice(null);
       setAIChoice(null);
+      setRoundOutcome(null);
     }, 1500);
   }, [aiAlgorithm]);
 
@@ -93,6 +98,7 @@ export default function PlayAIPage() {
   const handlePlayAgain = () => {
     setPlayerChoice(null);
     setAIChoice(null);
+    setRoundOutcome(null);
     setRounds({});
     setGameData({
       playerScore: 0,
@@ -118,6 +124,7 @@ export default function PlayAIPage() {
               name="Player"
               score={gameData.playerScore}
               choice={playerChoice}
+              outcome={roundOutcome}
             />
 
             <div className={styles.vsBlock}>
@@ -132,6 +139,7 @@ export default function PlayAIPage() {
               score={gameData.aiScore}
               choice={aiChoice}
               reveal={!!aiChoice}
+              outcome={roundOutcome === "win" ? "loss" : roundOutcome === "loss" ? "win" : roundOutcome}
             />
           </div>
 
@@ -185,16 +193,24 @@ type PlayerPanelProps = {
     score: number;
     choice: Choice | null;
     reveal?: boolean;
+    outcome?: RoundOutcome;
 };
 
-function PlayerPanel({ label, name, score, choice, reveal = true }: PlayerPanelProps) {
+const OUTCOME_CLASS: Record<NonNullable<RoundOutcome>, string> = {
+  win: styles.outcomeWin,
+  loss: styles.outcomeLoss,
+  draw: styles.outcomeDraw,
+};
+
+function PlayerPanel({ label, name, score, choice, reveal = true, outcome = null }: PlayerPanelProps) {
+  const revealed = !!choice && reveal;
   return (
     <div className={styles.playerPanel}>
       <span className={styles.playerLabel}>{label}</span>
       <span className={styles.playerName}>{name}</span>
       <span className={styles.playerScore}>{score}</span>
-      <div className={`${styles.choiceDisplay} ${choice && reveal ? styles.choiceVisible : ""}`}>
-        {choice && reveal ? CHOICE_EMOJI[choice] : ""}
+      <div className={`${styles.choiceDisplay} ${revealed ? styles.choiceVisible : ""} ${revealed && outcome ? OUTCOME_CLASS[outcome] : ""}`}>
+        {revealed ? CHOICE_EMOJI[choice as Choice] : ""}
       </div>
     </div>
   );
