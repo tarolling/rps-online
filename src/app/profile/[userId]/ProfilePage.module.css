@@ -44,6 +44,18 @@
     font-size: 2rem;
 }
 
+.equippedTitle {
+    display: inline-block;
+    margin-left: 0.6rem;
+    padding: 0.15rem 0.6rem;
+    border-radius: var(--radius);
+    border: 1px solid var(--title-color, var(--color-border));
+    color: var(--title-color, var(--color-text));
+    font-size: 0.9rem;
+    font-weight: 600;
+    vertical-align: middle;
+}
+
 .actions {
     display: flex;
     gap: 0.75rem;
@@ -136,9 +148,14 @@
     font-size: 0.9rem;
 }
 
-.editButton:hover,
+.editButton:hover:not(:disabled),
 .saveButton:hover {
     background: var(--color-primary-hover);
+}
+
+.editButton:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
 }
 
 .cancelButton {
@@ -343,6 +360,63 @@
 .matchDate {
     font-size: 0.78rem;
     color: var(--color-text-muted);
+}
+
+/* ── Titles ── */
+
+.titleList {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.titleChip {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.7rem 0.9rem;
+    background: var(--color-bg-secondary);
+    border-radius: var(--radius);
+    border-left: 4px solid var(--title-color, var(--color-border));
+    gap: 0.75rem;
+}
+
+.titleInfo {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    min-width: 0;
+}
+
+.titleName {
+    font-weight: 700;
+    color: var(--title-color, var(--color-text));
+}
+
+.titleDescription {
+    font-size: 0.78rem;
+    color: var(--color-text-muted);
+}
+
+.titleEquipButton {
+    flex-shrink: 0;
+    padding: 0.35rem 0.75rem;
+    border-radius: var(--radius);
+    border: 1px solid var(--color-border);
+    background: transparent;
+    color: var(--color-text);
+    font-size: 0.8rem;
+    cursor: pointer;
+}
+
+.titleEquipButton:hover {
+    border-color: var(--color-primary);
+}
+
+.titleEquipButton.equipped {
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+    color: var(--color-bg);
 }
 
 /* ── Error card ── */

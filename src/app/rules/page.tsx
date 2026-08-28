@@ -3,6 +3,7 @@ import Footer from "@/components/Footer";
 import Header from "@/components/Header";
 import { getRankNames, RANK_TIERS } from "@/lib/ranks";
 import RankBadge from "@/components/RankBadge";
+import { GAMES_PLAYED_TITLES, INFINITY_RANK_TITLE, RARITY_COLOR, TOURNAMENT_CHAMPION_TITLE, WIN_STREAK_TITLES } from "@/lib/titles";
 import styles from "./RulesPage.module.css";
 
 export const metadata: Metadata = {
@@ -116,6 +117,60 @@ export default function RulesPage() {
                 })}
               </tbody>
             </table>
+          </div>
+        </section>
+
+        <section className={styles.card}>
+          <h2 className={styles.sectionTitle}>Titles</h2>
+          <p className={styles.titlesIntro}>
+            Titles are earned automatically as you play, and are checked the moment a match finishes —
+            so if you already qualify for one before it&apos;s awarded, you&apos;ll pick it up on your
+            next completed game. Equip an earned title from your profile page to show it off next to
+            your name in-game and on your profile.
+          </p>
+
+          <div className={styles.titleGroup}>
+            <h3 className={styles.titleGroupHeading}>Games Played</h3>
+            <dl className={styles.titlesList}>
+              {GAMES_PLAYED_TITLES.map(({ title }) => (
+                <div key={title.id} className={styles.titleRow} style={{ "--title-color": RARITY_COLOR[title.rarity] } as React.CSSProperties}>
+                  <dt className={styles.titleRowName}>{title.name}</dt>
+                  <dd className={styles.titleRowDesc}>{title.description}</dd>
+                </div>
+              ))}
+            </dl>
+          </div>
+
+          <div className={styles.titleGroup}>
+            <h3 className={styles.titleGroupHeading}>Win Streaks</h3>
+            <dl className={styles.titlesList}>
+              {WIN_STREAK_TITLES.map(({ title }) => (
+                <div key={title.id} className={styles.titleRow} style={{ "--title-color": RARITY_COLOR[title.rarity] } as React.CSSProperties}>
+                  <dt className={styles.titleRowName}>{title.name}</dt>
+                  <dd className={styles.titleRowDesc}>{title.description}</dd>
+                </div>
+              ))}
+            </dl>
+          </div>
+
+          <div className={styles.titleGroup}>
+            <h3 className={styles.titleGroupHeading}>Rank</h3>
+            <dl className={styles.titlesList}>
+              <div className={styles.titleRow} style={{ "--title-color": RARITY_COLOR[INFINITY_RANK_TITLE.rarity] } as React.CSSProperties}>
+                <dt className={styles.titleRowName}>{INFINITY_RANK_TITLE.name}</dt>
+                <dd className={styles.titleRowDesc}>{INFINITY_RANK_TITLE.description}</dd>
+              </div>
+            </dl>
+          </div>
+
+          <div className={styles.titleGroup}>
+            <h3 className={styles.titleGroupHeading}>Tournaments</h3>
+            <dl className={styles.titlesList}>
+              <div className={styles.titleRow} style={{ "--title-color": RARITY_COLOR[TOURNAMENT_CHAMPION_TITLE.rarity] } as React.CSSProperties}>
+                <dt className={styles.titleRowName}>{TOURNAMENT_CHAMPION_TITLE.name}</dt>
+                <dd className={styles.titleRowDesc}>{TOURNAMENT_CHAMPION_TITLE.description}</dd>
+              </div>
+            </dl>
           </div>
         </section>
 

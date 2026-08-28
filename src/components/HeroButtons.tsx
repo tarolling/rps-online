@@ -6,7 +6,7 @@ export default function HeroButtons() {
   return (
     <div className={styles.heroButtons}>
       <Link href="/rules" className={styles.secondaryButton}>Learn the Rules</Link>
-      <Link href="/dashboard" className={styles.ctaButton}>Play Now</Link>
+      <Link href="/play" className={styles.ctaButton}>Play Now</Link>
     </div>
   );
 }

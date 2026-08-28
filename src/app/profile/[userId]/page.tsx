@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import Link from "next/link";
 import { useRouter, useParams, useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
@@ -18,6 +18,7 @@ import type { ClubAvailability } from "@/types/neo4j";
 import FriendButton from "@/components/FriendButton";
 import { fetchFriends, FriendEntry } from "@/lib/friends";
 import { GAME_MODES } from "@/lib/gameModes";
+import { getTitle, RARITY_COLOR } from "@/lib/titles";
 
 type GameStats = {
   totalGames: number;
@@ -186,6 +187,16 @@ function ProfilePage() {
     }
   };
 
+  const handleEquipTitle = async (titleId: string | null) => {
+    const nextTitleId = profileData?.equippedTitleId === titleId ? null : titleId;
+    try {
+      await postJSON("/api/titles/equip", { titleId: nextTitleId });
+      setProfileData((prev) => prev ? { ...prev, equippedTitleId: nextTitleId } : prev);
+    } catch (err: unknown) {
+      setError((err as Error).message);
+    }
+  };
+
   const handleDeleteAccount = async () => {
     if (!window.confirm("Are you sure you want to delete your account? This cannot be undone.")) return;
     try {
@@ -291,7 +302,17 @@ function ProfilePage() {
                 {usernameError && <span className={styles.fieldError}>{usernameError}</span>}
               </div>
             ) : (
-              <h1>{profileData?.username || "Player"}</h1>
+              <h1>
+                {profileData?.username || "Player"}
+                {profileData?.equippedTitleId && getTitle(profileData.equippedTitleId) && (
+                  <span
+                    className={styles.equippedTitle}
+                    style={{ "--title-color": RARITY_COLOR[getTitle(profileData.equippedTitleId)!.rarity] } as CSSProperties}
+                  >
+                    {getTitle(profileData.equippedTitleId)!.name}
+                  </span>
+                )}
+              </h1>
             )}
             {avatarError && <span className={styles.fieldError}>{avatarError}</span>}
             {isOwnProfile && (
@@ -300,8 +321,8 @@ function ProfilePage() {
                   <button onClick={() => setIsEditing(true)} className={styles.editButton}>Edit Username</button>
                 )}
                 {!isEditing && !isPremium && (
-                  <button onClick={handleUpgrade} className={styles.editButton} title="Upgrade to Premium to change your username">
-                    🔒 Edit Username
+                  <button className={styles.editButton} disabled title="Upgrade to Premium to change your username">
+                    Edit Username
                   </button>
                 )}
                 <button onClick={handleDeleteAccount} className={styles.deleteButton}>Delete Account</button>
@@ -362,6 +383,37 @@ function ProfilePage() {
               </div>
             ) : (
               <p className={styles.emptyState}>This player has not played any games.</p>
+            )}
+          </section>
+
+          <section className={styles.card}>
+            <h2>Titles</h2>
+            {profileData && profileData.earnedTitleIds.length > 0 ? (
+              <div className={styles.titleList}>
+                {profileData.earnedTitleIds.map((titleId) => {
+                  const title = getTitle(titleId);
+                  if (!title) return null;
+                  const equipped = profileData.equippedTitleId === titleId;
+                  return (
+                    <div key={titleId} className={styles.titleChip} style={{ "--title-color": RARITY_COLOR[title.rarity] } as CSSProperties}>
+                      <div className={styles.titleInfo}>
+                        <span className={styles.titleName}>{title.name}</span>
+                        <span className={styles.titleDescription}>{title.description}</span>
+                      </div>
+                      {isOwnProfile && (
+                        <button
+                          className={`${styles.titleEquipButton} ${equipped ? styles.equipped : ""}`}
+                          onClick={() => handleEquipTitle(titleId)}
+                        >
+                          {equipped ? "Equipped" : "Equip"}
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className={styles.emptyState}>No titles earned yet.</p>
             )}
           </section>
 

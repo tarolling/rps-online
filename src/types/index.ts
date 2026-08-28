@@ -20,6 +20,8 @@ export interface Player {
     isPremium: boolean;
     stripeCustomerId: string | null;
     stripeSubscriptionId: string | null;
+    /** Id of the earned title currently displayed next to this player's name, or null. */
+    equippedTitleId: string | null;
 }
 
 export interface ProfileData {
@@ -27,6 +29,9 @@ export interface ProfileData {
     ratings: Partial<Record<PlayMode, number>>;
     /** Never includes stripeCustomerId/stripeSubscriptionId — fetchPlayer is a public, unauthenticated route. */
     isPremium: boolean;
+    equippedTitleId: string | null;
+    /** Ids of every title this player has earned — display metadata comes from the TITLES catalog, not the server. */
+    earnedTitleIds: string[];
 }
 
 /** Which timing variant a game/queue entry belongs to. */
