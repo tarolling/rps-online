@@ -7,12 +7,13 @@ import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { DISCONNECT_TIMEOUT, WAITING_TIMEOUT } from "@/lib/common";
 import { resolveRound, resolveDisconnect } from "@/lib/matchmaking";
+import { determineWildcardRoundWinner } from "@/lib/wildcardLogic";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
 import styles from "@/styles/game.module.css";
 import config from "@/config/settings.json";
 import { getAvatarUrl } from "@/lib/avatar";
-import { getJSON } from "@/lib/api";
+import { getJSON, postJSON } from "@/lib/api";
 import { CHOICE_EMOJI, Game, UserClub } from "@/types";
 import { Choice, MatchStatus } from "@/types/neo4j";
 import { PlayerPanel, RoundHistory } from "@/components/GamePanels";
@@ -51,6 +52,7 @@ function WildcardGamePage() {
   const [playerAvatarUrl, setPlayerAvatarUrl] = useState<string | null>(null);
   const [opponentAvatarUrl, setOpponentAvatarUrl] = useState<string | null>(null);
   const [clubTags, setClubTags] = useState<Record<string, string | null>>({});
+  const [equippedTitles, setEquippedTitles] = useState<Record<string, string | null>>({});
   const [spectatorCount, setSpectatorCount] = useState(0);
   const [selectedConfig, setSelectedConfig] = useState<Choice[]>([]);
   const [configSubmitted, setConfigSubmitted] = useState(false);
@@ -82,6 +84,18 @@ function WildcardGamePage() {
         setClubTags({
           [game.player1.id]: p1Club?.tag ?? null,
           [game.player2.id]: p2Club?.tag ?? null,
+        });
+      });
+    }
+
+    if (!(game.player1.id in equippedTitles) && !(game.player2.id in equippedTitles)) {
+      Promise.all([
+        postJSON<{ equippedTitleId: string | null }>("/api/fetchPlayer", { uid: game.player1.id }).catch(() => null),
+        postJSON<{ equippedTitleId: string | null }>("/api/fetchPlayer", { uid: game.player2.id }).catch(() => null),
+      ]).then(([p1, p2]) => {
+        setEquippedTitles({
+          [game.player1.id]: p1?.equippedTitleId ?? null,
+          [game.player2.id]: p2?.equippedTitleId ?? null,
         });
       });
     }
@@ -376,6 +390,13 @@ function WildcardGamePage() {
   const isFinished = game.state === MatchStatus.Completed;
   const playerWon = game.winner === playerId;
 
+  // Cosmetic only — see the equivalent comment in game/[gameId]/page.tsx.
+  const roundWinnerKey = roundOver
+    ? determineWildcardRoundWinner(game.player1.choice, game.player2.choice, game.player1.aBeats, game.player2.aBeats)
+    : null;
+  const myOutcome = !roundOver ? null : roundWinnerKey === null ? "draw" : roundWinnerKey === (isPlayer1 ? "player1" : "player2") ? "win" : "loss";
+  const opponentOutcome = myOutcome === "win" ? "loss" : myOutcome === "loss" ? "win" : myOutcome;
+
   return (
     <div className="app">
       <Header />
@@ -418,10 +439,12 @@ function WildcardGamePage() {
                   label="You"
                   name={playerData?.username ?? "Player"}
                   clubTag={playerData ? clubTags[playerData.id] : null}
+                  titleId={playerData ? equippedTitles[playerData.id] : null}
                   rating={playerData?.rating ?? 0}
                   score={playerData?.score ?? 0}
                   choice={choice}
                   avatarUrl={playerAvatarUrl}
+                  outcome={myOutcome}
                 />
 
                 <div className={styles.vsBlock}>
@@ -441,6 +464,7 @@ function WildcardGamePage() {
                   label="Opponent"
                   name={opponentData?.username ?? "Opponent"}
                   clubTag={opponentData ? clubTags[opponentData.id] : null}
+                  titleId={opponentData ? equippedTitles[opponentData.id] : null}
                   rating={opponentData?.rating ?? 0}
                   score={opponentData?.score ?? 0}
                   choice={roundOver ? game[opponentKey].choice : null}
@@ -448,6 +472,7 @@ function WildcardGamePage() {
                   hasChosen={!!game[opponentKey].choice}
                   disconnected={!opponentConnected}
                   avatarUrl={opponentAvatarUrl}
+                  outcome={opponentOutcome}
                 />
               </div>
 

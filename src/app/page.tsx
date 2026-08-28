@@ -131,15 +131,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ── Bottom CTA ── */}
-      <section className={styles.bottomCta}>
-        <div className={styles.bottomCtaInner}>
-          <h2 className={styles.bottomCtaTitle}>Think you&apos;d have called it?</h2>
-          <p className={styles.bottomCtaSub}>Ranked matchmaking finds you an opponent in seconds. Go see where you actually rank.</p>
-          <Link href="/play" className={styles.bottomCtaBtn}>Find a Match</Link>
-        </div>
-      </section>
-
       <Footer />
     </div >
   );

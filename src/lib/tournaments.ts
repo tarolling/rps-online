@@ -1,5 +1,6 @@
 import { get, getDatabase, push, ref, set } from "firebase/database";
 import { createGame } from "./matchmaking";
+import { postJSON } from "./api";
 import { Participant, Tournament, TournamentMatch } from "@/types";
 import { TournamentMatchStatus, TournamentStatus, type TournamentPlayerCap } from "@/types/neo4j";
 import { generateBracket, getCurrentMatch, seedParticipants } from "./tournamentBracket";
@@ -115,6 +116,14 @@ export const advanceWinner = async (
     }
 
     await set(tournamentRef, tournament);
+
+    if (tournament.status === TournamentStatus.Completed) {
+      // Best-effort — a title-award failure shouldn't block bracket advancement.
+      postJSON("/api/tournaments/awardChampion", { tournamentId }).catch((err) =>
+        console.error("Error awarding tournament champion title:", err),
+      );
+    }
+
     return tournament;
   } catch (error) {
     console.error("Error advancing winner:", error);

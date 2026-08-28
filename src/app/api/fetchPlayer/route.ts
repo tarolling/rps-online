@@ -16,7 +16,10 @@ export async function POST(req: NextRequest) {
     const result = await runQuery(`
       MATCH (p:Player {uid: $uid})
       OPTIONAL MATCH (p)-[:HAS_RATING]->(r:Rating)
-      RETURN p.username AS username, p.isPremium AS isPremium, collect({mode: r.mode, value: r.value}) AS ratings
+      OPTIONAL MATCH (p)-[:EARNED_TITLE]->(t:Title)
+      RETURN p.username AS username, p.isPremium AS isPremium, p.equippedTitleId AS equippedTitleId,
+             collect(DISTINCT {mode: r.mode, value: r.value}) AS ratings,
+             collect(DISTINCT t.id) AS earnedTitleIds
       `, { uid });
 
     if (result.records.length === 0) {
@@ -34,11 +37,15 @@ export async function POST(req: NextRequest) {
       PLAY_MODES.map((mode) => [mode, ratingsByMode.get(mode) ?? config.defaultRating]),
     ) as Record<PlayMode, number>;
 
+    const earnedTitleIds = (read.get("earnedTitleIds") as (string | null)[]).filter((id): id is string => id !== null);
+
     return NextResponse.json({
       username: read.get("username"),
       ratings,
       // Boolean only — this route is public/unauthenticated, never leak Stripe IDs here.
       isPremium: read.get("isPremium") ?? false,
+      equippedTitleId: read.get("equippedTitleId") ?? null,
+      earnedTitleIds,
     });
   } catch (err) {
     console.error("fetchPlayer error:", err);

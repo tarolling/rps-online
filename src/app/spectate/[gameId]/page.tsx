@@ -4,7 +4,8 @@ import { getDatabase, onDisconnect, onValue, ref, remove, set } from "firebase/d
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { getAvatarUrl } from "@/lib/avatar";
-import { getJSON } from "@/lib/api";
+import type { CSSProperties } from "react";
+import { getJSON, postJSON } from "@/lib/api";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
 import RankBadge from "@/components/RankBadge";
@@ -13,6 +14,7 @@ import styles from "@/styles/game.module.css";
 import config from "@/config/settings.json";
 import { CHOICE_EMOJI, Game, RoundData, UserClub } from "@/types";
 import { Choice, MatchStatus } from "@/types/neo4j";
+import { getTitle, RARITY_COLOR } from "@/lib/titles";
 
 
 
@@ -27,6 +29,7 @@ export default function SpectatePage() {
   const [p1AvatarUrl, setP1AvatarUrl] = useState<string | null>(null);
   const [p2AvatarUrl, setP2AvatarUrl] = useState<string | null>(null);
   const [clubTags, setClubTags] = useState<Record<string, string | null>>({});
+  const [equippedTitles, setEquippedTitles] = useState<Record<string, string | null>>({});
 
   // Subscribe to game
   useEffect(() => {
@@ -64,6 +67,13 @@ export default function SpectatePage() {
     ]).then(([c1, c2]) => setClubTags({
       [game.player1.id]: c1?.tag ?? null,
       [game.player2.id]: c2?.tag ?? null,
+    }));
+    Promise.all([
+      postJSON<{ equippedTitleId: string | null }>("/api/fetchPlayer", { uid: game.player1.id }).catch(() => null),
+      postJSON<{ equippedTitleId: string | null }>("/api/fetchPlayer", { uid: game.player2.id }).catch(() => null),
+    ]).then(([p1, p2]) => setEquippedTitles({
+      [game.player1.id]: p1?.equippedTitleId ?? null,
+      [game.player2.id]: p2?.equippedTitleId ?? null,
     }));
   }, [game?.player1.id, game?.player2.id]);
 
@@ -134,6 +144,7 @@ export default function SpectatePage() {
           rating={game.player1.rating}
           score={game.player1.score}
           clubTag={clubTags[game.player1.id]}
+          titleId={equippedTitles[game.player1.id]}
           avatarUrl={p1AvatarUrl}
           hasChosen={game.player1.submitted}
           choice={bothSubmitted ? game.player1.choice : null}
@@ -155,6 +166,7 @@ export default function SpectatePage() {
           rating={game.player2.rating}
           score={game.player2.score}
           clubTag={clubTags[game.player2.id]}
+          titleId={equippedTitles[game.player2.id]}
           avatarUrl={p2AvatarUrl}
           hasChosen={game.player2.submitted}
           choice={bothSubmitted ? game.player2.choice : null}
@@ -171,17 +183,23 @@ export default function SpectatePage() {
 
 // ── Sub-components ────────────────────────────────────────────────────────────
 
-function SpectatorPanel({ label, name, rating, score, clubTag, avatarUrl, hasChosen, choice, reveal }: {
+function SpectatorPanel({ label, name, rating, score, clubTag, titleId, avatarUrl, hasChosen, choice, reveal }: {
   label: string; name: string; rating: number; score: number;
-  clubTag?: string | null; avatarUrl?: string | null;
+  clubTag?: string | null; titleId?: string | null; avatarUrl?: string | null;
   hasChosen: boolean; choice: Choice | null; reveal: boolean;
 }) {
+  const title = titleId ? getTitle(titleId) : null;
   return (
     <div className={styles.playerPanel}>
       <span className={styles.playerLabel}>{label}</span>
       <Avatar src={avatarUrl} username={name} size="md" />
       <span className={styles.playerName}>
         {clubTag && <span className={styles.playerClubTag}>[{clubTag}]</span>} {name}
+        {title && (
+          <span className={styles.playerTitle} style={{ "--title-color": RARITY_COLOR[title.rarity] } as CSSProperties}>
+            {title.name}
+          </span>
+        )}
       </span>
       <RankBadge rating={rating} variant="compact" />
       <span className={styles.playerScore}>{score}</span>
