@@ -194,202 +194,229 @@ function MatchmakingPage() {
         <div className={styles.grid}>
 
           {/* ── Blitz ── */}
-          {user && (
-            <div
-              className={`${styles.card} ${styles.cardAccent}`}
-              style={{ "--rank-color": rankColor ?? "var(--color-primary)", "--rank-glow": rankTier?.glow ?? "transparent" } as React.CSSProperties}
-            >
-              <div className={styles.cardBg} aria-hidden />
+          <div
+            className={`${styles.card} ${styles.cardAccent} ${!user ? styles.signedOut : ""}`}
+            style={{ "--rank-color": rankColor ?? "var(--color-primary)", "--rank-glow": rankTier?.glow ?? "transparent" } as React.CSSProperties}
+          >
+            <div className={styles.cardBg} aria-hidden />
 
-              <div className={styles.cardTopRow}>
-                <div className={styles.modeTag}>Competitive</div>
+            <div className={styles.cardTopRow}>
+              <div className={styles.modeTag}>Competitive</div>
+              {user && (
                 <div className={styles.onlineCount}>
                   <span className={styles.onlineDot} />
                   <span>{onlineCounts.blitz} online</span>
                 </div>
-              </div>
-              <h2 className={styles.cardTitle}>Blitz</h2>
-              <p className={styles.cardDesc}>Climb the leaderboard. Your rating is on the line.</p>
+              )}
+            </div>
+            <h2 className={styles.cardTitle}>Blitz</h2>
+            <p className={styles.cardDesc}>Climb the leaderboard. Your rating is on the line.</p>
 
-              {playerInfo && (
-                <div className={styles.playerSnapshot}>
-                  <RankBadge rating={playerInfo.ratings.blitz ?? config.defaultRating} variant="full" premium={playerInfo.isPremium} />
+            {playerInfo && (
+              <div className={styles.playerSnapshot}>
+                <RankBadge rating={playerInfo.ratings.blitz ?? config.defaultRating} variant="full" premium={playerInfo.isPremium} />
+              </div>
+            )}
+
+            <div className={styles.cardFooter}>
+              {!user && (
+                <div className={styles.statusBlock}>
+                  <p className={styles.signInText}>Sign in to play.</p>
+                  <button className={styles.primaryBtn} onClick={() => router.push("/login")}>
+                    Sign In
+                  </button>
                 </div>
               )}
 
-              <div className={styles.cardFooter}>
-                {matchStatus === "idle" && (
-                  <button className={styles.primaryBtn} onClick={handleFindMatch}>
-                    Find Match
-                  </button>
-                )}
+              {user && matchStatus === "idle" && (
+                <button className={styles.primaryBtn} onClick={handleFindMatch}>
+                  Find Match
+                </button>
+              )}
 
-                {matchStatus === "searching" && (
-                  <div className={styles.statusBlock}>
-                    <div className={styles.searchingRow}>
-                      <div className={styles.spinner} />
-                      <span className={styles.statusText}>Searching for opponent...</span>
-                    </div>
-                    <button className={styles.cancelBtn} onClick={handleCancel}>Cancel</button>
+              {user && matchStatus === "searching" && (
+                <div className={styles.statusBlock}>
+                  <div className={styles.searchingRow}>
+                    <div className={styles.spinner} />
+                    <span className={styles.statusText}>Searching for opponent...</span>
                   </div>
-                )}
+                  <button className={styles.cancelBtn} onClick={handleCancel}>Cancel</button>
+                </div>
+              )}
 
-                {matchStatus === "matched" && (
-                  <div className={styles.statusBlock}>
-                    <div className={styles.matchedRow}>
-                      <span className={styles.successIcon}>✓</span>
-                      <span className={styles.successText}>Match Found! Joining...</span>
-                    </div>
+              {user && matchStatus === "matched" && (
+                <div className={styles.statusBlock}>
+                  <div className={styles.matchedRow}>
+                    <span className={styles.successIcon}>✓</span>
+                    <span className={styles.successText}>Match Found! Joining...</span>
                   </div>
-                )}
+                </div>
+              )}
 
-                {matchStatus === "error" && (
-                  <div className={styles.statusBlock}>
-                    <p className={styles.errorText}>Something went wrong.</p>
-                    <button className={styles.primaryBtn} onClick={handleFindMatch}>Retry</button>
-                  </div>
-                )}
-              </div>
+              {user && matchStatus === "error" && (
+                <div className={styles.statusBlock}>
+                  <p className={styles.errorText}>Something went wrong.</p>
+                  <button className={styles.primaryBtn} onClick={handleFindMatch}>Retry</button>
+                </div>
+              )}
             </div>
-          )}
+          </div>
 
           {/* ── Async ── */}
-          {user && (
-            <div
-              className={`${styles.card} ${styles.cardAccent}`}
-              style={{ "--rank-color": asyncRankColor ?? "var(--color-primary)", "--rank-glow": asyncRankTier?.glow ?? "transparent" } as React.CSSProperties}
-            >
-              <div className={styles.cardBg} aria-hidden />
+          <div
+            className={`${styles.card} ${styles.cardAccent} ${!user ? styles.signedOut : ""}`}
+            style={{ "--rank-color": asyncRankColor ?? "var(--color-primary)", "--rank-glow": asyncRankTier?.glow ?? "transparent" } as React.CSSProperties}
+          >
+            <div className={styles.cardBg} aria-hidden />
 
-              <div className={styles.cardTopRow}>
-                <div className={styles.modeTag}>Correspondence</div>
+            <div className={styles.cardTopRow}>
+              <div className={styles.modeTag}>Correspondence</div>
+              {user && (
                 <div className={styles.onlineCount}>
                   <span className={styles.onlineDot} />
                   <span>{onlineCounts.async} online</span>
                 </div>
-              </div>
-              <h2 className={styles.cardTitle}>Async</h2>
-              <p className={styles.cardDesc}>24 hours per round. Play several games at once, check in whenever.</p>
+              )}
+            </div>
+            <h2 className={styles.cardTitle}>Async</h2>
+            <p className={styles.cardDesc}>24 hours per round. Play several games at once, check in whenever.</p>
 
-              {playerInfo && (
-                <div className={styles.playerSnapshot}>
-                  <RankBadge rating={playerInfo.ratings.async ?? config.defaultRating} variant="full" premium={playerInfo.isPremium} />
+            {playerInfo && (
+              <div className={styles.playerSnapshot}>
+                <RankBadge rating={playerInfo.ratings.async ?? config.defaultRating} variant="full" premium={playerInfo.isPremium} />
+              </div>
+            )}
+
+            <div className={styles.cardFooter}>
+              {!user && (
+                <div className={styles.statusBlock}>
+                  <p className={styles.signInText}>Sign in to play.</p>
+                  <button className={styles.primaryBtn} onClick={() => router.push("/login")}>
+                    Sign In
+                  </button>
                 </div>
               )}
 
-              <div className={styles.cardFooter}>
-                {asyncStatus === "idle" && (
-                  <button className={styles.primaryBtn} onClick={handleFindAsyncMatch}>
-                    Find Match
+              {user && asyncStatus === "idle" && (
+                <button className={styles.primaryBtn} onClick={handleFindAsyncMatch}>
+                  Find Match
+                </button>
+              )}
+
+              {user && asyncStatus === "queueing" && (
+                <div className={styles.statusBlock}>
+                  <div className={styles.searchingRow}>
+                    <div className={styles.spinner} />
+                    <span className={styles.statusText}>Looking for an opponent…</span>
+                  </div>
+                </div>
+              )}
+
+              {user && asyncStatus === "queued" && (
+                <div className={styles.statusBlock}>
+                  <div className={styles.searchingRow}>
+                    <span className={styles.statusText}>Queued. You&apos;ll be matched whenever another async player queues up.</span>
+                  </div>
+                  <button className={styles.cancelBtn} onClick={handleCancelAsync}>Cancel</button>
+                  <button className={styles.secondaryBtn} onClick={() => router.push("/asyncGames")}>
+                    View Async Games
                   </button>
-                )}
+                </div>
+              )}
 
-                {asyncStatus === "queueing" && (
-                  <div className={styles.statusBlock}>
-                    <div className={styles.searchingRow}>
-                      <div className={styles.spinner} />
-                      <span className={styles.statusText}>Looking for an opponent…</span>
-                    </div>
+              {user && asyncStatus === "matched" && (
+                <div className={styles.statusBlock}>
+                  <div className={styles.matchedRow}>
+                    <span className={styles.successIcon}>✓</span>
+                    <span className={styles.successText}>Match Found! Joining...</span>
                   </div>
-                )}
+                </div>
+              )}
 
-                {asyncStatus === "queued" && (
-                  <div className={styles.statusBlock}>
-                    <div className={styles.searchingRow}>
-                      <span className={styles.statusText}>Queued. You&apos;ll be matched whenever another async player queues up.</span>
-                    </div>
-                    <button className={styles.cancelBtn} onClick={handleCancelAsync}>Cancel</button>
-                    <button className={styles.secondaryBtn} onClick={() => router.push("/asyncGames")}>
-                      View Async Games
+              {user && asyncStatus === "error" && (
+                <div className={styles.statusBlock}>
+                  <p className={styles.errorText}>{asyncErrorMessage || "Something went wrong."}</p>
+                  {!asyncErrorMessage && (
+                    <button className={styles.primaryBtn} onClick={handleFindAsyncMatch}>Retry</button>
+                  )}
+                  {asyncErrorMessage && (
+                    <button className={styles.primaryBtn} onClick={() => router.push(`/profile/${user?.uid}`)}>
+                      Upgrade to Premium
                     </button>
-                  </div>
-                )}
-
-                {asyncStatus === "matched" && (
-                  <div className={styles.statusBlock}>
-                    <div className={styles.matchedRow}>
-                      <span className={styles.successIcon}>✓</span>
-                      <span className={styles.successText}>Match Found! Joining...</span>
-                    </div>
-                  </div>
-                )}
-
-                {asyncStatus === "error" && (
-                  <div className={styles.statusBlock}>
-                    <p className={styles.errorText}>{asyncErrorMessage || "Something went wrong."}</p>
-                    {!asyncErrorMessage && (
-                      <button className={styles.primaryBtn} onClick={handleFindAsyncMatch}>Retry</button>
-                    )}
-                    {asyncErrorMessage && (
-                      <button className={styles.primaryBtn} onClick={() => router.push(`/profile/${user?.uid}`)}>
-                        Upgrade to Premium
-                      </button>
-                    )}
-                  </div>
-                )}
-              </div>
+                  )}
+                </div>
+              )}
             </div>
-          )}
+          </div>
 
           {/* ── Wildcard ── */}
-          {user && (
-            <div
-              className={`${styles.card} ${styles.cardAccent}`}
-              style={{ "--rank-color": wildcardRankColor ?? "var(--color-primary)", "--rank-glow": wildcardRankTier?.glow ?? "transparent" } as React.CSSProperties}
-            >
-              <div className={styles.cardBg} aria-hidden />
+          <div
+            className={`${styles.card} ${styles.cardAccent} ${!user ? styles.signedOut : ""}`}
+            style={{ "--rank-color": wildcardRankColor ?? "var(--color-primary)", "--rank-glow": wildcardRankTier?.glow ?? "transparent" } as React.CSSProperties}
+          >
+            <div className={styles.cardBg} aria-hidden />
 
-              <div className={styles.cardTopRow}>
-                <div className={styles.modeTag}>Mind Games</div>
+            <div className={styles.cardTopRow}>
+              <div className={styles.modeTag}>Mind Games</div>
+              {user && (
                 <div className={styles.onlineCount}>
                   <span className={styles.onlineDot} />
                   <span>{onlineCounts.wildcard} online</span>
                 </div>
-              </div>
-              <h2 className={styles.cardTitle}>Wildcard</h2>
-              <p className={styles.cardDesc}>Blitz rules, plus two bluff moves you configure before the match.</p>
+              )}
+            </div>
+            <h2 className={styles.cardTitle}>Wildcard</h2>
+            <p className={styles.cardDesc}>Blitz rules, plus two bluff moves you configure before the match.</p>
 
-              {playerInfo && (
-                <div className={styles.playerSnapshot}>
-                  <RankBadge rating={playerInfo.ratings.wildcard ?? config.defaultRating} variant="full" premium={playerInfo.isPremium} />
+            {playerInfo && (
+              <div className={styles.playerSnapshot}>
+                <RankBadge rating={playerInfo.ratings.wildcard ?? config.defaultRating} variant="full" premium={playerInfo.isPremium} />
+              </div>
+            )}
+
+            <div className={styles.cardFooter}>
+              {!user && (
+                <div className={styles.statusBlock}>
+                  <p className={styles.signInText}>Sign in to play.</p>
+                  <button className={styles.primaryBtn} onClick={() => router.push("/login")}>
+                    Sign In
+                  </button>
                 </div>
               )}
 
-              <div className={styles.cardFooter}>
-                {wildcardStatus === "idle" && (
-                  <button className={styles.primaryBtn} onClick={handleFindWildcardMatch}>
-                    Find Match
-                  </button>
-                )}
+              {user && wildcardStatus === "idle" && (
+                <button className={styles.primaryBtn} onClick={handleFindWildcardMatch}>
+                  Find Match
+                </button>
+              )}
 
-                {wildcardStatus === "searching" && (
-                  <div className={styles.statusBlock}>
-                    <div className={styles.searchingRow}>
-                      <div className={styles.spinner} />
-                      <span className={styles.statusText}>Searching for opponent...</span>
-                    </div>
-                    <button className={styles.cancelBtn} onClick={handleCancelWildcard}>Cancel</button>
+              {user && wildcardStatus === "searching" && (
+                <div className={styles.statusBlock}>
+                  <div className={styles.searchingRow}>
+                    <div className={styles.spinner} />
+                    <span className={styles.statusText}>Searching for opponent...</span>
                   </div>
-                )}
+                  <button className={styles.cancelBtn} onClick={handleCancelWildcard}>Cancel</button>
+                </div>
+              )}
 
-                {wildcardStatus === "matched" && (
-                  <div className={styles.statusBlock}>
-                    <div className={styles.matchedRow}>
-                      <span className={styles.successIcon}>✓</span>
-                      <span className={styles.successText}>Match Found! Joining...</span>
-                    </div>
+              {user && wildcardStatus === "matched" && (
+                <div className={styles.statusBlock}>
+                  <div className={styles.matchedRow}>
+                    <span className={styles.successIcon}>✓</span>
+                    <span className={styles.successText}>Match Found! Joining...</span>
                   </div>
-                )}
+                </div>
+              )}
 
-                {wildcardStatus === "error" && (
-                  <div className={styles.statusBlock}>
-                    <p className={styles.errorText}>Something went wrong.</p>
-                    <button className={styles.primaryBtn} onClick={handleFindWildcardMatch}>Retry</button>
-                  </div>
-                )}
-              </div>
+              {user && wildcardStatus === "error" && (
+                <div className={styles.statusBlock}>
+                  <p className={styles.errorText}>Something went wrong.</p>
+                  <button className={styles.primaryBtn} onClick={handleFindWildcardMatch}>Retry</button>
+                </div>
+              )}
             </div>
-          )}
+          </div>
 
           {/* ── vs AI ── */}
           <div className={`${styles.card} ${styles.cardAI}`}>
