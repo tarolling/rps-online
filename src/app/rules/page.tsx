@@ -5,6 +5,7 @@ import { getRankNames, RANK_TIERS } from "@/lib/ranks";
 import RankBadge from "@/components/RankBadge";
 import { GAMES_PLAYED_TITLES, INFINITY_RANK_TITLE, RARITY_COLOR, TOURNAMENT_CHAMPION_TITLE, WIN_STREAK_TITLES } from "@/lib/titles";
 import styles from "./RulesPage.module.css";
+import config from "@/config/settings.json";
 
 export const metadata: Metadata = {
   title: "Rules",
@@ -44,7 +45,7 @@ export default function RulesPage() {
               <dt className={styles.modeName}>Async</dt>
               <dd className={styles.modeDesc}>
                 Play at your own pace. You have up to 24 hours to respond each round, and you can have
-                several async games going at once (up to 2 for non-premium users). A round resolves
+                several async games going at once (up to {config.async.freeConcurrentGameLimit} for non-premium users). A round resolves
                 automatically once both players have chosen, or when the timer runs out.
               </dd>
             </div>

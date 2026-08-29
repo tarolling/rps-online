@@ -6,7 +6,7 @@
     "roundTimeout": 30,
     "async": {
         "roundTimeoutSeconds": 86400,
-        "freeConcurrentGameLimit": 2
+        "freeConcurrentGameLimit": 3
     },
     "wildcard": {
         "roundTimeoutSeconds": 30,
