@@ -298,9 +298,14 @@ function MatchmakingPage() {
               )}
 
               {user && asyncStatus === "idle" && (
-                <button className={styles.primaryBtn} onClick={handleFindAsyncMatch}>
-                  Find Match
-                </button>
+                <div className={styles.buttonRow}>
+                  <button className={styles.primaryBtn} onClick={handleFindAsyncMatch}>
+                    Find Match
+                  </button>
+                  <button className={styles.secondaryBtn} onClick={() => router.push("/asyncGames")}>
+                    View Async Games
+                  </button>
+                </div>
               )}
 
               {user && asyncStatus === "queueing" && (

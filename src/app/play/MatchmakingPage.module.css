@@ -313,6 +313,11 @@
     color: var(--color-text-muted);
 }
 
+.buttonRow {
+    display: flex;
+    gap: 0.6rem;
+}
+
 .cancelBtn {
     background: transparent;
     color: var(--color-text-muted);
