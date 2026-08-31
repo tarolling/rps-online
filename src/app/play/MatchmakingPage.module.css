@@ -182,6 +182,17 @@
     filter: saturate(0.5);
 }
 
+.signedOut {
+    opacity: 0.7;
+    filter: saturate(0.6);
+}
+
+.signInText {
+    font-size: 0.82rem;
+    color: var(--color-text-muted);
+    margin: 0;
+}
+
 /* ── Mode tag ── */
 
 .cardTopRow {
@@ -300,6 +311,11 @@
     cursor: not-allowed;
     border-color: var(--color-border);
     color: var(--color-text-muted);
+}
+
+.buttonRow {
+    display: flex;
+    gap: 0.6rem;
 }
 
 .cancelBtn {

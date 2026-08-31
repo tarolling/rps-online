@@ -10,7 +10,7 @@ export default function Footer() {
       <div className={styles["footer-content"]}>
         <div className={styles["footer-section"]}>
           <Link href="/">
-            <Image src="/logo.png" alt="RPS logo" width={50} height={50} className="footer-logo"></Image>
+            <Image src="/logo.png" alt="RPS logo" width={50} height={50} className="footer-logo" loading="eager"></Image>
           </Link>
           <p className="footer-tagline">Play. Compete. Conquer.</p>
         </div>

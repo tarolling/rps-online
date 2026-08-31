@@ -5,6 +5,7 @@ import { getRankNames, RANK_TIERS } from "@/lib/ranks";
 import RankBadge from "@/components/RankBadge";
 import { GAMES_PLAYED_TITLES, INFINITY_RANK_TITLE, RARITY_COLOR, TOURNAMENT_CHAMPION_TITLE, WIN_STREAK_TITLES } from "@/lib/titles";
 import styles from "./RulesPage.module.css";
+import config from "@/config/settings.json";
 
 export const metadata: Metadata = {
   title: "Rules",
@@ -22,8 +23,6 @@ export default function RulesPage() {
         <section className={styles.card}>
           <h2 className={styles.sectionTitle}>Game Rules</h2>
           <ol className={styles.rulesList}>
-            <li>Don&apos;t be stupid.</li>
-            <li>Rock beats Scissors, Scissors beats Paper, Paper beats Rock.</li>
             <li>Matches are first to 4 round wins.</li>
             <li>If you don&apos;t submit a choice before the round timer runs out, you forfeit that round.</li>
             <li>Blitz, Async, and Wildcard games each track separate ratings, so climbing one doesn&apos;t affect the others.</li>
@@ -44,7 +43,7 @@ export default function RulesPage() {
               <dt className={styles.modeName}>Async</dt>
               <dd className={styles.modeDesc}>
                 Play at your own pace. You have up to 24 hours to respond each round, and you can have
-                several async games going at once (up to 2 for non-premium users). A round resolves
+                several async games going at once (up to {config.async.freeConcurrentGameLimit} for non-premium users). A round resolves
                 automatically once both players have chosen, or when the timer runs out.
               </dd>
             </div>

@@ -33,6 +33,12 @@ type Props = {
   onSuccess: () => void;
 };
 
+// Tracks that a redirect sign-in was started, in first-party sessionStorage
+// (unlike the Firebase auth iframe, this isn't subject to third-party
+// storage partitioning) so we can tell "no redirect was attempted" apart
+// from "a redirect was attempted but its result never came back" on return.
+const OAUTH_PENDING_KEY = "oauthPendingProvider";
+
 export default function OAuthSignInButtons({ onSuccess }: Props) {
   const [pending, setPending] = useState<ProviderId | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -55,18 +61,37 @@ export default function OAuthSignInButtons({ onSuccess }: Props) {
     onSuccess();
   };
 
+  // Both providers go through a full-page redirect instead of a popup:
   // Apple's sign-in page frequently fails to complete inside a popup on
-  // mobile Safari, so Apple goes through a full-page redirect instead of a
-  // popup; this catches the result when the browser lands back on this page.
+  // mobile Safari, and Google's popup can silently fail to report back to
+  // the opener (e.g. third-party storage partitioning, embedded browsers),
+  // leaving the popup closed with the app never hearing about it. This
+  // effect catches the result when the browser lands back on this page.
   useEffect(() => {
+    const pendingProvider = sessionStorage.getItem(OAUTH_PENDING_KEY);
     getRedirectResult(auth)
       .then((result) => {
-        if (!result) return;
-        setPending("apple");
+        if (!result) {
+          // A redirect was started but Firebase couldn't retrieve its result
+          // on return — typically third-party storage partitioning (Firefox
+          // ETP, Safari ITP, private browsing) blocking the auth helper
+          // iframe. Surface it instead of silently doing nothing.
+          if (pendingProvider) {
+            setError(
+              "Sign-in was unsuccessful. Your browser's privacy settings may be blocking it. Try allowing cookies for this site, using a different browser, or turning off private/incognito mode.",
+            );
+          }
+          return;
+        }
+        const providerId = getAdditionalUserInfo(result)?.providerId;
+        setPending(providerId === "apple.com" ? "apple" : "google");
         return finishSignIn(result);
       })
       .catch((e: unknown) => setError((e as Error).message))
-      .finally(() => setPending(null));
+      .finally(() => {
+        sessionStorage.removeItem(OAUTH_PENDING_KEY);
+        setPending(null);
+      });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -75,6 +100,7 @@ export default function OAuthSignInButtons({ onSuccess }: Props) {
     setPending(providerId);
     try {
       if (useRedirect) {
+        sessionStorage.setItem(OAUTH_PENDING_KEY, providerId);
         await signInWithRedirect(auth, provider);
         return; // page navigates away; result is picked up by getRedirectResult on return
       }
@@ -147,7 +173,7 @@ export default function OAuthSignInButtons({ onSuccess }: Props) {
       <button
         type="button"
         className={styles.oauthButton}
-        onClick={() => handleClick("google", new GoogleAuthProvider(), false)}
+        onClick={() => handleClick("google", new GoogleAuthProvider(), true)}
         disabled={pending !== null}
       >
         {pending === "google" ? <span className={styles.spinner} /> : (
