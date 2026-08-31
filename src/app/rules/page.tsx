@@ -23,8 +23,6 @@ export default function RulesPage() {
         <section className={styles.card}>
           <h2 className={styles.sectionTitle}>Game Rules</h2>
           <ol className={styles.rulesList}>
-            <li>Don&apos;t be stupid.</li>
-            <li>Rock beats Scissors, Scissors beats Paper, Paper beats Rock.</li>
             <li>Matches are first to 4 round wins.</li>
             <li>If you don&apos;t submit a choice before the round timer runs out, you forfeit that round.</li>
             <li>Blitz, Async, and Wildcard games each track separate ratings, so climbing one doesn&apos;t affect the others.</li>

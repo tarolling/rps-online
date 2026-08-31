@@ -139,7 +139,6 @@ export default function SpectatePage() {
       <div className={styles.scoreboard}>
         {/* Player 1 */}
         <SpectatorPanel
-          label={game.player1.username}
           name={game.player1.username}
           rating={game.player1.rating}
           score={game.player1.score}
@@ -161,7 +160,6 @@ export default function SpectatePage() {
 
         {/* Player 2 */}
         <SpectatorPanel
-          label={game.player2.username}
           name={game.player2.username}
           rating={game.player2.rating}
           score={game.player2.score}
@@ -175,7 +173,7 @@ export default function SpectatePage() {
       </div>
 
       {game.rounds && Object.keys(game.rounds).length > 0 && (
-        <RoundHistory rounds={game.rounds} />
+        <RoundHistory rounds={game.rounds} player1Name={game.player1.username} player2Name={game.player2.username} />
       )}
     </>,
   );
@@ -183,15 +181,14 @@ export default function SpectatePage() {
 
 // ── Sub-components ────────────────────────────────────────────────────────────
 
-function SpectatorPanel({ label, name, rating, score, clubTag, titleId, avatarUrl, hasChosen, choice, reveal }: {
-  label: string; name: string; rating: number; score: number;
+function SpectatorPanel({ name, rating, score, clubTag, titleId, avatarUrl, hasChosen, choice, reveal }: {
+  name: string; rating: number; score: number;
   clubTag?: string | null; titleId?: string | null; avatarUrl?: string | null;
   hasChosen: boolean; choice: Choice | null; reveal: boolean;
 }) {
   const title = titleId ? getTitle(titleId) : null;
   return (
     <div className={styles.playerPanel}>
-      <span className={styles.playerLabel}>{label}</span>
       <Avatar src={avatarUrl} username={name} size="md" />
       <span className={styles.playerName}>
         {clubTag && <span className={styles.playerClubTag}>[{clubTag}]</span>} {name}
@@ -210,14 +207,14 @@ function SpectatorPanel({ label, name, rating, score, clubTag, titleId, avatarUr
   );
 }
 
-function RoundHistory({ rounds }: { rounds: Record<number, RoundData> }) {
+function RoundHistory({ rounds, player1Name, player2Name }: { rounds: Record<number, RoundData>; player1Name: string; player2Name: string }) {
   const entries = Object.entries(rounds).sort(([a], [b]) => Number(a) - Number(b));
   return (
     <div className={styles.roundHistory}>
       <div className={styles.roundHistoryHeader}>
-        <span>Player 1</span>
+        <span>{player1Name}</span>
         <span />
-        <span>Player 2</span>
+        <span>{player2Name}</span>
       </div>
       {entries.map(([round, data]) => {
         const outcome = data.winner === "player1" ? "win" : data.winner === "draw" ? "draw" : "loss";
