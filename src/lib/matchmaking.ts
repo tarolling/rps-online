@@ -415,3 +415,21 @@ export async function resolveDisconnect(gameId: string, myId: string, amIStillCo
   if (!committed) return; // another client's transaction already resolved this game
   await endGame(gameId);
 }
+
+/**
+ * Live count of in-progress async games where it's this player's move
+ * (mirrors the "myTurn" check in the async games list) — used to drive
+ * nav notification badges.
+ */
+export function subscribeMyTurnAsyncGames(uid: string, cb: (count: number) => void) {
+  const gamesRef = ref(db, "games");
+  return onValue(gamesRef, (snapshot) => {
+    const all: Record<string, Game> = snapshot.val() ?? {};
+    const count = Object.values(all).filter((game) => {
+      if (game.mode !== "async" || game.state !== MatchStatus.InProgress) return false;
+      const me = game.player1.id === uid ? game.player1 : game.player2.id === uid ? game.player2 : null;
+      return !!me && !me.submitted;
+    }).length;
+    cb(count);
+  });
+}

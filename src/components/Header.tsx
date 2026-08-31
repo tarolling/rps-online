@@ -10,17 +10,37 @@ import { signOut } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import Avatar from "@/components/Avatar";
 import { postJSON } from "@/lib/api";
+import { subscribeRequestsData } from "@/lib/friends";
+import { subscribeMyTurnAsyncGames } from "@/lib/matchmaking";
 
 export default function Header() {
   const router = useRouter();
   const { user, username, avatarUrl } = useAuth();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [incomingRequestCount, setIncomingRequestCount] = useState(0);
+  const [myTurnGameCount, setMyTurnGameCount] = useState(0);
 
   useEffect(() => {
     document.body.classList.toggle("menuOpen", isMobileMenuOpen);
     return () => document.body.classList.remove("menuOpen");
   }, [isMobileMenuOpen]);
+
+  useEffect(() => {
+    if (!user) {
+      setIncomingRequestCount(0);
+      setMyTurnGameCount(0);
+      return;
+    }
+    const unsubRequests = subscribeRequestsData(user.uid, (data) => {
+      setIncomingRequestCount(Object.keys(data.incoming).length);
+    });
+    const unsubAsyncGames = subscribeMyTurnAsyncGames(user.uid, setMyTurnGameCount);
+    return () => {
+      unsubRequests();
+      unsubAsyncGames();
+    };
+  }, [user]);
 
   const handleLogout = async () => {
     await signOut(auth);
@@ -33,7 +53,7 @@ export default function Header() {
     <div className={styles.header}>
       <div className={styles.headerLogo}>
         <Link href="/">
-          <Image src="/logo.png" alt="RPS logo" className={styles.logo} width={60} height={60} />
+          <Image src="/logo.png" alt="RPS logo" className={styles.logo} width={60} height={60} loading="eager" />
         </Link>
       </div>
 
@@ -49,13 +69,19 @@ export default function Header() {
       {/* Navigation Links */}
       <nav className={`${styles.headerNav} ${isMobileMenuOpen ? styles.mobileOpen : ""}`}>
         <Link href="/" className={styles.navLink}>Home</Link>
-        <Link href="/dashboard" className={styles.navLink}>Dashboard</Link>
+        <Link href="/dashboard" className={styles.navLink}>
+          Dashboard
+          {myTurnGameCount > 0 && <span className={styles.navBadge}>{myTurnGameCount}</span>}
+        </Link>
         <Link href="/leaderboard" className={styles.navLink}>Leaderboard</Link>
         <Link href="/play" className={styles.navLink}>Play</Link>
         <Link href="/rules" className={styles.navLink}>Rules</Link>
         <Link href="/clubs" className={styles.navLink}>Clubs</Link>
         <Link href="/tournaments" className={styles.navLink}>Tournaments</Link>
-        <Link href="/friends" className={styles.navLink}>Friends</Link>
+        <Link href="/friends" className={styles.navLink}>
+          Friends
+          {incomingRequestCount > 0 && <span className={styles.navBadge}>{incomingRequestCount}</span>}
+        </Link>
 
         <div className={styles.mobileAuth}>
           {user ? (
