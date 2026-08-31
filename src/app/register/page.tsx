@@ -1,12 +1,11 @@
 "use client";
 
 import { createUserWithEmailAndPassword, sendEmailVerification } from "firebase/auth";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { auth } from "@/lib/firebase";
-import Footer from "@/components/Footer";
-import Header from "@/components/Header";
+import { useAuth } from "@/context/AuthContext";
 import OAuthSignInButtons from "@/components/OAuthSignInButtons";
 import styles from "./RegisterPage.module.css";
 import { EyeIcon, EyeOffIcon } from "@/components/icons";
@@ -36,7 +35,18 @@ export default function RegisterPage() {
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const [authReady, setAuthReady] = useState(false);
   const router = useRouter();
+  const { user } = useAuth();
+
+  // Wait for AuthContext's onAuthStateChanged to pick up the new session
+  // before navigating, so the dashboard doesn't mount while it still looks
+  // logged out.
+  useEffect(() => {
+    if (authReady && user) {
+      router.push("/dashboard");
+    }
+  }, [authReady, user, router]);
 
   const strength = getPasswordStrength(password);
   const usernameError = username && !USERNAME_REGEX.test(username)
@@ -75,13 +85,11 @@ export default function RegisterPage() {
   };
 
   const handleOAuthSuccess = () => {
-    router.refresh();
-    router.push("/dashboard");
+    setAuthReady(true);
   };
 
   return (
     <div className="app">
-      <Header />
       <main className={styles.main}>
         <div className="card">
           <h2>Create Account</h2>
@@ -197,7 +205,6 @@ export default function RegisterPage() {
           </p>
         </div>
       </main>
-      <Footer />
     </div>
   );
 }

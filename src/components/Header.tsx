@@ -26,7 +26,7 @@ export default function Header() {
     await signOut(auth);
     await postJSON("/api/logout", {});
     router.refresh();
-    router.push("/login");
+    router.push("/");
   };
 
   return (

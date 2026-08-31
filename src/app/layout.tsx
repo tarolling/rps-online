@@ -1,7 +1,8 @@
 import type { Metadata, Viewport } from "next";
-import { Analytics } from "@vercel/analytics/next";
-import { SpeedInsights } from "@vercel/speed-insights/next";
 import { AuthProvider } from "@/context/AuthContext";
+import { CookieConsentProvider } from "@/context/CookieConsentContext";
+import CookieConsentBanner from "@/components/CookieConsentBanner";
+import AnalyticsGate from "@/components/AnalyticsGate";
 import "./global.css";
 
 const SITE_URL = "https://ranked-rps.com";
@@ -47,9 +48,11 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <AuthProvider>{children}</AuthProvider>
-        <Analytics />
-        <SpeedInsights />
+        <CookieConsentProvider>
+          <AuthProvider>{children}</AuthProvider>
+          <CookieConsentBanner />
+          <AnalyticsGate />
+        </CookieConsentProvider>
       </body>
     </html>
   );

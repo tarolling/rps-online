@@ -33,6 +33,8 @@ export default function DashboardPage() {
   const router = useRouter();
 
   useEffect(() => {
+    if (!user) return;
+
     const fetchStats = async () => {
       const data = await postJSON<{
         rating: number,
@@ -43,7 +45,7 @@ export default function DashboardPage() {
         currentStreak: number,
         bestStreak: number
       }>("/api/fetchDashboardStats", {
-        playerId: user?.uid,
+        playerId: user.uid,
       });
 
       if (!data) {
@@ -71,14 +73,14 @@ export default function DashboardPage() {
       }
 
       const recentGames = await getJSON<PlayerMatch[]>("/api/fetchRecentGames", {
-        playerId: user?.uid,
+        playerId: user.uid,
       });
 
       setRecentMatches(recentGames);
     };
 
     fetchStats();
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     if (!user) return;
