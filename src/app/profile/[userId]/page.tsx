@@ -202,7 +202,7 @@ function ProfilePage() {
     try {
       await user!.delete();
       await postJSON("/api/deleteAccount", { uid: userId });
-      router.replace("/login");
+      router.replace("/");
     } catch (err: unknown) {
       setError((err as Error).message);
     }

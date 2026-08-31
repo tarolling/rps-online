@@ -601,13 +601,49 @@
 
 @media (max-width: 600px) {
     .scoreboard {
-        grid-template-columns: 1fr;
-        gap: 1.25rem;
+        grid-template-columns: 1fr 1fr;
+        grid-template-areas:
+            "vs vs"
+            "p1 p2";
+        gap: 0.5rem 1rem;
+        padding: 1.25rem 1rem;
+    }
+
+    .scoreboard>*:first-child {
+        grid-area: p1;
+        min-width: 0;
+    }
+
+    .scoreboard>*:nth-child(2) {
+        grid-area: vs;
+    }
+
+    .scoreboard>*:last-child {
+        grid-area: p2;
+        min-width: 0;
     }
 
     .vsBlock {
         flex-direction: row;
+        justify-content: center;
         gap: 0.75rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid var(--color-border);
+    }
+
+    .vs {
+        display: none;
+    }
+
+    .playerScore {
+        font-size: 2rem;
+    }
+
+    .playerName {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        max-width: 100%;
     }
 
     .choices {

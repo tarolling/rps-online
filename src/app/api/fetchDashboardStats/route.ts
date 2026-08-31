@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import neo4j from "neo4j-driver";
 import { runQuery } from "@/lib/neo4j";
-import { GAME_MODES, isValidPlayMode } from "@/lib/gameModes";
+import { GAME_MODES, PLAY_MODES, isValidPlayMode } from "@/lib/gameModes";
+import type { PlayMode } from "@/types";
 import config from "@/config/settings.json";
 
 export async function POST(req: NextRequest) {
@@ -11,14 +12,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Player ID is required." }, { status: 400 });
   }
 
-  if (!isValidPlayMode(mode)) {
+  const isAllModes = mode === "all";
+  if (!isAllModes && !isValidPlayMode(mode)) {
     return NextResponse.json({ error: "Invalid mode." }, { status: 400 });
   }
-  const matchMode = GAME_MODES[mode].matchMode;
+  const matchModes = isAllModes
+    ? PLAY_MODES.map((m) => GAME_MODES[m].matchMode)
+    : [GAME_MODES[mode as PlayMode].matchMode];
 
   try {
     const data = await runQuery(`
-        MATCH (p:Player {uid: $playerId})-[r:PARTICIPATED_IN]->(m:Match {mode: $matchMode})
+        MATCH (p:Player {uid: $playerId})-[r:PARTICIPATED_IN]->(m:Match)
+        WHERE m.mode IN $matchModes
         WITH
           p,
           collect({result: r.result, timestamp: m.timestamp}) AS games
@@ -71,8 +76,8 @@ export async function POST(req: NextRequest) {
           streakStats.best AS bestStreak
             `, {
       playerId,
-      matchMode,
-      mode,
+      matchModes,
+      mode: isAllModes ? null : mode,
       defaultRating: config.defaultRating,
     });
 
@@ -81,7 +86,7 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json({
-      rating: neo4j.integer.toNumber(data.records[0].get("rating")),
+      rating: isAllModes ? null : neo4j.integer.toNumber(data.records[0].get("rating")),
       totalGames: neo4j.integer.toNumber(data.records[0].get("totalGames")),
       wins: neo4j.integer.toNumber(data.records[0].get("wins")),
       losses: neo4j.integer.toNumber(data.records[0].get("losses")),

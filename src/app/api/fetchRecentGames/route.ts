@@ -1,11 +1,12 @@
 import { getRecentGames } from "@/lib/recentGames";
+import { isValidPlayMode } from "@/lib/gameModes";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
   const playerId = req.nextUrl.searchParams.get("playerId");
   const modeParam = req.nextUrl.searchParams.get("mode");
 
-  if (modeParam !== null && modeParam !== "blitz" && modeParam !== "async") {
+  if (modeParam !== null && !isValidPlayMode(modeParam)) {
     return NextResponse.json({ error: "Invalid mode." }, { status: 400 });
   }
 
