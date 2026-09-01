@@ -165,7 +165,38 @@
 
 .authButtons {
     display: flex;
+    align-items: center;
     gap: 10px;
+}
+
+.loginLink {
+    color: var(--color-text);
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-decoration: none;
+    padding: 8px 14px;
+    border-radius: var(--radius);
+    transition: color 0.2s, background 0.2s;
+}
+
+.loginLink:hover {
+    color: var(--color-primary);
+    background: var(--color-bg-secondary);
+}
+
+.registerButton {
+    background: var(--color-primary);
+    color: #fff;
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-decoration: none;
+    padding: 8px 16px;
+    border-radius: var(--radius);
+    transition: background 0.2s;
+}
+
+.registerButton:hover {
+    background: var(--color-primary-hover);
 }
 
 .mobileAuth {
@@ -253,12 +284,10 @@
         width: 100%;
     }
 
+    /* The hamburger menu's .mobileAuth already shows Log In/Register at this
+       width, so the header-bar copy would otherwise be shown twice. */
     .authButtons {
-        flex-direction: column;
-    }
-
-    .authButtons button {
-        width: 100%;
+        display: none;
     }
 }
 

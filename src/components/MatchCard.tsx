@@ -21,7 +21,7 @@ export default function MatchCard({ match, index }: { match: RecentMatch; index:
   const router = useRouter();
 
   return (
-    <div key={index} className={styles.matchCard} onClick={() => router.push(`/match/${match.id}`)} style={{ cursor: "pointer" }}>
+    <div key={index} className={styles.matchCard} onClick={() => router.push(`/match/${match.id}`)}>
       <div className={styles.matchHeader}>
         <span className={styles.matchTime}>{match.timestamp}</span>
         <span className={styles.modeBadge}>{GAME_MODES[match.mode].label}</span>

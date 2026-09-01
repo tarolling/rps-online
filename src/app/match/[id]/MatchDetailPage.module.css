@@ -358,7 +358,7 @@
 }
 
 /* ── Responsive ── */
-@media (max-width: 680px) {
+@media (max-width: 768px) {
     .scoreboard {
         flex-direction: column;
         gap: 1rem;

@@ -145,12 +145,31 @@
 
 .editField input,
 .editField select {
+    width: 100%;
+    /* global.css's `input` rule applies margin: 10px 0 site-wide, which a
+       <select> never matches — override it here so neither element carries
+       margin and the two stay pixel-aligned inside the flex row. */
+    margin: 0;
     padding: 0.5rem 0.75rem;
     border: 1px solid var(--color-border);
     border-radius: var(--radius);
     background: var(--color-bg-secondary);
     color: var(--color-text);
     font-size: 0.95rem;
+    line-height: 1.4;
+}
+
+/* Native <select> chrome adds its own padding/inset on top of the above,
+   shifting the text right of where an <input>'s text sits at the same
+   padding — appearance: none strips that so the two line up, with a
+   custom arrow drawn back in via background-image. */
+.editField select {
+    appearance: none;
+    padding-right: 2rem;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8' fill='none'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%23888' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 0.65rem;
 }
 
 .editActions {
@@ -197,7 +216,7 @@
 .tableWrapper {
     border-radius: var(--radius);
     box-shadow: var(--shadow);
-    overflow: hidden;
+    overflow-x: auto;
 }
 
 .table {
@@ -314,7 +333,7 @@
     background: color-mix(in srgb, var(--color-danger) 10%, transparent);
 }
 
-@media (max-width: 480px) {
+@media (max-width: 768px) {
     .table {
         font-size: 0.9rem;
     }
