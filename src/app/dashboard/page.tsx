@@ -237,8 +237,7 @@ export default function DashboardPage() {
             <div className={styles.matchesList}>
               {recentMatches.map((match, index) => (
                 <div key={index} className={`${styles.matchItem} ${styles[match.result.toLowerCase()]}`}
-                  onClick={() => router.push(`/match/${match.id}`)}
-                  style={{ cursor: "pointer" }}>
+                  onClick={() => router.push(`/match/${match.id}`)}>
                   <Link href={`/profile/${match.opponentId}`} className={styles.matchOpponent}>
                     {match.opponentUsername}
                   </Link>

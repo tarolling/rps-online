@@ -399,6 +399,7 @@
   padding: 1.25rem 1.5rem;
   text-decoration: none;
   display: block;
+  cursor: pointer;
   transition: border-color 0.15s, transform 0.15s, box-shadow 0.15s;
 }
 

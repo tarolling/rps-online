@@ -264,7 +264,7 @@ function ChallengeButton({ friendId, myId, myUsername, disabled }: {
 
   return (
     <button className={styles.challengeBtn} onClick={handleChallenge} disabled={disabled || status === "loading"}>
-      {status === "loading" ? "..." : "⚔️ Challenge"}
+      {status === "loading" ? "..." : "Challenge"}
     </button>
   );
 }

@@ -102,7 +102,7 @@ export default function FriendButton({ targetId, targetUsername }: Props) {
             <span className={styles.muted}>Waiting for response...</span>
           ) : (
             <button className={styles.challengeBtn} onClick={handleChallenge} disabled={busy}>
-              {busy ? "..." : "⚔️ Challenge"}
+              {busy ? "..." : "Challenge"}
             </button>
           )}
           <button className={styles.removeBtn} onClick={() => callFriends("remove")} disabled={busy}>

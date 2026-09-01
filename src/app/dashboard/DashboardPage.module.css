@@ -149,6 +149,7 @@
     background: var(--color-bg);
     transition: transform 0.2s ease;
     text-decoration: none;
+    cursor: pointer;
 }
 
 .matchItem:hover {

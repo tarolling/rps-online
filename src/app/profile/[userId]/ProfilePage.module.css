@@ -301,6 +301,7 @@
     border-left: 4px solid var(--color-border);
     gap: 0.5rem;
     text-decoration: none;
+    cursor: pointer;
     /* Same automatic-min-width issue as .container — .matchList is a column
        flex container, so each row needs this to actually shrink to fit. */
     min-width: 0;
