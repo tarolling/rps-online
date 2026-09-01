@@ -36,15 +36,14 @@ export default function ClubPage() {
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState<EditForm>({ newName: "", newTag: "", availability: "Open" });
   const [saving, setSaving] = useState(false);
-  const [isFounder, setIsFounder] = useState(false);
 
+  const isFounder = club?.members.find((m) => m.uid === user?.uid)?.role === "Founder";
 
   const fetchClub = async () => {
     setLoading(true);
     setError(null);
     try {
       const data = await getJSON<ClubDetail>(`/api/clubs/${clubName}`);
-      setIsFounder(data.members.find((m) => m.uid === user?.uid)?.role === "Founder");
       setClub(data);
       setEditForm({ newName: data.name, newTag: data.tag, availability: data.availability });
     } catch {

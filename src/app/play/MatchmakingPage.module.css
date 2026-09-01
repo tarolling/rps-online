@@ -418,7 +418,7 @@
 
 /* ── Responsive ── */
 
-@media (max-width: 520px) {
+@media (max-width: 768px) {
     .card {
         padding: 1.4rem;
     }

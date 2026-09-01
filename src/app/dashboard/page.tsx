@@ -237,8 +237,7 @@ export default function DashboardPage() {
             <div className={styles.matchesList}>
               {recentMatches.map((match, index) => (
                 <div key={index} className={`${styles.matchItem} ${styles[match.result.toLowerCase()]}`}
-                  onClick={() => router.push(`/match/${match.id}`)}
-                  style={{ cursor: "pointer" }}>
+                  onClick={() => router.push(`/match/${match.id}`)}>
                   <Link href={`/profile/${match.opponentId}`} className={styles.matchOpponent}>
                     {match.opponentUsername}
                   </Link>
@@ -274,7 +273,7 @@ const ErrorState = ({ error, onRetry }: { error: string, onRetry: () => void }) 
     <div className={styles.dashboardContainer}>
       <div className={styles.errorCard}>
         <p>Error: {error}</p>
-        <button onClick={onRetry}>Retry</button>
+        <button className={styles.retryButton} onClick={onRetry}>Retry</button>
       </div>
     </div>
     <Footer />

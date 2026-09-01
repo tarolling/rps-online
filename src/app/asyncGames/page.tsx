@@ -111,9 +111,11 @@ function AsyncGamesPage() {
         </div>
 
         {!queueEntry && (
-          <button className={styles.findMoreBtn} onClick={() => router.push("/play")}>
-            Find Another Match
-          </button>
+          <div className={styles.findMoreBtnRow}>
+            <button className={styles.findMoreBtn} onClick={() => router.push("/play")}>
+              Find Another Match
+            </button>
+          </div>
         )}
       </main>
       <Footer />
