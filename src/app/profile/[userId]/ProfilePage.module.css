@@ -451,7 +451,7 @@
 
 /* ── Responsive ── */
 
-@media (max-width: 600px) {
+@media (max-width: 768px) {
     /* .profileHeader ({display:flex, no wrap}) never adapted — avatarWrapper
        and profileInfo stayed side by side, and .actions' two buttons never
        wrapped either, forcing the row wider than the viewport. With body's

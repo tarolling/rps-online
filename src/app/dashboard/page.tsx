@@ -273,7 +273,7 @@ const ErrorState = ({ error, onRetry }: { error: string, onRetry: () => void }) 
     <div className={styles.dashboardContainer}>
       <div className={styles.errorCard}>
         <p>Error: {error}</p>
-        <button onClick={onRetry}>Retry</button>
+        <button className={styles.retryButton} onClick={onRetry}>Retry</button>
       </div>
     </div>
     <Footer />

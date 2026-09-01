@@ -216,7 +216,7 @@
 .tableWrapper {
     border-radius: var(--radius);
     box-shadow: var(--shadow);
-    overflow: hidden;
+    overflow-x: auto;
 }
 
 .table {
@@ -333,7 +333,7 @@
     background: color-mix(in srgb, var(--color-danger) 10%, transparent);
 }
 
-@media (max-width: 480px) {
+@media (max-width: 768px) {
     .table {
         font-size: 0.9rem;
     }

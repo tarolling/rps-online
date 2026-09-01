@@ -135,8 +135,12 @@
     border-radius: var(--radius);
 }
 
+.findMoreBtnRow {
+    width: 100%;
+    max-width: 720px;
+}
+
 .findMoreBtn {
-    align-self: flex-start;
     background: var(--color-primary);
     color: #fff;
     border: none;
@@ -152,7 +156,7 @@
     background: var(--color-primary-hover);
 }
 
-@media (max-width: 560px) {
+@media (max-width: 768px) {
     .gameRow {
         grid-template-columns: 1fr;
         gap: 0.4rem;

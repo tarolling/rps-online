@@ -83,17 +83,17 @@ export default function FriendButton({ targetId, targetUsername }: Props) {
     <div className={styles.group}>
       {status === "none" && (
         <button className={styles.addBtn} onClick={() => callFriends("send")} disabled={busy}>
-          {busy ? "..." : "➕ Add Friend"}
+          {busy ? "..." : "Add Friend"}
         </button>
       )}
       {status === "outgoing" && (
         <button className={styles.cancelBtn} onClick={() => callFriends("cancel")} disabled={busy}>
-          {busy ? "..." : "✉️ Request Sent"}
+          {busy ? "..." : "Request Sent"}
         </button>
       )}
       {status === "incoming" && (
         <button className={styles.acceptBtn} onClick={() => callFriends("accept")} disabled={busy}>
-          {busy ? "..." : "✅ Accept Request"}
+          {busy ? "..." : "Accept Request"}
         </button>
       )}
       {status === "friends" && (

@@ -119,7 +119,7 @@ export default function FriendsPage() {
         {/* Incoming Challenges */}
         {pendingChallenges.length > 0 && (
           <section className={styles.section}>
-            <h2>⚔️ Incoming Challenges</h2>
+            <h2>Incoming Challenges</h2>
             <div className={styles.list}>
               {pendingChallenges.map(([fromId, c]) => (
                 <div key={fromId} className={`${styles.row} ${styles.challengeRow}`}>
@@ -145,7 +145,7 @@ export default function FriendsPage() {
         {/* Incoming Friend Requests */}
         {Object.keys(requests.incoming).length > 0 && (
           <section className={styles.section}>
-            <h2>📬 Friend Requests</h2>
+            <h2>Friend Requests</h2>
             <div className={styles.list}>
               {Object.entries(requests.incoming).map(([fromId, req]) => (
                 <div key={fromId} className={styles.row}>
@@ -170,7 +170,7 @@ export default function FriendsPage() {
         {/* Outgoing Requests */}
         {Object.keys(requests.outgoing).length > 0 && (
           <section className={styles.section}>
-            <h2>📤 Sent Requests</h2>
+            <h2>Sent Requests</h2>
             <div className={styles.list}>
               {Object.entries(requests.outgoing).map(([toId, req]) => (
                 <div key={toId} className={styles.row}>
@@ -190,7 +190,7 @@ export default function FriendsPage() {
 
         {/* Friends List */}
         <section className={styles.section}>
-          <h2>👥 Friends ({friends.length})</h2>
+          <h2>Friends ({friends.length})</h2>
           {loading ? (
             <p className={styles.muted}>Loading...</p>
           ) : friends.length === 0 ? (

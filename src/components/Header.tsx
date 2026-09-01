@@ -112,8 +112,8 @@ export default function Header() {
           </div>
         ) : (
           <div className={styles.authButtons}>
-            <Link href="/login"><button>Log In</button></Link>
-            <Link href="/register"><button>Register</button></Link>
+            <Link href="/login" className={styles.loginLink}>Log In</Link>
+            <Link href="/register" className={styles.registerButton}>Register</Link>
           </div>
         )}
       </div>
