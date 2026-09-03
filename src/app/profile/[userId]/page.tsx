@@ -439,6 +439,9 @@ function ProfilePage() {
                 ))}
               </div>
             )}
+            <Link href={`/profile/${userId}/matches`} className={styles.friendsButton}>
+              View full match history →
+            </Link>
           </section>
 
           <section className={styles.card}>
