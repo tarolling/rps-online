@@ -76,8 +76,10 @@ export async function POST(req: NextRequest) {
       await session.executeWrite((tx) =>
         tx.run(
           `MATCH (a:Player {uid: $myId}), (b:Player {uid: $otherId})
-             MERGE (a)-[:FRIENDS_WITH {since: $since}]->(b)
-             MERGE (b)-[:FRIENDS_WITH {since: $since}]->(a)`,
+             MERGE (a)-[r1:FRIENDS_WITH]->(b)
+             ON CREATE SET r1.since = $since
+             MERGE (b)-[r2:FRIENDS_WITH]->(a)
+             ON CREATE SET r2.since = $since`,
           { myId, otherId, since },
         ),
       );
