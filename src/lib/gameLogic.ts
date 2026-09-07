@@ -127,6 +127,14 @@ export function computeRoundOutcome(game: Game, now: number): RoundOutcome {
       updates.endTimestamp = now;
       gameOverWinnerId = game[winner].id;
     }
+    if (game.mode === "wildcard") {
+      // Beating an opponent's A with B refunds the play that won the round,
+      // incentivizing the risk of committing to B.
+      const loser = winner === "player1" ? "player2" : "player1";
+      if (game[winner].choice === Choice.WildcardB && game[loser].choice === Choice.WildcardA) {
+        updates[`${winner}/abRemaining`] = (game[winner].abRemaining ?? 0) + 1;
+      }
+    }
   }
 
   return { action: "resolve", updates, gameOverWinnerId };

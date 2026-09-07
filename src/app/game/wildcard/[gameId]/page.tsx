@@ -501,6 +501,13 @@ function WildcardGamePage() {
                 </div>
               )}
 
+              {!isFinished && playerData?.aBeats && (
+                <p className={styles.hint}>
+                  Your A beats {playerData.aBeats.map((c) => `${CHOICE_EMOJI[c]} ${CHOICE_LABEL[c]}`).join(" and ")}.
+                  Beat an opponent&apos;s A with B to get that play back.
+                </p>
+              )}
+
               {/* Choices */}
               {!isFinished && (
                 <div className={styles.choices}>
