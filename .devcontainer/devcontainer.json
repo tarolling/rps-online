@@ -7,7 +7,6 @@
             "extensions": [
                 "dsznajder.es7-react-js-snippets",
                 "dbaeumer.vscode-eslint",
-                "GitHub.copilot-chat",
                 "anthropic.claude-code"
             ]
         }
