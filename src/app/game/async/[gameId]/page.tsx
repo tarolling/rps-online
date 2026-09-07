@@ -54,10 +54,7 @@ function AsyncGamePage() {
     const unsubscribe = onValue(gameRef, (snapshot) => {
       const data: Game = snapshot.val();
       setLoading(false);
-      if (!data || !data.player1 || !data.player2) {
-        setGame(null);
-        return;
-      }
+      if (!data || !data.player1 || !data.player2) return;
 
       setGame((prev) => {
         if (data.currentRound !== prev?.currentRound) {
