@@ -1,12 +1,13 @@
 import neo4j, { Driver, QueryResult } from "neo4j-driver";
+import { assertEnv } from "./env";
 
 let driver: Driver;
 
 export function getDriver() {
   if (!driver) {
     driver = neo4j.driver(
-        process.env.NEO4J_URI!,
-        neo4j.auth.basic(process.env.NEO4J_USERNAME!, process.env.NEO4J_PASSWORD!),
+      assertEnv("NEO4J_URI"),
+      neo4j.auth.basic(assertEnv("NEO4J_USERNAME"), assertEnv("NEO4J_PASSWORD")),
     );
   }
   return driver;

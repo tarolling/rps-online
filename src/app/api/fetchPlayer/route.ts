@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
       `, { uid });
 
     if (result.records.length === 0) {
-      throw new Error("No players with the specified user ID exists.");
+      return NextResponse.json({ error: "Player not found." }, { status: 404 });
     }
     const read = result.records[0];
 

@@ -73,14 +73,28 @@ export async function clearExpiredTournaments() {
  * Firebase Realtime Database game entries for all round-1 matches, and
  * persists the updated tournament state.
  *
- * @returns The generated bracket.
+ * Guarded by an RTDB transaction that claims the tournament (via a
+ * `starting` flag) before doing any of the async bracket/game-creation work,
+ * so a concurrent cron invocation racing against this one can't also pass
+ * the Registration check and generate a second, duplicate bracket.
+ *
+ * @returns The generated bracket, or `null` if the tournament was already
+ * claimed/started by another call.
  */
-export async function startTournament(tournamentId: string): Promise<TournamentMatch[]> {
-  try {
-    const tournamentRef = adminDb.ref(`tournaments/${tournamentId}`);
-    const snapshot = await tournamentRef.get();
-    const tournament: Tournament = snapshot.val();
+export async function startTournament(tournamentId: string): Promise<TournamentMatch[] | null> {
+  const tournamentRef = adminDb.ref(`tournaments/${tournamentId}`);
 
+  const claim = await tournamentRef.transaction((current: Tournament | null) => {
+    if (!current || current.status !== TournamentStatus.Registration || current.starting) {
+      return; // abort, no write — already claimed/started or gone
+    }
+    return { ...current, starting: true };
+  });
+
+  if (!claim.committed) return null;
+  const tournament: Tournament = claim.snapshot.val();
+
+  try {
     if (!tournament?.participants) {
       throw new Error("Tournament not found or has no participants.");
     }
@@ -103,17 +117,22 @@ export async function startTournament(tournamentId: string): Promise<TournamentM
         }),
     );
 
-    await tournamentRef.set({
+    const finalTournament: Tournament = {
       ...tournament,
       status: TournamentStatus.InProgress,
       bracket,
       matchGames,
       startTime: Date.now(),
-    });
+    };
+    delete finalTournament.starting;
+    await tournamentRef.set(finalTournament);
 
     return bracket;
   } catch (error) {
     console.error("Error starting tournament:", error);
+    // Release the claim so a future sweep can retry instead of leaving the
+    // tournament stuck in Registration with `starting: true` forever.
+    await tournamentRef.child("starting").remove().catch(() => {});
     throw error;
   }
 };

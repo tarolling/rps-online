@@ -1,8 +1,10 @@
 import neo4j from "neo4j-driver";
+import { z } from "zod";
 import { NextRequest, NextResponse } from "next/server";
 import { getDriver } from "@/lib/neo4j";
 import { Club } from "@/types/neo4j";
 import { getAuthedUid } from "@/lib/auth";
+import { CreateClubSchema } from "@/lib/schemas/clubs";
 
 /**
  * Search from a list of clubs
@@ -47,20 +49,14 @@ export async function GET(req: NextRequest) {
  * @returns 
  */
 export async function POST(req: NextRequest) {
-  const { uid, name, tag, availability } = await req.json();
-
-  if (!uid) {
-    return NextResponse.json({ error: "Founder ID is required." }, { status: 400 });
+  const parsed = CreateClubSchema.safeParse(await req.json());
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: "Invalid request body.", details: z.flattenError(parsed.error).fieldErrors },
+      { status: 400 },
+    );
   }
-  if (!name) {
-    return NextResponse.json({ error: "Club name is required." }, { status: 400 });
-  }
-  if (!tag) {
-    return NextResponse.json({ error: "Club tag is required." }, { status: 400 });
-  }
-  if (!availability) {
-    return NextResponse.json({ error: "Club availability is required." }, { status: 400 });
-  }
+  const { uid, name, tag, availability } = parsed.data;
 
   // authenticate so that only the ego user can create their own clubs
   const authedUid = await getAuthedUid(req);
@@ -76,7 +72,7 @@ export async function POST(req: NextRequest) {
       availability,
     };
 
-    await session.executeWrite((tx) =>
+    const writeResult = await session.executeWrite((tx) =>
       tx.run(`
         MATCH (p:Player {uid: $founderID})
         CREATE (p)-[:MEMBER {role: 'Founder'}]->(c:Club $club)
@@ -87,6 +83,10 @@ export async function POST(req: NextRequest) {
       },
       ),
     );
+
+    if (writeResult.summary.counters.updates().nodesCreated === 0) {
+      return NextResponse.json({ error: "Founder not found." }, { status: 404 });
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {
