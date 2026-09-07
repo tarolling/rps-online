@@ -37,6 +37,7 @@ function AsyncGamePage() {
   const [now, setNow] = useState(() => Date.now());
   const [playerAvatarUrl, setPlayerAvatarUrl] = useState<string | null>(null);
   const [opponentAvatarUrl, setOpponentAvatarUrl] = useState<string | null>(null);
+  const [equippedTitles, setEquippedTitles] = useState<Record<string, string | null>>({});
 
   const playerId = user?.uid;
   const isPlayer1 = game?.player1.id === playerId;
@@ -76,6 +77,19 @@ function AsyncGamePage() {
     const opponentId = isPlayer1 ? game.player2.id : game.player1.id;
     getAvatarUrl(playerId).then(setPlayerAvatarUrl);
     getAvatarUrl(opponentId).then(setOpponentAvatarUrl);
+
+    // fetch their equipped titles
+    if (!(game.player1.id in equippedTitles) && !(game.player2.id in equippedTitles)) {
+      Promise.all([
+        postJSON<{ equippedTitleId: string | null }>("/api/fetchPlayer", { uid: game.player1.id }).catch(() => null),
+        postJSON<{ equippedTitleId: string | null }>("/api/fetchPlayer", { uid: game.player2.id }).catch(() => null),
+      ]).then(([p1, p2]) => {
+        setEquippedTitles({
+          [game.player1.id]: p1?.equippedTitleId ?? null,
+          [game.player2.id]: p2?.equippedTitleId ?? null,
+        });
+      });
+    }
   }, [playerId, game?.player1.id, game?.player2.id]);
 
   // Periodically refresh the "time remaining" display
@@ -168,6 +182,7 @@ function AsyncGamePage() {
               score={playerData?.score ?? 0}
               choice={choice}
               avatarUrl={playerAvatarUrl}
+              titleId={playerData ? equippedTitles[playerData.id] : null}
             />
 
             <div className={styles.vsBlock}>
@@ -189,6 +204,7 @@ function AsyncGamePage() {
               reveal={false}
               hasChosen={!!game[opponentKey].submitted}
               avatarUrl={opponentAvatarUrl}
+              titleId={opponentData ? equippedTitles[opponentData.id] : null}
             />
           </div>
 
