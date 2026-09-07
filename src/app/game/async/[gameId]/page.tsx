@@ -56,11 +56,17 @@ function AsyncGamePage() {
 
       setGame((prev) => {
         if (data.currentRound !== prev?.currentRound) {
-          setChoice(null);
           setSubmitError(null);
         }
         return data;
       });
+
+      // Re-derive from RTDB rather than trusting only the optimistic update in
+      // makeChoice — otherwise navigating away after submitting and back again
+      // (a fresh mount) shows no choice selected even though it's already
+      // recorded server-side.
+      const mine = data.player1.id === playerId ? data.player1 : data.player2;
+      setChoice(mine.submitted ? mine.choice : null);
     });
 
     return () => unsubscribe();
