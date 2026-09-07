@@ -29,10 +29,14 @@ export async function POST(req: NextRequest) {
       await getStripe().subscriptions.cancel(stripeSubscriptionId);
     }
 
-    await runQuery(`
+    const deleteResult = await runQuery(`
       MATCH (p:Player {uid: $uid})
       DETACH DELETE p
       `, { uid }, "write");
+
+    if (deleteResult.summary.counters.updates().nodesDeleted === 0) {
+      return NextResponse.json({ error: "Player not found." }, { status: 404 });
+    }
 
     return NextResponse.json({ success: true });
   } catch (err) {

@@ -337,7 +337,7 @@ function ProfilePage() {
         <div className={styles.grid}>
           {isOwnProfile && (
             <section className={`${styles.card} ${styles.premiumCard}`}>
-              <h2>⭐ Premium</h2>
+              <h2>Premium</h2>
               {isPremium ? (
                 <>
                   <p className={styles.premiumBody}>You&apos;re subscribed to Premium: unlimited async games, rank flair, and custom username/avatar.</p>
