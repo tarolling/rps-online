@@ -68,7 +68,13 @@ export const POST = withErrorHandling("challenges", async (req: NextRequest) => 
     // actually flips pending -> accepting "wins"; a racing second caller's
     // update function reruns against the now-"accepting" value and aborts.
     const txResult = await challengeRef.transaction((current) => {
-      if (!current || current.status !== "pending") return undefined;
+      // `current` starts out as an optimistic `null` guess on the first
+      // invocation (no active listener keeps a local cache warm for this ref
+      // server-side) — returning it unchanged lets the transaction retry
+      // against the real server value instead of treating the guess as proof
+      // no challenge exists.
+      if (!current) return current;
+      if (current.status !== "pending") return undefined;
       return { ...current, status: "accepting" };
     });
 

@@ -54,7 +54,8 @@ export default function RulesPage() {
                 pick 2 of Rock/Paper/Scissors that your A will beat. The one you don&apos;t pick beats your A
                 instead, and B beats only A. A and B tie themselves, and B always loses to Rock, Paper, and
                 Scissors. You get 3 total plays of A and B combined for the whole match, so use them wisely
-                and watch for patterns in your opponent&apos;s picks.
+                and watch for patterns in your opponent&apos;s picks. Beating an opponent&apos;s A with B
+                refunds that play, so a correctly-read B costs you nothing.
               </dd>
             </div>
             <div className={styles.modeItem}>
