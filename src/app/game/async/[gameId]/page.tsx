@@ -33,6 +33,7 @@ function AsyncGamePage() {
   const [loading, setLoading] = useState(true);
   const [choice, setChoice] = useState<Choice | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const [now, setNow] = useState(() => Date.now());
   const [playerAvatarUrl, setPlayerAvatarUrl] = useState<string | null>(null);
   const [opponentAvatarUrl, setOpponentAvatarUrl] = useState<string | null>(null);
@@ -58,7 +59,10 @@ function AsyncGamePage() {
       }
 
       setGame((prev) => {
-        if (data.currentRound !== prev?.currentRound) setChoice(null);
+        if (data.currentRound !== prev?.currentRound) {
+          setChoice(null);
+          setSubmitError(null);
+        }
         return data;
       });
     });
@@ -83,12 +87,14 @@ function AsyncGamePage() {
   const makeChoice = useCallback(async (selected: Choice) => {
     if (choice || !gameId || game?.state !== MatchStatus.InProgress) return;
     setChoice(selected);
+    setSubmitError(null);
     setSubmitting(true);
     try {
       await postJSON("/api/games/submitChoice", { gameId, choice: selected });
     } catch (err) {
       console.error("Error submitting choice:", err);
       setChoice(null);
+      setSubmitError("Couldn't submit your choice. Check your connection and try again.");
     } finally {
       setSubmitting(false);
     }
@@ -204,6 +210,9 @@ function AsyncGamePage() {
           )}
           {choice && !isFinished && (
             <p className={styles.hint}>Choice locked in. Waiting on your opponent (or the deadline).</p>
+          )}
+          {submitError && !isFinished && (
+            <p className={styles.errorText}>{submitError}</p>
           )}
 
           {/* Round History */}

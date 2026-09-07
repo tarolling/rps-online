@@ -1,5 +1,5 @@
 import { adminDb } from "@/lib/firebaseAdmin";
-import { computeRoundOutcome, recordRankedGame } from "./gameLogic";
+import { applyFlatUpdates, computeRoundOutcome, recordRankedGame } from "./gameLogic";
 import type { Game } from "@/types";
 import { Choice, MatchStatus } from "@/types/neo4j";
 
@@ -17,30 +17,20 @@ import { Choice, MatchStatus } from "@/types/neo4j";
  * cron route before this was split out).
  */
 
-/**
- * Applies a Firebase-style flattened update map (e.g. `{ "player1/choice": null }`)
- * onto a plain object copy, the way the Realtime Database's `update()` would.
- */
-function applyFlatUpdates<T extends object>(obj: T, updates: Record<string, unknown>): T {
-  const next: T = JSON.parse(JSON.stringify(obj));
-  for (const [path, value] of Object.entries(updates)) {
-    const parts = path.split("/");
-    let cursor: Record<string, unknown> = next as unknown as Record<string, unknown>;
-    for (let i = 0; i < parts.length - 1; i++) {
-      cursor[parts[i]] ??= {};
-      cursor = cursor[parts[i]] as Record<string, unknown>;
-    }
-    cursor[parts[parts.length - 1]] = value;
-  }
-  return next;
-}
-
 /** Finalises a completed/cancelled async game: records stats, removes the RTDB node. */
 export async function endGameServer(game: Game): Promise<void> {
-  if (game.state !== MatchStatus.Cancelled) {
-    await recordRankedGame(game);
+  try {
+    if (game.state !== MatchStatus.Cancelled) {
+      await recordRankedGame(game);
+    }
+  } catch (err) {
+    // Cleanup must still happen even if stats recording fails, otherwise the
+    // game node is stuck forever in Completed/Cancelled state, invisible to
+    // sweepExpiredAsyncRounds (which only scans state === InProgress).
+    console.error(`Failed to record ranked stats for game ${game.id}:`, err);
+  } finally {
+    await adminDb.ref(`games/${game.id}`).remove();
   }
-  await adminDb.ref(`games/${game.id}`).remove();
 }
 
 /**
@@ -100,24 +90,47 @@ export async function resolveRoundServer(gameId: string): Promise<{ winner: stri
  * always attempts server-side resolution — `resolveRoundServer`'s transaction
  * safely no-ops if the opponent hasn't submitted yet and the deadline hasn't
  * passed, so there's no need (or race) to check the opponent's status first.
+ *
+ * The validate-then-write has to happen inside a single `.transaction()` on
+ * the game node rather than a plain `get()` + `update()`: a separate read and
+ * write leaves a window where a concurrent `resolveRoundServer` call (the
+ * opponent's own submission, or the cron sweep hitting the round deadline)
+ * can finish, finalize the game, and `remove()` the RTDB node in the middle of
+ * it. The stray `update()` would then silently recreate a phantom node
+ * containing only the choice/submitted fields (RTDB `update()` creates
+ * missing paths), which the client renders as "Game not found." Running the
+ * whole thing as one transaction means a concurrent removal forces this to
+ * retry against the latest snapshot (`null`) instead.
  */
 export async function submitChoiceServer(gameId: string, playerId: string, choice: Choice): Promise<void> {
   const gameRef = adminDb.ref(`games/${gameId}`);
-  const snap = await gameRef.get();
-  const game: Game = snap.val();
-  if (!game) throw new Error("Game not found.");
-  if (game.state !== MatchStatus.InProgress) throw new Error("Game is not in progress.");
-  if (playerId !== game.player1.id && playerId !== game.player2.id) {
-    throw new Error("Player is not part of this game.");
-  }
+  let failure: string | null = null;
 
-  const playerKey = playerId === game.player1.id ? "player1" : "player2";
-  if (!game[playerKey].submitted) {
-    await gameRef.update({
+  const txResult = await gameRef.transaction((current: Game | null) => {
+    failure = null;
+    if (!current) {
+      failure = "Game not found.";
+      return; // abort, no write
+    }
+    if (current.state !== MatchStatus.InProgress) {
+      failure = "Game is not in progress.";
+      return;
+    }
+    if (playerId !== current.player1.id && playerId !== current.player2.id) {
+      failure = "Player is not part of this game.";
+      return;
+    }
+
+    const playerKey = playerId === current.player1.id ? "player1" : "player2";
+    if (current[playerKey].submitted) return; // already submitted: idempotent no-op, not an error
+
+    return applyFlatUpdates(current, {
       [`${playerKey}/choice`]: choice,
       [`${playerKey}/submitted`]: true,
     });
-  }
+  });
+
+  if (!txResult.committed && failure) throw new Error(failure);
 
   await resolveRoundServer(gameId);
 }

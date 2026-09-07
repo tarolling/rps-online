@@ -1,6 +1,6 @@
 "use client";
 
-import { get, getDatabase, onValue, ref, remove, set, update } from "firebase/database";
+import { get, getDatabase, onValue, ref, remove, runTransaction, set, update } from "firebase/database";
 import { onDisconnect } from "firebase/database";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
@@ -114,7 +114,9 @@ function WildcardGamePage() {
       const elapsed = Math.floor((Date.now() - game.roundStartTimestamp!) / 1000);
       const remaining = Math.max(0, roundDurationSeconds - elapsed);
       setTimeLeft(remaining);
-      if (remaining === 0 && iAmResolver) resolveRound(gameId, resolverPlayerId);
+      if (remaining === 0 && iAmResolver) {
+        resolveRound(gameId, resolverPlayerId).catch((err) => console.error("Error auto-resolving round:", err));
+      }
     };
 
     tick();
@@ -134,7 +136,7 @@ function WildcardGamePage() {
       if (!data.player1 || !data.player2) return;
       if (data.state === MatchStatus.Cancelled) {
         setGame(data);
-        remove(ref(db, `games/${gameId}`));
+        remove(ref(db, `games/${gameId}`)).catch((err) => console.error("Error removing canceled game:", err));
         return;
       }
 
@@ -168,7 +170,11 @@ function WildcardGamePage() {
         setRoundOver(true);
         const oppKey = playerId === data.player1.id ? "player2" : "player1";
         setDisplayedOpponentAB(data[oppKey]?.abRemaining ?? config.wildcard.abStartingPoints);
-        if (iAmResolver) setTimeout(() => resolveRound(gameId, resolverPlayerId), 1000);
+        if (iAmResolver) {
+          setTimeout(() => {
+            resolveRound(gameId, resolverPlayerId).catch((err) => console.error("Error resolving round:", err));
+          }, 1000);
+        }
       }
     });
 
@@ -203,25 +209,33 @@ function WildcardGamePage() {
 
     const presenceRootRef = ref(db, `games/${gameId}/presence`);
     const unsubPresence = onValue(presenceRootRef, async (snapshot) => {
-      const presence = snapshot.val() ?? {};
+      try {
+        const presence = snapshot.val() ?? {};
 
-      const gameSnap = await get(ref(db, `games/${gameId}`));
-      const currentGame = gameSnap.val();
+        const gameSnap = await get(ref(db, `games/${gameId}`));
+        const currentGame = gameSnap.val();
 
-      if (!currentGame || currentGame.state !== MatchStatus.Waiting) return;
+        if (!currentGame || currentGame.state !== MatchStatus.Waiting) return;
 
-      if (
-        currentGame.player1.id &&
-                currentGame.player2.id &&
-                presence[currentGame.player1.id] &&
-                presence[currentGame.player2.id]
-      ) {
-        const iAmPlayer1 = playerId === currentGame.player1.id;
-        if (iAmPlayer1) {
-          await update(ref(db, `games/${gameId}`), {
-            state: MatchStatus.InProgress,
-          });
+        if (
+          currentGame.player1.id &&
+                    currentGame.player2.id &&
+                    presence[currentGame.player1.id] &&
+                    presence[currentGame.player2.id]
+        ) {
+          const iAmPlayer1 = playerId === currentGame.player1.id;
+          if (iAmPlayer1) {
+            // Transaction (not a plain update) so two clients detecting mutual
+            // presence at the same instant can't race on the Waiting -> InProgress
+            // transition.
+            await runTransaction(ref(db, `games/${gameId}`), (current: Game | null) => {
+              if (!current || current.state !== MatchStatus.Waiting) return current;
+              return { ...current, state: MatchStatus.InProgress };
+            });
+          }
         }
+      } catch (err) {
+        console.error("Error starting game:", err);
       }
     });
 
@@ -267,8 +281,12 @@ function WildcardGamePage() {
       if (!connected) {
         const timeout = game.state === MatchStatus.Waiting ? WAITING_TIMEOUT * 1000 : DISCONNECT_TIMEOUT * 1000;
         disconnectTimer = setTimeout(async () => {
-          const myPresence = await get(ref(db, `games/${gameId}/presence/${playerId}`));
-          await resolveDisconnect(gameId, playerId, myPresence.exists());
+          try {
+            const myPresence = await get(ref(db, `games/${gameId}/presence/${playerId}`));
+            await resolveDisconnect(gameId, playerId, myPresence.exists());
+          } catch (err) {
+            console.error("Error resolving disconnect:", err);
+          }
         }, timeout);
       } else {
         if (disconnectTimer) {

@@ -1,6 +1,6 @@
 "use client";
 
-import { get, getDatabase, onValue, ref, remove, set, update } from "firebase/database";
+import { get, getDatabase, onValue, ref, remove, runTransaction, set, update } from "firebase/database";
 import { onDisconnect } from "firebase/database";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
@@ -105,7 +105,9 @@ function GamePage() {
       const elapsed = Math.floor((Date.now() - game.roundStartTimestamp!) / 1000);
       const remaining = Math.max(0, config.roundTimeout - elapsed);
       setTimeLeft(remaining);
-      if (remaining === 0 && iAmResolver) resolveRound(gameId, resolverPlayerId);
+      if (remaining === 0 && iAmResolver) {
+        resolveRound(gameId, resolverPlayerId).catch((err) => console.error("Error auto-resolving round:", err));
+      }
     };
 
     tick();
@@ -125,7 +127,7 @@ function GamePage() {
       if (!data.player1 || !data.player2) return;
       if (data.state === MatchStatus.Cancelled) {
         setGame(data);
-        remove(ref(db, `games/${gameId}`));
+        remove(ref(db, `games/${gameId}`)).catch((err) => console.error("Error removing canceled game:", err));
         return;
       }
 
@@ -162,7 +164,11 @@ function GamePage() {
       ) {
         handled.resolveFired = true;
         setRoundOver(true);
-        if (iAmResolver) setTimeout(() => resolveRound(gameId, resolverPlayerId), 1000);
+        if (iAmResolver) {
+          setTimeout(() => {
+            resolveRound(gameId, resolverPlayerId).catch((err) => console.error("Error resolving round:", err));
+          }, 1000);
+        }
       }
     });
 
@@ -182,7 +188,7 @@ function GamePage() {
 
     if (game[botKey].submitted) return; // already played this round
 
-    postJSON("/api/botPlay", { gameId, botId });
+    postJSON("/api/botPlay", { gameId, botId }).catch((err) => console.error("Error triggering bot play:", err));
   }, [game?.roundStartTimestamp]);
 
   // Set presence once on mount, never clean it up early
@@ -236,28 +242,35 @@ function GamePage() {
 
     const presenceRootRef = ref(db, `games/${gameId}/presence`);
     const unsubPresence = onValue(presenceRootRef, async (snapshot) => {
-      const presence = snapshot.val() ?? {};
+      try {
+        const presence = snapshot.val() ?? {};
 
-      // get fresh game state from firebase
-      const gameSnap = await get(ref(db, `games/${gameId}`));
-      const currentGame = gameSnap.val();
+        // get fresh game state from firebase
+        const gameSnap = await get(ref(db, `games/${gameId}`));
+        const currentGame = gameSnap.val();
 
-      if (!currentGame || currentGame.state !== MatchStatus.Waiting) return;
+        if (!currentGame || currentGame.state !== MatchStatus.Waiting) return;
 
-      if (
-        currentGame.player1.id &&
-                currentGame.player2.id &&
-                presence[currentGame.player1.id] &&
-                presence[currentGame.player2.id]
-      ) {
-        const iAmPlayer1 = playerId === currentGame.player1.id;
-        const player1IsBot = currentGame.player1.id.startsWith("bot_");
-        if (iAmPlayer1 || player1IsBot) {
-          await update(ref(db, `games/${gameId}`), {
-            state: MatchStatus.InProgress,
-            roundStartTimestamp: Date.now(),
-          });
+        if (
+          currentGame.player1.id &&
+                    currentGame.player2.id &&
+                    presence[currentGame.player1.id] &&
+                    presence[currentGame.player2.id]
+        ) {
+          const iAmPlayer1 = playerId === currentGame.player1.id;
+          const player1IsBot = currentGame.player1.id.startsWith("bot_");
+          if (iAmPlayer1 || player1IsBot) {
+            // Transaction (not a plain update) so two clients detecting mutual
+            // presence at the same instant can't both write the InProgress
+            // transition with slightly different roundStartTimestamps.
+            await runTransaction(ref(db, `games/${gameId}`), (current: Game | null) => {
+              if (!current || current.state !== MatchStatus.Waiting) return current;
+              return { ...current, state: MatchStatus.InProgress, roundStartTimestamp: Date.now() };
+            });
+          }
         }
+      } catch (err) {
+        console.error("Error starting game:", err);
       }
     });
 
@@ -293,8 +306,12 @@ function GamePage() {
       if (!connected) {
         const timeout = game.state === MatchStatus.Waiting ? WAITING_TIMEOUT * 1000 : DISCONNECT_TIMEOUT * 1000;
         disconnectTimer = setTimeout(async () => {
-          const myPresence = await get(ref(db, `games/${gameId}/presence/${playerId}`));
-          await resolveDisconnect(gameId, playerId, myPresence.exists());
+          try {
+            const myPresence = await get(ref(db, `games/${gameId}/presence/${playerId}`));
+            await resolveDisconnect(gameId, playerId, myPresence.exists());
+          } catch (err) {
+            console.error("Error resolving disconnect:", err);
+          }
         }, timeout);
       } else {
         // we reconnected in time - cancel the timer
@@ -317,7 +334,7 @@ function GamePage() {
 
     get(ref(db, `tournaments/${game.tournamentId}`)).then((snapshot) => {
       if (snapshot.exists()) setTournamentInfo(snapshot.val());
-    });
+    }).catch((err) => console.error("Error fetching tournament info:", err));
   }, [game?.tournamentId]);
 
   const makeChoice = useCallback(async (selected: Choice | null) => {
