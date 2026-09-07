@@ -45,7 +45,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ nam
     if (check.records.length === 0 || check.records[0].get("availability") !== "Open") {
       return NextResponse.json({ error: "Cannot join a closed club." }, { status: 403 });
     }
-    await session.executeWrite((tx) =>
+    const writeResult = await session.executeWrite((tx) =>
       tx.run(`
         MATCH (p:Player {uid: $uid}), (c:Club {name: $clubName})
         CREATE (p)-[:MEMBER {role: 'Member'}]->(c)
@@ -53,6 +53,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ nam
       { uid, clubName },
       ),
     );
+    if (writeResult.summary.counters.updates().relationshipsCreated === 0) {
+      return NextResponse.json({ error: "Player not found." }, { status: 404 });
+    }
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Clubs API error:", error);
@@ -85,7 +88,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ n
 
   const session = getDriver().session({ database: process.env.NEO4J_DATABASE });
   try {
-    await session.executeWrite((tx) =>
+    const writeResult = await session.executeWrite((tx) =>
       tx.run(`
         MATCH (p:Player {uid: $uid})-[r:MEMBER]->(c:Club {name: $clubName})
         DELETE r
@@ -93,6 +96,10 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ n
       { uid, clubName },
       ),
     );
+
+    if (writeResult.summary.counters.updates().relationshipsDeleted === 0) {
+      return NextResponse.json({ error: "Not a member of this club." }, { status: 404 });
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {

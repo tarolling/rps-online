@@ -9,6 +9,9 @@ export async function GET(req: NextRequest) {
 
   try {
     const response = await getMatchDetail(matchId);
+    if (!response) {
+      return NextResponse.json({ error: "Match not found." }, { status: 404 });
+    }
     return NextResponse.json(response);
   } catch (err) {
     console.error("fetchMatchDetail error:", err);

@@ -72,7 +72,7 @@ export async function POST(req: NextRequest) {
       availability,
     };
 
-    await session.executeWrite((tx) =>
+    const writeResult = await session.executeWrite((tx) =>
       tx.run(`
         MATCH (p:Player {uid: $founderID})
         CREATE (p)-[:MEMBER {role: 'Founder'}]->(c:Club $club)
@@ -83,6 +83,10 @@ export async function POST(req: NextRequest) {
       },
       ),
     );
+
+    if (writeResult.summary.counters.updates().nodesCreated === 0) {
+      return NextResponse.json({ error: "Founder not found." }, { status: 404 });
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {

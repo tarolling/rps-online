@@ -24,15 +24,22 @@ export async function POST(req: NextRequest) {
     // Re-derive premium status server-side from the authenticated uid — never
     // trust a client-supplied flag for this.
     const player = await runQuery("MATCH (p:Player {uid: $uid}) RETURN p.isPremium AS isPremium", { uid: authedUid });
-    if (!(player.records[0]?.get("isPremium") ?? false)) {
+    if (player.records.length === 0) {
+      return NextResponse.json({ error: "Player not found." }, { status: 404 });
+    }
+    if (!(player.records[0].get("isPremium") ?? false)) {
       return NextResponse.json({ error: "Changing your username requires Premium." }, { status: 403 });
     }
 
-    await runQuery(`
+    const updateResult = await runQuery(`
       MATCH (p:Player {uid: $uid})
       SET p.username = $newUsername,
           p.usernameLower = toLower($newUsername)
       `, { uid, newUsername }, "write");
+
+    if (updateResult.summary.counters.updates().propertiesSet === 0) {
+      return NextResponse.json({ error: "Player not found." }, { status: 404 });
+    }
 
     return NextResponse.json({ success: true });
   } catch (err) {
