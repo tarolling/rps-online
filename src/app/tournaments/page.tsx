@@ -9,7 +9,6 @@ import Header from "@/components/Header";
 import LocalTime from "@/components/LocalTime";
 import styles from "./TournamentsPage.module.css";
 import { postJSON } from "@/lib/api";
-import { createTournament } from "@/lib/tournaments";
 import { Tournament } from "@/types";
 import { TournamentStatus, type TournamentPlayerCap } from "@/types/neo4j";
 
@@ -27,7 +26,7 @@ type TournamentEntry = Tournament & { firebaseKey: string };
 // ── Component ─────────────────────────────────────────────────────────────────
 
 const TournamentsPage = () => {
-  const { user } = useAuth();
+  const { user, isPremium } = useAuth();
   const db = getDatabase();
 
   const [tournaments, setTournaments] = useState<TournamentEntry[]>([]);
@@ -50,7 +49,7 @@ const TournamentsPage = () => {
     return () => unsubscribe();
   }, []);
 
-  // Check admin claim from Firebase token
+  // Check admin status
   useEffect(() => {
     if (!user) return;
     postJSON<{ isAdmin: boolean }>("/api/admin/isAdmin", {})
@@ -59,11 +58,16 @@ const TournamentsPage = () => {
 
   const handleCreate = async (e: React.SubmitEvent) => {
     e.preventDefault();
-    if (!isAdmin || !user) return;
+    if ((!isAdmin && !isPremium) || !user) return;
     setError(null);
 
     try {
-      await createTournament(form.name, form.description, form.playerCap, form.startTime);
+      await postJSON("/api/tournaments/create", {
+        name: form.name,
+        description: form.description,
+        playerCap: form.playerCap,
+        startTime: form.startTime,
+      });
       setForm({ name: "", playerCap: 8, description: "", startTime: 0 });
     } catch (err) {
       console.error("Error creating tournament:", err);
@@ -90,8 +94,8 @@ const TournamentsPage = () => {
 
         {error && <p className={styles.errorBanner}>{error}</p>}
 
-        {/* Admin: create tournament */}
-        {isAdmin && (
+        {/* Admin or Premium: create tournament */}
+        {(isAdmin || isPremium) && (
           <section className={styles.card}>
             <h2>Create Tournament</h2>
             <form onSubmit={handleCreate} className={styles.form} noValidate>
