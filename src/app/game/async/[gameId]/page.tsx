@@ -4,8 +4,6 @@ import { getDatabase, onValue, ref } from "firebase/database";
 import { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
-import Footer from "@/components/Footer";
-import Header from "@/components/Header";
 import styles from "@/styles/game.module.css";
 import config from "@/config/settings.json";
 import { getAvatarUrl } from "@/lib/avatar";
@@ -37,6 +35,7 @@ function AsyncGamePage() {
   const [now, setNow] = useState(() => Date.now());
   const [playerAvatarUrl, setPlayerAvatarUrl] = useState<string | null>(null);
   const [opponentAvatarUrl, setOpponentAvatarUrl] = useState<string | null>(null);
+  const [equippedTitles, setEquippedTitles] = useState<Record<string, string | null>>({});
 
   const playerId = user?.uid;
   const isPlayer1 = game?.player1.id === playerId;
@@ -53,18 +52,21 @@ function AsyncGamePage() {
     const unsubscribe = onValue(gameRef, (snapshot) => {
       const data: Game = snapshot.val();
       setLoading(false);
-      if (!data || !data.player1 || !data.player2) {
-        setGame(null);
-        return;
-      }
+      if (!data || !data.player1 || !data.player2) return;
 
       setGame((prev) => {
         if (data.currentRound !== prev?.currentRound) {
-          setChoice(null);
           setSubmitError(null);
         }
         return data;
       });
+
+      // Re-derive from RTDB rather than trusting only the optimistic update in
+      // makeChoice — otherwise navigating away after submitting and back again
+      // (a fresh mount) shows no choice selected even though it's already
+      // recorded server-side.
+      const mine = data.player1.id === playerId ? data.player1 : data.player2;
+      setChoice(mine.submitted ? mine.choice : null);
     });
 
     return () => unsubscribe();
@@ -76,6 +78,19 @@ function AsyncGamePage() {
     const opponentId = isPlayer1 ? game.player2.id : game.player1.id;
     getAvatarUrl(playerId).then(setPlayerAvatarUrl);
     getAvatarUrl(opponentId).then(setOpponentAvatarUrl);
+
+    // fetch their equipped titles
+    if (!(game.player1.id in equippedTitles) && !(game.player2.id in equippedTitles)) {
+      Promise.all([
+        postJSON<{ equippedTitleId: string | null }>("/api/fetchPlayer", { uid: game.player1.id }).catch(() => null),
+        postJSON<{ equippedTitleId: string | null }>("/api/fetchPlayer", { uid: game.player2.id }).catch(() => null),
+      ]).then(([p1, p2]) => {
+        setEquippedTitles({
+          [game.player1.id]: p1?.equippedTitleId ?? null,
+          [game.player2.id]: p2?.equippedTitleId ?? null,
+        });
+      });
+    }
   }, [playerId, game?.player1.id, game?.player2.id]);
 
   // Periodically refresh the "time remaining" display
@@ -104,19 +119,16 @@ function AsyncGamePage() {
 
   if (loading) return (
     <div className="app">
-      <Header />
       <main className={styles.main}>
         <div className={styles.gameContainer}>
           <p className={styles.loading}>Loading game...</p>
         </div>
       </main>
-      <Footer />
     </div>
   );
 
   if (!game) return (
     <div className="app">
-      <Header />
       <main className={styles.main}>
         <div className={styles.gameContainer}>
           <div className={styles.result}>
@@ -127,13 +139,11 @@ function AsyncGamePage() {
           </div>
         </div>
       </main>
-      <Footer />
     </div>
   );
 
   if (game.state === MatchStatus.Cancelled) return (
     <div className="app">
-      <Header />
       <main className={styles.main}>
         <div className={styles.gameContainer}>
           <div className={styles.result}>
@@ -145,7 +155,6 @@ function AsyncGamePage() {
           </div>
         </div>
       </main>
-      <Footer />
     </div>
   );
 
@@ -155,7 +164,6 @@ function AsyncGamePage() {
 
   return (
     <div className="app">
-      <Header />
       <main className={styles.main}>
         <div className={styles.gameContainer}>
 
@@ -168,6 +176,7 @@ function AsyncGamePage() {
               score={playerData?.score ?? 0}
               choice={choice}
               avatarUrl={playerAvatarUrl}
+              titleId={playerData ? equippedTitles[playerData.id] : null}
             />
 
             <div className={styles.vsBlock}>
@@ -189,6 +198,7 @@ function AsyncGamePage() {
               reveal={false}
               hasChosen={!!game[opponentKey].submitted}
               avatarUrl={opponentAvatarUrl}
+              titleId={opponentData ? equippedTitles[opponentData.id] : null}
             />
           </div>
 
@@ -209,7 +219,12 @@ function AsyncGamePage() {
             </div>
           )}
           {choice && !isFinished && (
-            <p className={styles.hint}>Choice locked in. Waiting on your opponent (or the deadline).</p>
+            <div className={styles.result}>
+              <p className={styles.hint}>Choice locked in. Waiting on your opponent (or the deadline).</p>
+              <button className={styles.playAgainButton} onClick={() => router.push("/asyncGames")}>
+                Back to Async Games
+              </button>
+            </div>
           )}
           {submitError && !isFinished && (
             <p className={styles.errorText}>{submitError}</p>
@@ -236,7 +251,6 @@ function AsyncGamePage() {
           )}
         </div>
       </main>
-      <Footer />
     </div>
   );
 };

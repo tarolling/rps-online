@@ -70,7 +70,7 @@ function AsyncGamesPage() {
       <main className={styles.main}>
         <div className={styles.header}>
           <h1 className={styles.title}>Async Games</h1>
-          <Link href="/play" className={styles.backLink}>← Back to Play</Link>
+          <Link href="/play" className={styles.backLink}>Back</Link>
         </div>
 
         {queueEntry && (

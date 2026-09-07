@@ -1,21 +1,31 @@
 import type { Metadata, Viewport } from "next";
+import { Inter } from "next/font/google";
 import { AuthProvider } from "@/context/AuthContext";
 import { CookieConsentProvider } from "@/context/CookieConsentContext";
 import CookieConsentBanner from "@/components/CookieConsentBanner";
 import AnalyticsGate from "@/components/AnalyticsGate";
+import StructuredData from "@/components/StructuredData";
+import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/seo";
 import "./global.css";
 
-const SITE_URL = "https://ranked-rps.com";
-const SITE_NAME = "Ranked RPS";
-const SITE_DESCRIPTION = "Competitive Rock-Paper-Scissors matchmaking. Climb ranked ladders, form clubs, and battle players worldwide.";
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-sans",
+  display: "swap",
+});
+
+const DEFAULT_TITLE = `${SITE_NAME} - Competitive Rock Paper Scissors Matchmaking`;
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: `${SITE_NAME} - Rock-Paper-Scissors Matchmaking`,
+    default: DEFAULT_TITLE,
     template: `%s - ${SITE_NAME}`,
   },
   description: SITE_DESCRIPTION,
+  alternates: {
+    canonical: "/",
+  },
   icons: {
     icon: "/favicon.ico",
   },
@@ -23,15 +33,13 @@ export const metadata: Metadata = {
     type: "website",
     url: SITE_URL,
     siteName: SITE_NAME,
-    title: `${SITE_NAME} - Rock-Paper-Scissors Matchmaking`,
+    title: DEFAULT_TITLE,
     description: SITE_DESCRIPTION,
-    images: [{ url: "/logo.png" }],
   },
   twitter: {
-    card: "summary",
-    title: `${SITE_NAME} - Rock-Paper-Scissors Matchmaking`,
+    card: "summary_large_image",
+    title: DEFAULT_TITLE,
     description: SITE_DESCRIPTION,
-    images: ["/logo.png"],
   },
 };
 
@@ -46,8 +54,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className={inter.variable}>
       <body>
+        <StructuredData />
         <CookieConsentProvider>
           <AuthProvider>{children}</AuthProvider>
           <CookieConsentBanner />

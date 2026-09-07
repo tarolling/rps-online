@@ -51,14 +51,6 @@ export default function Footer() {
                         Discord
           </a>
           <a
-            href="https://github.com/tarolling/rps-online"
-            target="_blank"
-            rel="noopener noreferrer"
-            className={styles["footer-social-link"]}
-          >
-                        GitHub
-          </a>
-          <a
             href="https://www.instagram.com/rankedrps/"
             target="_blank"
             rel="noopener noreferrer"

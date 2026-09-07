@@ -70,7 +70,7 @@ export default async function MatchDetailPage({ params }: { params: Promise<{ id
             <div className={`${styles.playerBlock} ${isP1Winner ? styles.winner : styles.loser}`}>
               <Avatar src={player1.avatar} username={player1.name} size="lg" />
               <Link href={`/profile/${player1.id}`} className={styles.playerName}>{player1.name}</Link>
-              {isP1Winner && <span className={styles.crownBadge}>👑 Winner</span>}
+              {isP1Winner && <span className={styles.crownBadge}>Winner</span>}
             </div>
             <div className={styles.scoreDisplay}>
               <span className={styles.scoreNum}>{player1.wins}</span>
@@ -80,7 +80,7 @@ export default async function MatchDetailPage({ params }: { params: Promise<{ id
             <div className={`${styles.playerBlock} ${!isP1Winner ? styles.winner : styles.loser}`}>
               <Avatar src={player2.avatar} username={player2.name} size="lg" />
               <Link href={`/profile/${player2.id}`} className={styles.playerName}>{player2.name}</Link>
-              {!isP1Winner && <span className={styles.crownBadge}>👑 Winner</span>}
+              {!isP1Winner && <span className={styles.crownBadge}>Winner</span>}
             </div>
           </div>
         </section>

@@ -24,13 +24,18 @@
 }
 
 .backLink {
-    font-size: 0.85rem;
-    color: var(--color-text-muted);
+    background: var(--color-primary);
+    color: #fff;
+    padding: 0.45rem 1rem;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 600;
     text-decoration: none;
+    transition: background 0.15s;
 }
 
 .backLink:hover {
-    color: var(--color-primary);
+    background: var(--color-primary-hover);
 }
 
 .section {
