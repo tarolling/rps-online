@@ -1,8 +1,10 @@
 import { getDriver } from "@/lib/neo4j";
 import { NextResponse, type NextRequest } from "next/server";
 import neo4j from "neo4j-driver";
+import { z } from "zod";
 import { getAuthedUid } from "@/lib/auth";
 import config from "@/config/settings.json";
+import { UpdateClubSchema } from "@/lib/schemas/clubs";
 
 /**
  * Get club members/info 
@@ -69,18 +71,18 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ nam
  */
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ name: string }>}) {
   const { name: clubName } = await params;
-  const {        
-    uid,
-    newName,
-    newTag,
-    availability,
-  } = await req.json();
   if (!clubName) {
     return NextResponse.json({ error: "Club name is required." }, { status: 400 });
   }
-  if (!uid) {
-    return NextResponse.json({ error: "User ID is required." }, { status: 400 });
+
+  const parsed = UpdateClubSchema.safeParse(await req.json());
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: "Invalid request body.", details: z.flattenError(parsed.error).fieldErrors },
+      { status: 400 },
+    );
   }
+  const { uid, newName, newTag, availability } = parsed.data;
 
   // authenticate so that only the ego user can edit their own club
   const authedUid = await getAuthedUid(req);

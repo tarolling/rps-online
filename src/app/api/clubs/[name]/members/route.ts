@@ -1,6 +1,8 @@
 import { getAuthedUid } from "@/lib/auth";
 import { getDriver } from "@/lib/neo4j";
 import { NextResponse, type NextRequest } from "next/server";
+import { z } from "zod";
+import { JoinClubSchema } from "@/lib/schemas/clubs";
 
 /**
  * Join a club
@@ -10,13 +12,18 @@ import { NextResponse, type NextRequest } from "next/server";
  */
 export async function POST(req: NextRequest, { params }: { params: Promise<{ name: string }>}) {
   const { name: clubName } = await params;
-  const { uid } = await req.json();
-  if (!uid) {
-    return NextResponse.json({ error: "User ID is required." }, { status: 400 });
-  }
   if (!clubName) {
     return NextResponse.json({ error: "Club name is required." }, { status: 400 });
   }
+
+  const parsed = JoinClubSchema.safeParse(await req.json());
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: "Invalid request body.", details: z.flattenError(parsed.error).fieldErrors },
+      { status: 400 },
+    );
+  }
+  const { uid } = parsed.data;
 
   // authenticate so that only the ego user can join their own club
   const authedUid = await getAuthedUid(req);
