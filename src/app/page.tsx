@@ -9,7 +9,7 @@ import RecentMatchesGrid from "@/components/RecentMatchesGrid";
 import MatchesGridSkeleton from "@/components/MatchesGridSkeleton";
 import { RankedIcon, ClubsIcon, PracticeIcon, AnalyticsIcon } from "@/components/icons/FeatureIcons";
 
-export const revalidate = 0;
+export const revalidate = 30;
 
 const FEATURES = [
   {
@@ -52,13 +52,13 @@ export default function Home() {
         </div>
 
         <div className={styles.heroContent}>
-          <p className={styles.heroEyebrow}>Competitive Rock Paper Scissors</p>
+          <p className={styles.heroEyebrow}>Competitive Rock Paper Scissors Online</p>
           <h1 className={styles.heroHeadline}>
             Prove your reads.<br />
             <span className={styles.heroAccent}>Earn your rank.</span>
           </h1>
           <p className={styles.heroSub}>
-            Real rankings. Real stakes. The world&#39;s most underestimated game, taken seriously.
+            Play rock paper scissors online against real opponents in the world&#39;s most underestimated competitive game.
           </p>
           <HeroButtons />
         </div>
@@ -71,7 +71,9 @@ export default function Home() {
         <div className={styles.tickerTrack}>
           {Array.from({ length: 3 }).map((_, i) => (
             <span key={i} className={styles.tickerItems}>
-              <span>Ranked Matchmaking</span>
+              <span>Ranked Ladder Matchmaking</span>
+              <span className={styles.tickerDot}>✦</span>
+              <span>Four Different Game Modes</span>
               <span className={styles.tickerDot}>✦</span>
               <span>Global Leaderboard</span>
               <span className={styles.tickerDot}>✦</span>
@@ -87,26 +89,9 @@ export default function Home() {
           ))}
         </div>
       </div>
-
-      {/* ── Features ── */}
-      <section className={styles.features}>
-        <div className={styles.featuresInner}>
-          <div className={styles.featuresHeader}>
-            <p className={styles.sectionEyebrow}>Why play here</p>
-            <h2 className={styles.sectionTitle}>Built for competitors.</h2>
-          </div>
-          <div className={styles.featuresGrid}>
-            {FEATURES.map(({ icon: Icon, label, title, desc }) => (
-              <div key={title} className={styles.featureCard}>
-                <span className={styles.featureLabel}>{label}</span>
-                <Icon className={styles.featureIcon} />
-                <h3 className={styles.featureTitle}>{title}</h3>
-                <p className={styles.featureDesc}>{desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      <p className={styles.tickerCaption}>
+        Ranked matchmaking, live spectating, clubs, AI practice, and tournaments, all in one rock paper scissors online arena.
+      </p>
 
       {/* ── Live matches ── */}
       <Suspense fallback={null}>
@@ -125,7 +110,7 @@ export default function Home() {
           </Suspense>
           <div className={styles.leaderboardCta}>
             <Link href="/leaderboard" className={styles.leaderboardLink}>
-              View Full Leaderboard →
+              View Full Leaderboard
             </Link>
           </div>
         </div>

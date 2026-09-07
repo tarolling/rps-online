@@ -55,49 +55,56 @@ function LeaderboardPage() {
       <main className={styles.main}>
         <h1>Top 100 Players</h1>
 
-        {/* Mode tabs */}
-        <div className={styles.tabs}>
-          {MODE_TABS.map(({ mode, label }) => (
-            <button
-              key={mode}
-              className={`${styles.tab} ${activeMode === mode ? styles.tabActive : ""}`}
-              onClick={() => setActiveMode(mode)}
+        {/* Filters */}
+        <div className={styles.filters}>
+          <div className={styles.filterGroup}>
+            <label className={styles.filterLabel} htmlFor="mode-select">Mode</label>
+            <select
+              id="mode-select"
+              className={styles.select}
+              value={activeMode}
+              onChange={(e) => setActiveMode(e.target.value as PlayMode)}
             >
-              {label}
-            </button>
-          ))}
-        </div>
+              {MODE_TABS.map(({ mode, label }) => (
+                <option key={mode} value={mode}>{label}</option>
+              ))}
+            </select>
+          </div>
 
-        {/* Type tabs */}
-        <div className={styles.tabs}>
-          {LEADERBOARD_TABS.map(({ type, label }) => (
-            <button
-              key={type}
-              className={`${styles.tab} ${activeType === type ? styles.tabActive : ""}`}
-              onClick={() => setActiveType(type)}
+          <div className={styles.filterGroup}>
+            <label className={styles.filterLabel} htmlFor="type-select">Sort by</label>
+            <select
+              id="type-select"
+              className={styles.select}
+              value={activeType}
+              onChange={(e) => {
+                const nextType = e.target.value as LeaderboardType;
+                setActiveType(nextType);
+                if (nextType !== "rating") setActiveRank(null);
+              }}
             >
-              {label}
-            </button>
-          ))}
-        </div>
+              {LEADERBOARD_TABS.map(({ type, label }) => (
+                <option key={type} value={type}>{label}</option>
+              ))}
+            </select>
+          </div>
 
-        {/* Rank filter */}
-        <div className={styles.rankFilter}>
-          <button
-            className={`${styles.rankChip} ${activeRank === null ? styles.rankChipActive : ""}`}
-            onClick={() => setActiveRank(null)}
-          >
-            Global
-          </button>
-          {getRankNames().map((rank) => (
-            <button
-              key={rank}
-              className={`${styles.rankChip} ${activeRank === rank ? styles.rankChipActive : ""}`}
-              onClick={() => setActiveRank(rank)}
-            >
-              {rank}
-            </button>
-          ))}
+          {activeType === "rating" && (
+            <div className={styles.filterGroup}>
+              <label className={styles.filterLabel} htmlFor="rank-select">Rank</label>
+              <select
+                id="rank-select"
+                className={styles.select}
+                value={activeRank ?? ""}
+                onChange={(e) => setActiveRank(e.target.value === "" ? null : e.target.value as RankName)}
+              >
+                <option value="">Global</option>
+                {getRankNames().map((rank) => (
+                  <option key={rank} value={rank}>{rank}</option>
+                ))}
+              </select>
+            </div>
+          )}
         </div>
 
         {playerData === null ? (
