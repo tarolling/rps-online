@@ -153,6 +153,8 @@ export interface Tournament {
     participants: Record<string, Participant>;
     bracket?: TournamentMatch[];
     matchGames?: Record<string, string>;
+    /** Transient claim set while `startTournament` is generating the bracket, guarding against a duplicate start from a concurrent cron run. */
+    starting?: boolean;
     /* unix ms */
     createdAt: number;
     /* unix ms */
