@@ -1,4 +1,4 @@
-import { Participant, Tournament, TournamentMatch } from "@/types";
+import { Tournament, TournamentMatch } from "@/types";
 import { adminDb } from "./firebaseAdmin";
 import { createGame } from "./matchmaking.server";
 import { TournamentMatchStatus, TournamentStatus, type TournamentPlayerCap } from "@/types/neo4j";
@@ -85,8 +85,14 @@ export async function startTournament(tournamentId: string): Promise<TournamentM
   const tournamentRef = adminDb.ref(`tournaments/${tournamentId}`);
 
   const claim = await tournamentRef.transaction((current: Tournament | null) => {
-    if (!current || current.status !== TournamentStatus.Registration || current.starting) {
-      return; // abort, no write — already claimed/started or gone
+    // `current` starts out as an optimistic `null` guess on the first
+    // invocation (no active listener keeps a local cache warm for this ref
+    // server-side) — returning it unchanged lets the transaction retry
+    // against the real server value instead of treating the guess as proof
+    // the tournament doesn't exist.
+    if (!current) return current;
+    if (current.status !== TournamentStatus.Registration || current.starting) {
+      return; // abort, no write — already claimed/started
     }
     return { ...current, starting: true };
   });
@@ -142,6 +148,14 @@ export async function startTournament(tournamentId: string): Promise<TournamentM
  * If both players are now set in the next match, creates a game for it.
  * If the final match is complete, marks the tournament as finished.
  *
+ * Runs as an RTDB transaction because two matches in the same round can
+ * complete around the same time: a plain get()+set() would let a second call
+ * overwrite the whole tournament document with a stale bracket, silently
+ * dropping the first call's winner assignment. `nextGameMatchId` is only set
+ * on the transaction attempt that actually fills the next match's slots, so
+ * `createGame` below (a side effect that must not run inside the retryable
+ * transaction callback) only fires once.
+ *
  * @returns The updated tournament state.
  */
 export async function advanceWinner(
@@ -149,72 +163,86 @@ export async function advanceWinner(
   matchId: string,
   winnerId: string,
 ): Promise<Tournament> {
+  const tournamentRef = adminDb.ref(`tournaments/${tournamentId}`);
+  let failure: string | null = null;
+  let nextGameMatchId: string | undefined;
+
   try {
-    const tournamentRef = adminDb.ref(`tournaments/${tournamentId}`);
-    const snapshot = await tournamentRef.get();
-    const tournament: Tournament = snapshot.val();
+    const txResult = await tournamentRef.transaction((current: Tournament | null) => {
+      failure = null;
+      nextGameMatchId = undefined;
 
-    if (!tournament?.bracket) throw new Error("Tournament or bracket not found.");
+      // `current` starts out as an optimistic `null` guess on the first
+      // invocation — return it unchanged so the transaction retries against
+      // the real server value instead of aborting on an unconfirmed guess.
+      if (!current) return current;
+      if (!current.bracket) {
+        failure = "Tournament or bracket not found.";
+        return; // abort, no write
+      }
 
-    const currentMatch = tournament.bracket.find((m) => m.matchId === matchId);
-    if (!currentMatch || currentMatch.winner) return tournament;
+      const currentMatch = current.bracket.find((m) => m.matchId === matchId);
+      if (!currentMatch || currentMatch.winner) return current; // already advanced, idempotent no-op
 
-    const winner = currentMatch.player1?.id === winnerId
-      ? currentMatch.player1
-      : currentMatch.player2;
+      const winner = currentMatch.player1?.id === winnerId
+        ? currentMatch.player1
+        : currentMatch.player2;
 
-    currentMatch.winner = winner;
-    currentMatch.status = TournamentMatchStatus.Completed;
+      currentMatch.winner = winner;
+      currentMatch.status = TournamentMatchStatus.Completed;
 
-    if (currentMatch.nextMatchId) {
-      await assignToNextMatch(tournament, currentMatch, winner!, tournamentId);
+      if (currentMatch.nextMatchId) {
+        const nextMatch = current.bracket.find((m) => m.matchId === currentMatch.nextMatchId);
+        if (nextMatch) {
+          // Odd-numbered matches fill player1, even-numbered fill player2
+          const matchNumber = parseInt(currentMatch.matchId.split("match")[1]);
+          if (matchNumber % 2 === 0) {
+            nextMatch.player2 = winner;
+          } else {
+            nextMatch.player1 = winner;
+          }
+          if (nextMatch.player1 && nextMatch.player2 && !current.matchGames?.[nextMatch.matchId]) {
+            nextGameMatchId = nextMatch.matchId;
+          }
+        }
+      }
+
+      const finalMatch = current.bracket.find((m) => !m.nextMatchId);
+      if (finalMatch?.winner && current.status !== TournamentStatus.Completed) {
+        current.status = TournamentStatus.Completed;
+        current.winner = finalMatch.winner;
+        current.endTime = Date.now();
+      }
+
+      return current;
+    });
+
+    if (failure) throw new Error(failure);
+
+    const tournament: Tournament = txResult.snapshot.val();
+    if (!tournament) throw new Error("Tournament or bracket not found.");
+
+    if (nextGameMatchId) {
+      const nextMatch = tournament.bracket!.find((m) => m.matchId === nextGameMatchId);
+      if (nextMatch?.player1 && nextMatch?.player2) {
+        const gameId = await createGame(
+          nextMatch.player1.id, nextMatch.player1.username, nextMatch.player1.rating,
+          nextMatch.player2.id, nextMatch.player2.username, nextMatch.player2.rating,
+          { tournamentId, matchId: nextMatch.matchId },
+        );
+        if (gameId) {
+          await tournamentRef.child(`matchGames/${nextMatch.matchId}`).set(gameId);
+          tournament.matchGames = { ...tournament.matchGames, [nextMatch.matchId]: gameId };
+        }
+      }
     }
 
-    const finalMatch = tournament.bracket.find((m) => !m.nextMatchId);
-    if (finalMatch?.winner) {
-      tournament.status = TournamentStatus.Completed;
-      tournament.winner = finalMatch.winner;
-      tournament.endTime = Date.now();
-    }
-
-    await tournamentRef.set(tournament);
     return tournament;
   } catch (error) {
     console.error("Error advancing winner:", error);
     throw error;
   }
 };
-
-/**
- * Places the winner into the correct slot (player1 or player2) of the next
- * match, and creates a game if both slots are now filled.
- */
-async function assignToNextMatch(
-  tournament: Tournament,
-  currentMatch: TournamentMatch,
-  winner: Participant,
-  tournamentId: string,
-): Promise<void> {
-  const nextMatch = tournament.bracket!.find((m) => m.matchId === currentMatch.nextMatchId);
-  if (!nextMatch) return;
-
-  // Odd-numbered matches fill player1, even-numbered fill player2
-  const matchNumber = parseInt(currentMatch.matchId.split("match")[1]);
-  if (matchNumber % 2 === 0) {
-    nextMatch.player2 = winner;
-  } else {
-    nextMatch.player1 = winner;
-  }
-
-  if (nextMatch.player1 && nextMatch.player2) {
-    const gameId = await createGame(
-      nextMatch.player1.id, nextMatch.player1.username, nextMatch.player1.rating,
-      nextMatch.player2.id, nextMatch.player2.username, nextMatch.player2.rating,
-      { tournamentId, matchId: nextMatch.matchId },
-    );
-    if (gameId) tournament.matchGames![nextMatch.matchId] = gameId;
-  }
-}
 
 // ── Queries ───────────────────────────────────────────────────────────────────
 

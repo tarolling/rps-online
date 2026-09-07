@@ -340,14 +340,14 @@ function ProfilePage() {
               <h2>Premium</h2>
               {isPremium ? (
                 <>
-                  <p className={styles.premiumBody}>You&apos;re subscribed to Premium: unlimited async games, rank flair, and custom username/avatar.</p>
+                  <p className={styles.premiumBody}>You&apos;re subscribed to Premium: unlimited async games, rank flair, custom username/avatar, and the ability to create tournaments.</p>
                   <button onClick={handleManageSubscription} disabled={billingLoading} className={styles.premiumButton}>
                     {billingLoading ? "Loading…" : "Manage Subscription"}
                   </button>
                 </>
               ) : (
                 <>
-                  <p className={styles.premiumBody}>$5/mo: unlimited async games, exclusive rank flair, and the ability to change your username and avatar.</p>
+                  <p className={styles.premiumBody}>$5/mo: unlimited async games, exclusive rank flair, the ability to change your username and avatar, and create your own tournaments.</p>
                   <button onClick={handleUpgrade} disabled={billingLoading} className={styles.premiumButton}>
                     {billingLoading ? "Loading…" : "Upgrade to Premium"}
                   </button>
