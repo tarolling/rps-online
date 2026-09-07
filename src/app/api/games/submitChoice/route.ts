@@ -26,6 +26,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true });
   } catch (err) {
     console.error("submitChoice error:", err);
-    return NextResponse.json({ error: (err as Error).message ?? "Failed to submit choice." }, { status: 400 });
+    const message = (err as Error).message ?? "Failed to submit choice.";
+    const status = message === "Game not found."
+      ? 404
+      : message === "Game is not in progress." || message === "Player is not part of this game."
+        ? 409
+        : 500;
+    return NextResponse.json({ error: message }, { status });
   }
 }

@@ -36,6 +36,28 @@ export interface RoundOutcome {
 }
 
 /**
+ * Applies a Firebase-style flattened update map (e.g. `{ "player1/choice": null }`,
+ * as returned in `RoundOutcome.updates`) onto a plain object copy, the way the
+ * Realtime Database's `update()` would. Shared by both the client (`matchmaking.ts`'s
+ * `resolveRound`) and server (`matchmakingServer.ts`'s `resolveRoundServer`/
+ * `submitChoiceServer`) transaction callbacks, which must apply these updates
+ * to an in-memory snapshot rather than issuing a separate `update()` call.
+ */
+export function applyFlatUpdates<T extends object>(obj: T, updates: Record<string, unknown>): T {
+  const next: T = JSON.parse(JSON.stringify(obj));
+  for (const [path, value] of Object.entries(updates)) {
+    const parts = path.split("/");
+    let cursor: Record<string, unknown> = next as unknown as Record<string, unknown>;
+    for (let i = 0; i < parts.length - 1; i++) {
+      cursor[parts[i]] ??= {};
+      cursor = cursor[parts[i]] as Record<string, unknown>;
+    }
+    cursor[parts[parts.length - 1]] = value;
+  }
+  return next;
+}
+
+/**
  * Pure decision logic for what should happen to a game's current round, given
  * its current state and the current time. Contains no I/O — callers (the
  * client-driven blitz path in `matchmaking.ts`'s `resolveRound`, and the
