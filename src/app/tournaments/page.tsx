@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
+import LocalTime from "@/components/LocalTime";
 import styles from "./TournamentsPage.module.css";
 import { postJSON } from "@/lib/api";
 import { createTournament } from "@/lib/tournaments";
@@ -205,12 +206,11 @@ function TournamentCard({ tournament, firebaseKey, statusLabel, linkLabel, compl
       {tournament.description && (
         <p className={styles.cardDescription}>{tournament.description}</p>
       )}
-      <p className={styles.cardStartTime}>
-                🕐 {new Date(tournament.scheduledStartTime).toLocaleString(undefined, {
-          dateStyle: "medium",
-          timeStyle: "short",
-        })}
-      </p>
+      <LocalTime
+        ms={tournament.scheduledStartTime}
+        fallback={new Date(tournament.scheduledStartTime).toUTCString()}
+        className={styles.cardStartTime}
+      />
       <p className={styles.cardStatus}>{statusLabel}</p>
       <Link href={`/tournaments/${firebaseKey}`} className={styles.viewButton}>
         {linkLabel}

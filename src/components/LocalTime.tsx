@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { ReactNode, useEffect, useState } from "react";
 
 /**
  * Renders a timestamp formatted in the viewer's local timezone. Starts out
  * showing `fallback` (the server-rendered UTC string) so SSR and the initial
  * client render match, then swaps to the local-time string once mounted.
  */
-export default function LocalTime({ ms, fallback, className }: { ms: number, fallback: string, className?: string }) {
+export default function LocalTime({ ms, fallback, className, prefix }: { ms: number, fallback: string, className?: string, prefix?: ReactNode }) {
   const [text, setText] = useState(fallback);
 
   useEffect(() => {
@@ -17,5 +17,5 @@ export default function LocalTime({ ms, fallback, className }: { ms: number, fal
     }));
   }, [ms]);
 
-  return <p className={className}>{text}</p>;
+  return <p className={className}>{prefix}{text}</p>;
 }

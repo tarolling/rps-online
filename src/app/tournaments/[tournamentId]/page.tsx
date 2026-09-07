@@ -9,6 +9,7 @@ import { startTournament, getCurrentMatch } from "@/lib/tournaments";
 import { postJSON } from "@/lib/api";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
+import LocalTime from "@/components/LocalTime";
 import styles from "./TournamentPage.module.css";
 import { Participant, Tournament, TournamentMatch } from "@/types";
 import { TournamentMatchStatus, TournamentStatus } from "@/types/neo4j";
@@ -112,12 +113,12 @@ const TournamentPage = () => {
             <p className={styles.description}>{tournament.description}</p>
           )}
           {tournament.scheduledStartTime && (
-            <p className={styles.scheduledStartTime}>
-                            🕐 Starts {new Date(tournament.scheduledStartTime).toLocaleString(undefined, {
-                dateStyle: "medium",
-                timeStyle: "short",
-              })}
-            </p>
+            <LocalTime
+              ms={tournament.scheduledStartTime}
+              fallback={new Date(tournament.scheduledStartTime).toUTCString()}
+              className={styles.scheduledStartTime}
+              prefix="Starts "
+            />
           )}
         </div>
 

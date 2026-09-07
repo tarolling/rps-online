@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import styles from "./header.module.css";
 import Image from "next/image";
 import Link from "next/link";
@@ -20,11 +20,23 @@ export default function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [incomingRequestCount, setIncomingRequestCount] = useState(0);
   const [myTurnGameCount, setMyTurnGameCount] = useState(0);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     document.body.classList.toggle("menuOpen", isMobileMenuOpen);
     return () => document.body.classList.remove("menuOpen");
   }, [isMobileMenuOpen]);
+
+  useEffect(() => {
+    if (!isDropdownOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [isDropdownOpen]);
 
   useEffect(() => {
     if (!user) {
@@ -101,7 +113,7 @@ export default function Header() {
       {/* Desktop User Menu */}
       <div className={styles.headerUser}>
         {user ? (
-          <div className={styles.profileDropdown} onClick={() => setIsDropdownOpen(!isDropdownOpen)}>
+          <div className={styles.profileDropdown} onClick={() => setIsDropdownOpen(!isDropdownOpen)} ref={dropdownRef}>
             <div className={styles.profilePic}>
               <Avatar src={avatarUrl} username={username ?? user.email ?? "?"} size="sm" />
             </div>
