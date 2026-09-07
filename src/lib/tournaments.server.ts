@@ -85,8 +85,14 @@ export async function startTournament(tournamentId: string): Promise<TournamentM
   const tournamentRef = adminDb.ref(`tournaments/${tournamentId}`);
 
   const claim = await tournamentRef.transaction((current: Tournament | null) => {
-    if (!current || current.status !== TournamentStatus.Registration || current.starting) {
-      return; // abort, no write — already claimed/started or gone
+    // `current` starts out as an optimistic `null` guess on the first
+    // invocation (no active listener keeps a local cache warm for this ref
+    // server-side) — returning it unchanged lets the transaction retry
+    // against the real server value instead of treating the guess as proof
+    // the tournament doesn't exist.
+    if (!current) return current;
+    if (current.status !== TournamentStatus.Registration || current.starting) {
+      return; // abort, no write — already claimed/started
     }
     return { ...current, starting: true };
   });
@@ -166,7 +172,11 @@ export async function advanceWinner(
       failure = null;
       nextGameMatchId = undefined;
 
-      if (!current?.bracket) {
+      // `current` starts out as an optimistic `null` guess on the first
+      // invocation — return it unchanged so the transaction retries against
+      // the real server value instead of aborting on an unconfirmed guess.
+      if (!current) return current;
+      if (!current.bracket) {
         failure = "Tournament or bracket not found.";
         return; // abort, no write
       }
@@ -210,6 +220,7 @@ export async function advanceWinner(
     if (failure) throw new Error(failure);
 
     const tournament: Tournament = txResult.snapshot.val();
+    if (!tournament) throw new Error("Tournament or bracket not found.");
 
     if (nextGameMatchId) {
       const nextMatch = tournament.bracket!.find((m) => m.matchId === nextGameMatchId);

@@ -108,10 +108,14 @@ export async function submitChoiceServer(gameId: string, playerId: string, choic
 
   const txResult = await gameRef.transaction((current: Game | null) => {
     failure = null;
-    if (!current) {
-      failure = "Game not found.";
-      return; // abort, no write
-    }
+    // `current` starts out as an optimistic `null` guess on the first
+    // invocation (this ref has no active listener keeping a local cache
+    // warm in this server-side context, unlike a client tab with `onValue`
+    // open) — returning it unchanged here is a no-op write that lets the
+    // transaction retry against the real server value instead of aborting
+    // on a guess that was never checked against the server. See
+    // `resolveRoundServer` above, which already relies on this.
+    if (!current) return current;
     if (current.state !== MatchStatus.InProgress) {
       failure = "Game is not in progress.";
       return;
@@ -130,7 +134,11 @@ export async function submitChoiceServer(gameId: string, playerId: string, choic
     });
   });
 
-  if (!txResult.committed && failure) throw new Error(failure);
+  if (failure) throw new Error(failure);
+  // Committed with a still-null result means the transaction converged on
+  // the real server value and confirmed the game genuinely doesn't exist
+  // (as opposed to the transient null guess above, which always retries).
+  if (!txResult.snapshot.val()) throw new Error("Game not found.");
 
   await resolveRoundServer(gameId);
 }
