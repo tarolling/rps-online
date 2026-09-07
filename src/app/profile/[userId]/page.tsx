@@ -440,7 +440,7 @@ function ProfilePage() {
               </div>
             )}
             <Link href={`/profile/${userId}/matches`} className={styles.friendsButton}>
-              View full match history →
+              View full match history
             </Link>
           </section>
 
@@ -473,7 +473,7 @@ function ProfilePage() {
                 </div>
               )}
               <Link href="/friends" className={styles.friendsButton}>
-              Manage friends →
+              Manage friends
               </Link>
             </section>
           )}
