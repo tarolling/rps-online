@@ -1,10 +1,11 @@
 import Stripe from "stripe";
+import { assertEnv } from "./env";
 
 let stripe: Stripe;
 
 export function getStripe(): Stripe {
   if (!stripe) {
-    stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+    stripe = new Stripe(assertEnv("STRIPE_SECRET_KEY"));
   }
   return stripe;
 }
