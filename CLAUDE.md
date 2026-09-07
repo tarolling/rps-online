@@ -53,6 +53,9 @@ CSS Modules (`src/styles/game.module.css`, per-page `*.module.css`), plus one gl
 `src/types/neo4j.ts` — Neo4j-specific: enums (`Choice` — includes `WildcardA`/`WildcardB`, `MatchResult`, `MatchStatus`, tournament statuses) and node/relationship shapes (`Player`, `Rating` (`HAS_RATING` target), `Club`, `Match`, `Round`, `Title`, `ParticipatedIn`, `EarnedTitle`).
 `src/lib/gameModes.ts` — the `GAME_MODES` registry described above; add a new `PlayMode` here (plus its own game-rule logic, if its rules differ) rather than a new ternary arm scattered across matchmaking/stats/UI files.
 
+## Writing style
+Use American spelling in code comments, commit messages, PR descriptions, and other prose (e.g. "color" not "colour", "behavior" not "behaviour", "canceled" not "cancelled"). Note `MatchStatus.Cancelled` in `src/types/neo4j.ts` is an existing British-spelled enum value; don't rename it, just don't introduce new British spellings elsewhere. Limit the use of em-dashes; prefer a period, comma, or parentheses instead.
+
 <!-- BEGIN:nextjs-agent-rules -->
 
 # This is NOT the Next.js you know

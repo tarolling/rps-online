@@ -1,10 +1,10 @@
-import { getDatabase, ref, set, get, update, remove, onValue, off, runTransaction } from "firebase/database";
+import { getDatabase, ref, set, get, remove, onValue, off, runTransaction } from "firebase/database";
 import { Game, PlayMode } from "../types";
 import { advanceWinner } from "./tournaments";
 import config from "@/config/settings.json";
 import { postJSON } from "./api";
 import { MatchStatus } from "@/types/neo4j";
-import { computeRoundOutcome, recordRankedGame, FIRST_TO } from "./gameLogic";
+import { applyFlatUpdates, computeRoundOutcome, recordRankedGame, FIRST_TO } from "./gameLogic";
 import { GAME_MODES } from "./gameModes";
 
 // Re-exported so existing consumers (game/[gameId]/page.tsx, playAI/page.tsx,
@@ -305,36 +305,50 @@ export async function createGame(
 /**
  * Resolves the current round of a game once both players have submitted choices.
  * Updates scores and, if a player has reached FIRST_TO wins, marks the game finished.
- * Client-driven (blitz only) — async rounds are resolved server-side, see `matchmakingServer.ts`.
+ * Client-driven (blitz/wildcard only); async rounds are resolved server-side, see `matchmakingServer.ts`.
+ *
+ * Runs as a transaction on the game node (mirrors `resolveRoundServer`) rather
+ * than a plain `get()` + `update()`: both pages call this from more than one
+ * trigger (the round-timeout interval and the both-submitted listener), and a
+ * non-atomic read-then-write left a window for both triggers to act on the
+ * same stale snapshot and double-apply an outcome.
  *
  * @returns `{ winner: uid }` if the game just ended, otherwise null.
  */
 export async function resolveRound(gameId: string, playerId: string) {
   const gameRef = ref(db, `games/${gameId}`);
+  let outcomeWinner: string | undefined;
+  let shouldFinalize = false;
+
   try {
-    const snapshot = await get(gameRef);
-    if (!snapshot.exists()) return null;
-    const game: Game = snapshot.val();
+    const { committed, snapshot } = await runTransaction(gameRef, (current: Game | null) => {
+      outcomeWinner = undefined;
+      shouldFinalize = false;
+      if (!current || playerId !== current.player1.id) return current; // not ours to resolve
 
-    // prevent duplicate writes
-    if (playerId !== game.player1.id) return null;
+      const outcome = computeRoundOutcome(current, Date.now());
+      if (outcome.action === "noop") return; // abort, nothing to do yet
 
-    const outcome = computeRoundOutcome(game, Date.now());
-    if (outcome.action === "noop") return null;
+      if (outcome.action === "cancel") {
+        shouldFinalize = true;
+        return { ...current, state: MatchStatus.Cancelled };
+      }
 
-    if (outcome.action === "cancel") {
-      await update(gameRef, { state: MatchStatus.Cancelled });
-      await endGame(gameId);
-      return null;
-    }
+      const next = applyFlatUpdates(current, outcome.updates!);
+      if (outcome.gameOverWinnerId) {
+        shouldFinalize = true;
+        outcomeWinner = outcome.gameOverWinnerId;
+      }
+      return next;
+    });
 
-    await update(gameRef, outcome.updates!);
+    if (!committed || !shouldFinalize) return null;
 
-    if (outcome.gameOverWinnerId) {
-      await endGame(gameId);
-      return { winner: outcome.gameOverWinnerId };
-    }
-    return null;
+    const finalGame: Game = snapshot.val();
+    if (!finalGame) return null;
+
+    await endGame(gameId);
+    return outcomeWinner ? { winner: outcomeWinner } : null;
   } catch (error) {
     console.error("Error resolving round:", error);
     throw error;
@@ -360,20 +374,26 @@ export async function endGame(gameId: string): Promise<void> {
     const game: Game = snapshot.val();
     if (!game) return;
 
-    // if no winner, both players didn't respond or both dc'd
-    // don't record
-    if (game.state !== MatchStatus.Cancelled) {
-      await recordRankedGame(game);
-      if (game.tournamentId) {
-        await advanceWinner(game.tournamentId, game.matchId!, game.winner!);
+    try {
+      // if no winner, both players didn't respond or both dc'd
+      // don't record
+      if (game.state !== MatchStatus.Cancelled) {
+        await recordRankedGame(game);
+        if (game.tournamentId) {
+          await advanceWinner(game.tournamentId, game.matchId!, game.winner!);
+        }
+      } else {
+        // Both players disconnected — no fault-based winner, so advance one at random
+        // rather than always favoring whichever participant happened to land in player1.
+        if (game.tournamentId) {
+          const advancedId = Math.random() < 0.5 ? game.player1.id : game.player2.id;
+          await advanceWinner(game.tournamentId, game.matchId!, advancedId);
+        }
       }
-    } else {
-      // Both players disconnected — no fault-based winner, so advance one at random
-      // rather than always favoring whichever participant happened to land in player1.
-      if (game.tournamentId) {
-        const advancedId = Math.random() < 0.5 ? game.player1.id : game.player2.id;
-        await advanceWinner(game.tournamentId, game.matchId!, advancedId);
-      }
+    } catch (err) {
+      // The game node must still be cleaned up even if stats/tournament
+      // advancement fails, otherwise it's orphaned in RTDB forever.
+      console.error(`Failed to finalize game ${gameId}:`, err);
     }
 
     await remove(gameRef);
