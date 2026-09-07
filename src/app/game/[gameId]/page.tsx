@@ -7,8 +7,6 @@ import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { DISCONNECT_TIMEOUT, WAITING_TIMEOUT } from "@/lib/common";
 import { resolveRound, resolveDisconnect, determineRoundWinner } from "@/lib/matchmaking";
-import Footer from "@/components/Footer";
-import Header from "@/components/Header";
 import styles from "@/styles/game.module.css";
 import config from "@/config/settings.json";
 import { getAvatarUrl } from "@/lib/avatar";
@@ -357,19 +355,16 @@ function GamePage() {
 
   if (loading) return (
     <div className="app">
-      <Header />
       <main className={styles.main}>
         <div className={styles.gameContainer}>
           <p className={styles.loading}>Loading game...</p>
         </div>
       </main>
-      <Footer />
     </div>
   );
 
   if (!game) return (
     <div className="app">
-      <Header />
       <main className={styles.main}>
         <div className={styles.gameContainer}>
           <div className={styles.result}>
@@ -380,25 +375,21 @@ function GamePage() {
           </div>
         </div>
       </main>
-      <Footer />
     </div>
   );
 
   if (game.state === MatchStatus.Waiting) return (
     <div className="app">
-      <Header />
       <main className={styles.main}>
         <div className={styles.gameContainer}>
           <p className={styles.loading}>Waiting for opponent to connect...</p>
         </div>
       </main>
-      <Footer />
     </div>
   );
 
   if (game.state === MatchStatus.Cancelled) return (
     <div className="app">
-      <Header />
       <main className={styles.main}>
         <div className={styles.gameContainer}>
           <div className={styles.result}>
@@ -413,7 +404,6 @@ function GamePage() {
           </div>
         </div>
       </main>
-      <Footer />
     </div>
   );
 
@@ -429,7 +419,6 @@ function GamePage() {
 
   return (
     <div className="app">
-      <Header />
       <main className={styles.main}>
         <div className={styles.gameContainer}>
 
@@ -525,7 +514,6 @@ function GamePage() {
           )}
         </div>
       </main>
-      <Footer />
     </div>
   );
 };

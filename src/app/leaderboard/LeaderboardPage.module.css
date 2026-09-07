@@ -8,6 +8,12 @@
     width: 100%;
 }
 
+.main h1 {
+    text-align: left;
+    font-size: 2rem;
+    margin-bottom: 1.5rem;
+}
+
 .status {
     color: var(--color-text-muted);
     text-align: center;

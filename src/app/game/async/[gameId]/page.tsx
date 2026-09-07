@@ -4,8 +4,6 @@ import { getDatabase, onValue, ref } from "firebase/database";
 import { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
-import Footer from "@/components/Footer";
-import Header from "@/components/Header";
 import styles from "@/styles/game.module.css";
 import config from "@/config/settings.json";
 import { getAvatarUrl } from "@/lib/avatar";
@@ -115,19 +113,16 @@ function AsyncGamePage() {
 
   if (loading) return (
     <div className="app">
-      <Header />
       <main className={styles.main}>
         <div className={styles.gameContainer}>
           <p className={styles.loading}>Loading game...</p>
         </div>
       </main>
-      <Footer />
     </div>
   );
 
   if (!game) return (
     <div className="app">
-      <Header />
       <main className={styles.main}>
         <div className={styles.gameContainer}>
           <div className={styles.result}>
@@ -138,13 +133,11 @@ function AsyncGamePage() {
           </div>
         </div>
       </main>
-      <Footer />
     </div>
   );
 
   if (game.state === MatchStatus.Cancelled) return (
     <div className="app">
-      <Header />
       <main className={styles.main}>
         <div className={styles.gameContainer}>
           <div className={styles.result}>
@@ -156,7 +149,6 @@ function AsyncGamePage() {
           </div>
         </div>
       </main>
-      <Footer />
     </div>
   );
 
@@ -166,7 +158,6 @@ function AsyncGamePage() {
 
   return (
     <div className="app">
-      <Header />
       <main className={styles.main}>
         <div className={styles.gameContainer}>
 
@@ -222,7 +213,12 @@ function AsyncGamePage() {
             </div>
           )}
           {choice && !isFinished && (
-            <p className={styles.hint}>Choice locked in. Waiting on your opponent (or the deadline).</p>
+            <div className={styles.result}>
+              <p className={styles.hint}>Choice locked in. Waiting on your opponent (or the deadline).</p>
+              <button className={styles.playAgainButton} onClick={() => router.push("/asyncGames")}>
+                Back to Async Games
+              </button>
+            </div>
           )}
           {submitError && !isFinished && (
             <p className={styles.errorText}>{submitError}</p>
@@ -249,7 +245,6 @@ function AsyncGamePage() {
           )}
         </div>
       </main>
-      <Footer />
     </div>
   );
 };
