@@ -1,12 +1,22 @@
 import type { MetadataRoute } from "next";
+import { SITE_URL } from "@/lib/seo";
 
-const SITE_URL = "https://ranked-rps.com";
+const ROUTE_LAST_MODIFIED: Record<string, string> = {
+  "": "2026-09-07",
+  "/rules": "2026-09-07",
+  "/leaderboard": "2026-09-07",
+  "/login": "2026-09-07",
+  "/register": "2026-09-07",
+  "/play": "2026-09-07",
+  "/clubs": "2026-09-07",
+  "/tournaments": "2026-09-07",
+  "/playAI": "2026-09-07",
+  "/asyncGames": "2026-09-07",
+};
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const routes = ["", "/rules", "/leaderboard", "/login", "/register"];
-
-  return routes.map((route) => ({
+  return Object.entries(ROUTE_LAST_MODIFIED).map(([route, lastModified]) => ({
     url: `${SITE_URL}${route}`,
-    lastModified: new Date(),
+    lastModified,
   }));
 }
