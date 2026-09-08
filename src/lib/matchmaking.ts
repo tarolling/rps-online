@@ -29,6 +29,7 @@ interface QueueEntry {
     mode: PlayMode;
     timestamp: number;
     isBot?: boolean;
+    isGuest?: boolean;
     claimed?: boolean;
 }
 
@@ -116,7 +117,7 @@ async function countActiveAsyncGames(uid: string): Promise<number> {
  * search timed out, or `{ error: ... }` if a free-tier async player is at
  * their concurrent game limit.
  */
-export async function findMatch(uid: string, username: string, userRating: number, mode: PlayMode = "blitz", isPremium = false): Promise<MatchResult> {
+export async function findMatch(uid: string, username: string, userRating: number, mode: PlayMode = "blitz", isPremium = false, isGuest = false): Promise<MatchResult> {
   const queueRef = ref(db, "matchmaking_queue");
   const myQueueKey = matchmakingQueueKey(uid, mode);
 
@@ -143,7 +144,8 @@ export async function findMatch(uid: string, username: string, userRating: numbe
       const candidateUid: string = playerData.uid;
       const sameMode = (playerData.mode ?? "blitz") === mode;
       const ratingClose = Math.abs(playerData.rating - userRating) <= config.matchmakingRatingRange;
-      if (candidateUid === uid || !sameMode || !ratingClose) continue;
+      const sameGuestness = !!playerData.isGuest === isGuest;
+      if (candidateUid === uid || !sameMode || !ratingClose || !sameGuestness) continue;
 
       // Atomically claim this candidate's queue slot so no other concurrent
       // matchmaking attempt can also grab them. This marks the entry rather
@@ -171,7 +173,7 @@ export async function findMatch(uid: string, username: string, userRating: numbe
       const gameId = await createGame(
         candidateUid, playerData.username, playerData.rating,
         uid, username, userRating,
-        null, mode,
+        null, mode, isGuest,
       );
       if (playerData.isBot) {
         await set(ref(db, `games/${gameId}/presence/${candidateUid}`), true);
@@ -192,6 +194,7 @@ export async function findMatch(uid: string, username: string, userRating: numbe
       rating: userRating,
       mode,
       timestamp: Date.now(),
+      ...(isGuest && { isGuest: true }),
     });
 
     // Non-live modes: don't block the caller waiting for a match that may take
@@ -256,6 +259,7 @@ export async function createGame(
   playerTwoRating: number,
   tournamentInfo: TournamentInfo | null = null,
   mode: PlayMode = "blitz",
+  isGuest = false,
 ): Promise<string> {
   const gameId = crypto.randomUUID();
   const roundDurationSeconds = GAME_MODES[mode].roundDurationSeconds;
@@ -281,6 +285,7 @@ export async function createGame(
     // Wildcard games need a pregame "pick your A config" step before round 1's
     // timer can start — see game/wildcard/[gameId]/page.tsx.
     ...(mode === "wildcard" && { configPhase: true }),
+    ...(isGuest && { isGuest: true }),
     ...(tournamentInfo && {
       tournamentId: tournamentInfo.tournamentId,
       matchId: tournamentInfo.matchId,
@@ -378,7 +383,9 @@ export async function endGame(gameId: string): Promise<void> {
       // if no winner, both players didn't respond or both dc'd
       // don't record
       if (game.state !== MatchStatus.Cancelled) {
-        await recordRankedGame(game);
+        if (!game.isGuest) {
+          await recordRankedGame(game);
+        }
         if (game.tournamentId) {
           await advanceWinner(game.tournamentId, game.matchId!, game.winner!);
         }

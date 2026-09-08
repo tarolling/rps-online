@@ -201,6 +201,16 @@
   align-items: center;
   transition: background 0.15s, transform 0.1s, box-shadow 0.15s;
   border-radius: 8px;
+  /* Neutralize the global `button` reset (global.css) for the <button>
+     variant of this class ("Play as Guest") so it matches the <a>
+     variant ("Play Now") exactly — border/font-size/etc. are already
+     overridden above by class specificity, but margin/min-height aren't
+     set here at all, so they'd otherwise leak through from the element
+     selector and the two buttons would visibly mismatch. */
+  border: none;
+  margin: 0;
+  min-height: 0;
+  font-family: inherit;
 }
 
 .ctaButton:hover {

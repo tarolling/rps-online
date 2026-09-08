@@ -1,10 +1,11 @@
 "use client";
 
 import { get, getDatabase, onValue, ref, remove } from "firebase/database";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { findMatch, matchmakingQueueKey } from "@/lib/matchmaking";
+import { signInAsGuest, guestUsername } from "@/lib/guestAuth";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
 import RankBadge from "@/components/RankBadge";
@@ -19,9 +20,10 @@ import { PLAY_MODES } from "@/lib/gameModes";
 type MatchmakingStatus = "idle" | "searching" | "matched" | "error";
 type AsyncQueueStatus = "idle" | "queueing" | "queued" | "matched" | "error";
 
-function MatchmakingPage() {
+function MatchmakingPageInner() {
   const { user } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const db = getDatabase();
 
   const [matchStatus, setMatchStatus] = useState<MatchmakingStatus>("idle");
@@ -33,8 +35,12 @@ function MatchmakingPage() {
   const [playerInfo, setPlayerInfo] = useState<ProfileData | null>(null);
   const [asyncErrorMessage, setAsyncErrorMessage] = useState("");
 
+  // Guests may only play Blitz (see guestAuth.ts) — Async and Wildcard still
+  // require a real, non-anonymous account.
+  const isSignedInNonGuest = !!user && !user.isAnonymous;
+
   useEffect(() => {
-    if (!user) return;
+    if (!user || user.isAnonymous) return;
     postJSON<ProfileData>("/api/fetchPlayer", { uid: user.uid })
       .then(setPlayerInfo)
       .catch(console.error);
@@ -49,14 +55,16 @@ function MatchmakingPage() {
     const queueRef = ref(db, "matchmaking_queue");
     const gamesRef = ref(db, "games");
 
+    const isViewerGuest = !!user.isAnonymous;
+
     const unsubscribe = onValue(queueRef, (queueSnap) => {
       onValue(gamesRef, (gamesSnap) => {
-        const queue = Object.values(queueSnap.val() || {}) as { mode?: PlayMode }[];
+        const queue = Object.values(queueSnap.val() || {}) as { mode?: PlayMode; isGuest?: boolean }[];
         const games = Object.values(gamesSnap.val() || {}) as Game[];
 
         const counts = Object.fromEntries(PLAY_MODES.map((mode) => {
-          const queueCount = queue.filter((entry) => (entry.mode ?? "blitz") === mode).length;
-          const gameCount = games.filter((game) => (game.mode ?? "blitz") === mode).length;
+          const queueCount = queue.filter((entry) => (entry.mode ?? "blitz") === mode && !!entry.isGuest === isViewerGuest).length;
+          const gameCount = games.filter((game) => (game.mode ?? "blitz") === mode && !!game.isGuest === isViewerGuest).length;
           return [mode, queueCount + gameCount * 2];
         })) as Record<PlayMode, number>;
 
@@ -97,9 +105,19 @@ function MatchmakingPage() {
     if (!user) return;
     setMatchStatus("searching");
     try {
-      const info = await postJSON<ProfileData>("/api/fetchPlayer", { uid: user?.uid });
-      if (!playerInfo) setPlayerInfo(info);
-      const result = await findMatch(user?.uid, info.username, info.ratings.blitz ?? config.defaultRating, "blitz");
+      const isGuest = !!user.isAnonymous;
+      let username: string;
+      let rating: number;
+      if (isGuest) {
+        username = guestUsername(user.uid);
+        rating = config.defaultRating;
+      } else {
+        const info = await postJSON<ProfileData>("/api/fetchPlayer", { uid: user.uid });
+        if (!playerInfo) setPlayerInfo(info);
+        username = info.username;
+        rating = info.ratings.blitz ?? config.defaultRating;
+      }
+      const result = await findMatch(user.uid, username, rating, "blitz", false, isGuest);
 
       if ("gameID" in result) {
         setMatchStatus("matched");
@@ -114,10 +132,37 @@ function MatchmakingPage() {
     }
   };
 
+  // Guest sign-in is async and `user` here is a stale closure until
+  // AuthContext's onAuthStateChanged listener re-renders this component, so
+  // handleFindMatch can't just be called inline right after signInAsGuest —
+  // this flag lets the effect below fire it once `user` actually reflects
+  // the new anonymous session.
+  const [guestTriggerPending, setGuestTriggerPending] = useState(false);
+
+  const handlePlayAsGuest = async () => {
+    try {
+      await signInAsGuest();
+      setGuestTriggerPending(true);
+    } catch (err) {
+      console.error("Guest sign-in failed:", err);
+      setMatchStatus("error");
+    }
+  };
+
   const handleCancel = async () => {
     await remove(ref(db, `matchmaking_queue/${matchmakingQueueKey(user?.uid ?? "", "blitz")}`));
     setMatchStatus("idle");
   };
+
+  // Fires handleFindMatch once we have a guest session, either because the
+  // homepage CTA already signed in and linked here with ?guest=1, or because
+  // handlePlayAsGuest (above) just signed in from this page directly.
+  useEffect(() => {
+    if (user?.isAnonymous && matchStatus === "idle" && (searchParams.get("guest") === "1" || guestTriggerPending)) {
+      setGuestTriggerPending(false);
+      handleFindMatch();
+    }
+  }, [user, searchParams, guestTriggerPending, matchStatus]);
 
   const handleFindAsyncMatch = async () => {
     if (!user) return;
@@ -221,10 +266,15 @@ function MatchmakingPage() {
             <div className={styles.cardFooter}>
               {!user && (
                 <div className={styles.statusBlock}>
-                  <p className={styles.signInText}>Sign in to play.</p>
-                  <button className={styles.primaryBtn} onClick={() => router.push("/login")}>
-                    Sign In
-                  </button>
+                  <p className={styles.signInText}>Sign in to play, or jump in as a guest.</p>
+                  <div className={styles.buttonRow}>
+                    <button className={styles.primaryBtn} onClick={() => router.push("/login")}>
+                      Sign In
+                    </button>
+                    <button className={styles.secondaryBtn} onClick={handlePlayAsGuest}>
+                      Play as Guest
+                    </button>
+                  </div>
                 </div>
               )}
 
@@ -264,14 +314,14 @@ function MatchmakingPage() {
 
           {/* ── Async ── */}
           <div
-            className={`${styles.card} ${styles.cardAccent} ${!user ? styles.signedOut : ""}`}
+            className={`${styles.card} ${styles.cardAccent} ${!isSignedInNonGuest ? styles.signedOut : ""}`}
             style={{ "--rank-color": asyncRankColor ?? "var(--color-primary)", "--rank-glow": asyncRankTier?.glow ?? "transparent" } as React.CSSProperties}
           >
             <div className={styles.cardBg} aria-hidden />
 
             <div className={styles.cardTopRow}>
               <div className={styles.modeTag}>Correspondence</div>
-              {user && (
+              {isSignedInNonGuest && (
                 <div className={styles.onlineCount}>
                   <span className={styles.onlineDot} />
                   <span>{onlineCounts.async} online</span>
@@ -288,7 +338,7 @@ function MatchmakingPage() {
             )}
 
             <div className={styles.cardFooter}>
-              {!user && (
+              {!isSignedInNonGuest && (
                 <div className={styles.statusBlock}>
                   <p className={styles.signInText}>Sign in to play.</p>
                   <button className={styles.primaryBtn} onClick={() => router.push("/login")}>
@@ -297,7 +347,7 @@ function MatchmakingPage() {
                 </div>
               )}
 
-              {user && asyncStatus === "idle" && (
+              {isSignedInNonGuest && asyncStatus === "idle" && (
                 <div className={styles.buttonRow}>
                   <button className={styles.primaryBtn} onClick={handleFindAsyncMatch}>
                     Find Match
@@ -308,7 +358,7 @@ function MatchmakingPage() {
                 </div>
               )}
 
-              {user && asyncStatus === "queueing" && (
+              {isSignedInNonGuest && asyncStatus === "queueing" && (
                 <div className={styles.statusBlock}>
                   <div className={styles.searchingRow}>
                     <div className={styles.spinner} />
@@ -317,7 +367,7 @@ function MatchmakingPage() {
                 </div>
               )}
 
-              {user && asyncStatus === "queued" && (
+              {isSignedInNonGuest && asyncStatus === "queued" && (
                 <div className={styles.statusBlock}>
                   <div className={styles.searchingRow}>
                     <span className={styles.statusText}>Queued. You&apos;ll be matched whenever another async player queues up.</span>
@@ -329,7 +379,7 @@ function MatchmakingPage() {
                 </div>
               )}
 
-              {user && asyncStatus === "matched" && (
+              {isSignedInNonGuest && asyncStatus === "matched" && (
                 <div className={styles.statusBlock}>
                   <div className={styles.matchedRow}>
                     <span className={styles.successIcon}>✓</span>
@@ -338,7 +388,7 @@ function MatchmakingPage() {
                 </div>
               )}
 
-              {user && asyncStatus === "error" && (
+              {isSignedInNonGuest && asyncStatus === "error" && (
                 <div className={styles.statusBlock}>
                   <p className={styles.errorText}>{asyncErrorMessage || "Something went wrong."}</p>
                   {!asyncErrorMessage && (
@@ -356,14 +406,14 @@ function MatchmakingPage() {
 
           {/* ── Wildcard ── */}
           <div
-            className={`${styles.card} ${styles.cardAccent} ${!user ? styles.signedOut : ""}`}
+            className={`${styles.card} ${styles.cardAccent} ${!isSignedInNonGuest ? styles.signedOut : ""}`}
             style={{ "--rank-color": wildcardRankColor ?? "var(--color-primary)", "--rank-glow": wildcardRankTier?.glow ?? "transparent" } as React.CSSProperties}
           >
             <div className={styles.cardBg} aria-hidden />
 
             <div className={styles.cardTopRow}>
               <div className={styles.modeTag}>Mind Games</div>
-              {user && (
+              {isSignedInNonGuest && (
                 <div className={styles.onlineCount}>
                   <span className={styles.onlineDot} />
                   <span>{onlineCounts.wildcard} online</span>
@@ -380,7 +430,7 @@ function MatchmakingPage() {
             )}
 
             <div className={styles.cardFooter}>
-              {!user && (
+              {!isSignedInNonGuest && (
                 <div className={styles.statusBlock}>
                   <p className={styles.signInText}>Sign in to play.</p>
                   <button className={styles.primaryBtn} onClick={() => router.push("/login")}>
@@ -389,13 +439,13 @@ function MatchmakingPage() {
                 </div>
               )}
 
-              {user && wildcardStatus === "idle" && (
+              {isSignedInNonGuest && wildcardStatus === "idle" && (
                 <button className={styles.primaryBtn} onClick={handleFindWildcardMatch}>
                   Find Match
                 </button>
               )}
 
-              {user && wildcardStatus === "searching" && (
+              {isSignedInNonGuest && wildcardStatus === "searching" && (
                 <div className={styles.statusBlock}>
                   <div className={styles.searchingRow}>
                     <div className={styles.spinner} />
@@ -405,7 +455,7 @@ function MatchmakingPage() {
                 </div>
               )}
 
-              {user && wildcardStatus === "matched" && (
+              {isSignedInNonGuest && wildcardStatus === "matched" && (
                 <div className={styles.statusBlock}>
                   <div className={styles.matchedRow}>
                     <span className={styles.successIcon}>✓</span>
@@ -414,7 +464,7 @@ function MatchmakingPage() {
                 </div>
               )}
 
-              {user && wildcardStatus === "error" && (
+              {isSignedInNonGuest && wildcardStatus === "error" && (
                 <div className={styles.statusBlock}>
                   <p className={styles.errorText}>Something went wrong.</p>
                   <button className={styles.primaryBtn} onClick={handleFindWildcardMatch}>Retry</button>
@@ -453,6 +503,14 @@ function MatchmakingPage() {
       </main>
       <Footer />
     </div>
+  );
+}
+
+function MatchmakingPage() {
+  return (
+    <Suspense fallback={null}>
+      <MatchmakingPageInner />
+    </Suspense>
   );
 }
 

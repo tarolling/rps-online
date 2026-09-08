@@ -78,6 +78,14 @@ export default function Footer() {
       </div>
       <div className={styles["footer-bottom"]}>
         <p>&copy; {new Date().getFullYear()} Ranked RPS. All rights reserved.</p>
+        <div className={styles["footer-legal"]}>
+          <Link href="/privacy" className={styles["footer-legal-link"]}>
+            Privacy Policy
+          </Link>
+          <Link href="/terms" className={styles["footer-legal-link"]}>
+            Terms of Service
+          </Link>
+        </div>
       </div>
     </footer>
   );

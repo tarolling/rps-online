@@ -81,10 +81,12 @@ export default function Header() {
       {/* Navigation Links */}
       <nav className={`${styles.headerNav} ${isMobileMenuOpen ? styles.mobileOpen : ""}`}>
         <Link href="/" className={styles.navLink}>Home</Link>
-        <Link href="/dashboard" className={styles.navLink}>
-          Dashboard
-          {myTurnGameCount > 0 && <span className={styles.navBadge}>{myTurnGameCount}</span>}
-        </Link>
+        {!user?.isAnonymous && (
+          <Link href="/dashboard" className={styles.navLink}>
+            Dashboard
+            {myTurnGameCount > 0 && <span className={styles.navBadge}>{myTurnGameCount}</span>}
+          </Link>
+        )}
         <Link href="/leaderboard" className={styles.navLink}>Leaderboard</Link>
         <Link href="/play" className={styles.navLink}>Play</Link>
         <Link href="/rules" className={styles.navLink}>Rules</Link>
@@ -98,7 +100,7 @@ export default function Header() {
         <div className={styles.mobileAuth}>
           {user ? (
             <>
-              <Link href={`/profile/${user.uid}`} className={styles.navLink}>Profile</Link>
+              {!user.isAnonymous && <Link href={`/profile/${user.uid}`} className={styles.navLink}>Profile</Link>}
               <button onClick={handleLogout} className={styles.navLink}>Logout</button>
             </>
           ) : (
@@ -118,7 +120,7 @@ export default function Header() {
               <Avatar src={avatarUrl} username={username ?? user.email ?? "?"} size="sm" />
             </div>
             <div className={`${styles.dropdownContent} ${isDropdownOpen ? styles.show : ""}`}>
-              <Link href={`/profile/${user.uid}`} className={styles.dropdownItem}>Profile</Link>
+              {!user.isAnonymous && <Link href={`/profile/${user.uid}`} className={styles.dropdownItem}>Profile</Link>}
               <button onClick={handleLogout} className={styles.dropdownItem}>Log Out</button>
             </div>
           </div>

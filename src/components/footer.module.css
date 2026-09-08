@@ -80,6 +80,24 @@
     color: var(--color-text-muted);
 }
 
+.footer-legal {
+    margin-top: 10px;
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+}
+
+.footer-legal-link {
+    color: var(--color-text-muted);
+    text-decoration: none;
+    font-size: 0.85rem;
+}
+
+.footer-legal-link:hover {
+    color: var(--color-primary);
+    text-decoration: underline;
+}
+
 @media (max-width: 768px) {
     .footer-content {
         flex-direction: column;

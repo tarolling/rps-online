@@ -5,6 +5,7 @@ import { onAuthStateChanged, User } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { getAvatarUrl } from "@/lib/avatar";
 import { postJSON } from "@/lib/api";
+import { guestUsername } from "@/lib/guestAuth";
 
 
 interface AuthContextType {
@@ -36,10 +37,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setUser(user);
       setLoading(false);
       if (user) {
-        getAvatarUrl(user.uid).then(setAvatarUrl);
-        postJSON<{ username: string; isPremium: boolean }>("/api/fetchPlayer", { uid: user.uid })
-          .then((d) => { setUsername(d.username); setIsPremium(d.isPremium); })
-          .catch(() => { });
+        if (user.isAnonymous) {
+          // Guests have no Neo4j Player row and no Firestore avatar to fetch.
+          setUsername(guestUsername(user.uid));
+          setIsPremium(false);
+          setAvatarUrl(null);
+        } else {
+          getAvatarUrl(user.uid).then(setAvatarUrl);
+          postJSON<{ username: string; isPremium: boolean }>("/api/fetchPlayer", { uid: user.uid })
+            .then((d) => { setUsername(d.username); setIsPremium(d.isPremium); })
+            .catch(() => { });
+        }
       } else {
         setAvatarUrl(null);
         setUsername(null);
