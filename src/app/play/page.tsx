@@ -1,7 +1,7 @@
 "use client";
 
 import { get, getDatabase, onValue, ref, remove } from "firebase/database";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter, useSearchParams } from "next/navigation";
 import { findMatch, matchmakingQueueKey } from "@/lib/matchmaking";
@@ -20,7 +20,7 @@ import { PLAY_MODES } from "@/lib/gameModes";
 type MatchmakingStatus = "idle" | "searching" | "matched" | "error";
 type AsyncQueueStatus = "idle" | "queueing" | "queued" | "matched" | "error";
 
-function MatchmakingPage() {
+function MatchmakingPageInner() {
   const { user } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -503,6 +503,14 @@ function MatchmakingPage() {
       </main>
       <Footer />
     </div>
+  );
+}
+
+function MatchmakingPage() {
+  return (
+    <Suspense fallback={null}>
+      <MatchmakingPageInner />
+    </Suspense>
   );
 }
 
