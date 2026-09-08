@@ -12,6 +12,8 @@ const ROUTE_LAST_MODIFIED: Record<string, string> = {
   "/tournaments": "2026-09-07",
   "/playAI": "2026-09-07",
   "/asyncGames": "2026-09-07",
+  "/privacy": "2026-09-08",
+  "/terms": "2026-09-08",
 };
 
 export default function sitemap(): MetadataRoute.Sitemap {

@@ -112,6 +112,9 @@ export interface Game {
     // a missing value as "blitz" / the legacy 30s round timeout everywhere.
     mode?: PlayMode;
     roundDurationSeconds?: number;
+    // Set when both players are ephemeral guest sessions (see guestAuth.ts) —
+    // skips recordRankedGame since guests have no Neo4j Player node.
+    isGuest?: boolean;
     // Consecutive rounds where neither player submitted a choice before the
     // deadline. Resets to 0 whenever either player acts; the game is only
     // cancelled once this reaches AFK_ROUND_LIMIT (see gameLogic.ts).

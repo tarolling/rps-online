@@ -64,7 +64,7 @@ export default function DashboardPage() {
   const recentMatches = matchesByFilter[statsFilter];
 
   useEffect(() => {
-    if (!user) return;
+    if (!user || user.isAnonymous) return;
 
     const fetchStatsForFilter = async (filter: StatsFilter) => {
       const data = await postJSON<{
@@ -119,6 +119,12 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (!user) return;
+    if (user.isAnonymous) {
+      // Guests have no Neo4j Player record — nothing to fetch, and the
+      // dashboard isn't meaningful for them (see the guest-render branch below).
+      setLoading(false);
+      return;
+    }
 
     const fetchPlayer = async () => {
       try {
@@ -139,13 +145,14 @@ export default function DashboardPage() {
   }, [user]);
 
   useEffect(() => {
-    if (!user) {
+    if (!user || user.isAnonymous) {
       setMyTurnGameCount(0);
       return;
     }
     return subscribeMyTurnAsyncGames(user.uid, setMyTurnGameCount);
   }, [user]);
 
+  if (user?.isAnonymous) return <GuestState />;
   if (loading) return <LoadingState />;
   if (error) return <ErrorState error={error} onRetry={() => window.location.reload()} />;
 
@@ -256,6 +263,19 @@ export default function DashboardPage() {
     </div >
   );
 }
+
+const GuestState = () => (
+  <div className={styles.dashboard}>
+    <Header />
+    <div className={styles.dashboardContainer}>
+      <div className={styles.errorCard}>
+        <p>Guest sessions don&apos;t have a dashboard — sign up to track your stats and rating.</p>
+        <Link className={styles.playButton} href="/register">Sign Up</Link>
+      </div>
+    </div>
+    <Footer />
+  </div>
+);
 
 const LoadingState = () => (
   <div className={styles.dashboard}>

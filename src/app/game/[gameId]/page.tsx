@@ -59,7 +59,7 @@ function GamePage() {
 
   // Fetch avatars once we know both player IDs
   useEffect(() => {
-    if (!playerId || !game) return;
+    if (!playerId || !game || game.isGuest) return; // guest games never have Firestore avatars to fetch
     const opponentId = isPlayer1 ? game.player2.id : game.player1.id;
     getAvatarUrl(playerId).then(setPlayerAvatarUrl);
     getAvatarUrl(opponentId).then(setOpponentAvatarUrl);
