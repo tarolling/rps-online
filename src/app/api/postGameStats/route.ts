@@ -10,14 +10,24 @@ import { GAME_MODES, isValidPlayMode } from "@/lib/gameModes";
 import { checkAndAwardMatchTitles } from "@/lib/titles.server";
 import { MatchStatus } from "@/types/neo4j";
 import type { Game, RoundData } from "@/types";
+import config from "@/config/settings.json";
 
 /**
  * Records a completed game's Match/Round/PARTICIPATED_IN nodes and adjusts
  * both players' ratings. Deliberately trusts nothing from the request body
- * except `matchId` (which doubles as the game's Firebase key) — every score,
- * choice tally, and rating change is recomputed here from the Firebase game
- * record, since a client posting arbitrary numbers here could otherwise
- * forge match history or inflate/tank any player's rating at will.
+ * except `matchId` (which doubles as the game's Firebase key) — every score
+ * and choice tally is recomputed here from the Firebase game record, since a
+ * client posting arbitrary numbers here could otherwise forge match history
+ * or inflate/tank any player's rating at will.
+ *
+ * The rating calculation itself is deliberately NOT based on the ratings
+ * frozen into the Firebase game record at matchmaking time — a player can
+ * have several async games open for up to 24h, and if another one of their
+ * games finishes and moves their live Neo4j rating while this one is still
+ * open, that matchmaking-time snapshot is stale. Instead this reads each
+ * player's live rating under a write lock inside the same transaction that
+ * later updates it, so a lost update can't happen between two games of the
+ * same player finishing back-to-back.
  */
 export const POST = withErrorHandling("postGameStats", async (req: NextRequest) => {
   const { matchId } = await req.json();
@@ -66,11 +76,49 @@ export const POST = withErrorHandling("postGameStats", async (req: NextRequest) 
 
     const { player1, player2 } = game;
     const gameStats = calculateGameStats(game);
-    const playerOneNewRating = calculateRating(player1.rating, player2.rating, game.winner === player1.id);
-    const playerTwoNewRating = calculateRating(player2.rating, player1.rating, game.winner === player2.id);
     const rounds = Object.values(game.rounds ?? {}).filter((r) => r.player1Choice !== null && r.player2Choice !== null);
 
+    // Lock ordering: always acquire the two players' Rating-node write locks
+    // in the same (sorted) order regardless of which is player1/player2, so
+    // two concurrent games between the same pair of players can't deadlock
+    // by locking each other's node first.
+    const [firstId, secondId] = [player1.id, player2.id].sort();
+
+    let playerOneNewRating = 0;
+    let playerTwoNewRating = 0;
+
     await session.executeWrite(async (tx) => {
+      // Read each player's live rating under a write lock (the no-op
+      // `SET r.value = r.value` is what forces Neo4j to take the lock here,
+      // before anything is read into JS) so no other transaction can write
+      // either player's rating between this read and the final SET below.
+      const lockResult = await tx.run(`
+        MATCH (pFirst:Player {uid: $firstId})
+        MERGE (pFirst)-[:HAS_RATING]->(rFirst:Rating {mode: $mode})
+        ON CREATE SET rFirst.value = $defaultRating
+        SET rFirst.value = rFirst.value
+        WITH rFirst
+        MATCH (pSecond:Player {uid: $secondId})
+        MERGE (pSecond)-[:HAS_RATING]->(rSecond:Rating {mode: $mode})
+        ON CREATE SET rSecond.value = $defaultRating
+        SET rSecond.value = rSecond.value
+        RETURN rFirst.value AS firstRating, rSecond.value AS secondRating
+        `, {
+        firstId,
+        secondId,
+        mode,
+        defaultRating: neo4j.int(config.defaultRating),
+      });
+      const { firstRating, secondRating } = lockResult.records[0].toObject();
+      const liveRatingByUid = new Map<string, number>([
+        [firstId, neo4j.integer.toNumber(firstRating)],
+        [secondId, neo4j.integer.toNumber(secondRating)],
+      ]);
+      const playerOneRating = liveRatingByUid.get(player1.id)!;
+      const playerTwoRating = liveRatingByUid.get(player2.id)!;
+      playerOneNewRating = calculateRating(playerOneRating, playerTwoRating, game.winner === player1.id);
+      playerTwoNewRating = calculateRating(playerTwoRating, playerOneRating, game.winner === player2.id);
+
       await tx.run(`
         MATCH (p1:Player {uid: $playerOneId})
         MATCH (p2:Player {uid: $playerTwoId})
@@ -120,13 +168,13 @@ export const POST = withErrorHandling("postGameStats", async (req: NextRequest) 
         matchStatus: MatchStatus.Completed,
         playerOneId: player1.id, playerTwoId: player2.id,
         playerOneScore: neo4j.int(player1.score),
-        playerOneRating: neo4j.int(player1.rating),
+        playerOneRating: neo4j.int(playerOneRating),
         playerOneNewRating: neo4j.int(playerOneNewRating),
         playerOneRocks: neo4j.int(gameStats.playerOneChoices.ROCK),
         playerOnePapers: neo4j.int(gameStats.playerOneChoices.PAPER),
         playerOneScissors: neo4j.int(gameStats.playerOneChoices.SCISSORS),
         playerTwoScore: neo4j.int(player2.score),
-        playerTwoRating: neo4j.int(player2.rating),
+        playerTwoRating: neo4j.int(playerTwoRating),
         playerTwoNewRating: neo4j.int(playerTwoNewRating),
         playerTwoRocks: neo4j.int(gameStats.playerTwoChoices.ROCK),
         playerTwoPapers: neo4j.int(gameStats.playerTwoChoices.PAPER),
