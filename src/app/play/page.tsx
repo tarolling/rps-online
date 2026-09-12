@@ -156,10 +156,15 @@ function MatchmakingPageInner() {
 
   // Fires handleFindMatch once we have a guest session, either because the
   // homepage CTA already signed in and linked here with ?guest=1, or because
-  // handlePlayAsGuest (above) just signed in from this page directly.
+  // handlePlayAsGuest (above) just signed in from this page directly. The
+  // ?guest=1 param is stripped from the URL right after consuming it —
+  // otherwise it would still read "1" every time matchStatus returns to
+  // "idle" (e.g. after Cancel, or a timed-out search), silently re-queueing
+  // the player and making Cancel look broken.
   useEffect(() => {
     if (user?.isAnonymous && matchStatus === "idle" && (searchParams.get("guest") === "1" || guestTriggerPending)) {
       setGuestTriggerPending(false);
+      if (searchParams.get("guest") === "1") router.replace("/play");
       handleFindMatch();
     }
   }, [user, searchParams, guestTriggerPending, matchStatus]);
