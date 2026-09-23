@@ -6,21 +6,22 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
-import { signOut } from "firebase/auth";
-import { auth } from "@/lib/firebase";
 import Avatar from "@/components/Avatar";
-import { postJSON } from "@/lib/api";
+import { signOutEverywhere } from "@/lib/session";
 import { subscribeRequestsData } from "@/lib/friends";
 import { subscribeMyTurnAsyncGames } from "@/lib/matchmaking";
 
 export default function Header() {
   const router = useRouter();
-  const { user, username, avatarUrl } = useAuth();
+  const { user, username, avatarUrl, status } = useAuth();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [incomingRequestCount, setIncomingRequestCount] = useState(0);
   const [myTurnGameCount, setMyTurnGameCount] = useState(0);
+  const [loggingOut, setLoggingOut] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const signedIn = status === "authenticated" || status === "guest";
 
   useEffect(() => {
     document.body.classList.toggle("menuOpen", isMobileMenuOpen);
@@ -55,10 +56,14 @@ export default function Header() {
   }, [user]);
 
   const handleLogout = async () => {
-    await signOut(auth);
-    await postJSON("/api/logout", {});
-    router.refresh();
-    router.push("/");
+    if (loggingOut) return;
+    setLoggingOut(true);
+    // signOutEverywhere never throws, so we always navigate and never strand
+    // the user half signed out. No router.refresh(): nothing server-rendered
+    // reads the session cookie. Not resetting loggingOut on success either,
+    // since navigation unmounts this.
+    await signOutEverywhere();
+    router.replace("/");
   };
 
   return (
@@ -81,7 +86,10 @@ export default function Header() {
       {/* Navigation Links */}
       <nav className={`${styles.headerNav} ${isMobileMenuOpen ? styles.mobileOpen : ""}`}>
         <Link href="/" className={styles.navLink}>Home</Link>
-        {!user?.isAnonymous && (
+        {/* Dashboard, Clubs, Tournaments and Friends all sit behind the proxy's
+            login gate, so only link them for someone who can actually open
+            them. Guests can't: they have a session but no Player record. */}
+        {status === "authenticated" && (
           <Link href="/dashboard" className={styles.navLink}>
             Dashboard
             {myTurnGameCount > 0 && <span className={styles.navBadge}>{myTurnGameCount}</span>}
@@ -90,18 +98,24 @@ export default function Header() {
         <Link href="/leaderboard" className={styles.navLink}>Leaderboard</Link>
         <Link href="/play" className={styles.navLink}>Play</Link>
         <Link href="/rules" className={styles.navLink}>Rules</Link>
-        <Link href="/clubs" className={styles.navLink}>Clubs</Link>
-        <Link href="/tournaments" className={styles.navLink}>Tournaments</Link>
-        <Link href="/friends" className={styles.navLink}>
-          Friends
-          {incomingRequestCount > 0 && <span className={styles.navBadge}>{incomingRequestCount}</span>}
-        </Link>
+        {status === "authenticated" && (
+          <>
+            <Link href="/clubs" className={styles.navLink}>Clubs</Link>
+            <Link href="/tournaments" className={styles.navLink}>Tournaments</Link>
+            <Link href="/friends" className={styles.navLink}>
+              Friends
+              {incomingRequestCount > 0 && <span className={styles.navBadge}>{incomingRequestCount}</span>}
+            </Link>
+          </>
+        )}
 
         <div className={styles.mobileAuth}>
-          {user ? (
+          {status === "loading" ? null : signedIn ? (
             <>
-              {!user.isAnonymous && <Link href={`/profile/${user.uid}`} className={styles.navLink}>Profile</Link>}
-              <button onClick={handleLogout} className={styles.navLink}>Logout</button>
+              {status === "authenticated" && user && <Link href={`/profile/${user.uid}`} className={styles.navLink}>Profile</Link>}
+              <button onClick={handleLogout} className={styles.navLink} disabled={loggingOut}>
+                {loggingOut ? "Logging out..." : "Logout"}
+              </button>
             </>
           ) : (
             <>
@@ -114,14 +128,22 @@ export default function Header() {
 
       {/* Desktop User Menu */}
       <div className={styles.headerUser}>
-        {user ? (
+        {/* Gated on `status`, not `user`: while auth is still resolving, `user`
+            is null and indistinguishable from signed-out, which used to flash
+            the Log In / Register buttons on every load for signed-in users.
+            The placeholder holds the same space so the header doesn't shift. */}
+        {status === "loading" ? (
+          <div className={styles.authPlaceholder} aria-hidden />
+        ) : signedIn && user ? (
           <div className={styles.profileDropdown} onClick={() => setIsDropdownOpen(!isDropdownOpen)} ref={dropdownRef}>
             <div className={styles.profilePic}>
               <Avatar src={avatarUrl} username={username ?? user.email ?? "?"} size="sm" />
             </div>
             <div className={`${styles.dropdownContent} ${isDropdownOpen ? styles.show : ""}`}>
-              {!user.isAnonymous && <Link href={`/profile/${user.uid}`} className={styles.dropdownItem}>Profile</Link>}
-              <button onClick={handleLogout} className={styles.dropdownItem}>Log Out</button>
+              {status === "authenticated" && <Link href={`/profile/${user.uid}`} className={styles.dropdownItem}>Profile</Link>}
+              <button onClick={handleLogout} className={styles.dropdownItem} disabled={loggingOut}>
+                {loggingOut ? "Logging out..." : "Log Out"}
+              </button>
             </div>
           </div>
         ) : (

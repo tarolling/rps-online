@@ -57,8 +57,9 @@ export default function PrivacyPage() {
         <section className={styles.card}>
           <h2 className={styles.sectionTitle}>Cookies &amp; Analytics</h2>
           <p>
-            We use one strictly necessary cookie to keep you signed in. This cookie is required for the Services
-            to function and is not optional.
+            We use two strictly necessary cookies to keep you signed in: one holding your session itself, and one
+            recording when that session expires so your browser knows when to renew it. These cookies are required
+            for the Services to function and are not optional.
           </p>
           <p>
             With your consent (given through the cookie banner shown on your first visit), we also use

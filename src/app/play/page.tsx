@@ -21,7 +21,7 @@ type MatchmakingStatus = "idle" | "searching" | "matched" | "error";
 type AsyncQueueStatus = "idle" | "queueing" | "queued" | "matched" | "error";
 
 function MatchmakingPageInner() {
-  const { user } = useAuth();
+  const { user, status } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const db = getDatabase();
@@ -37,7 +37,11 @@ function MatchmakingPageInner() {
 
   // Guests may only play Blitz (see guestAuth.ts) — Async and Wildcard still
   // require a real, non-anonymous account.
-  const isSignedInNonGuest = !!user && !user.isAnonymous;
+  const isSignedInNonGuest = status === "authenticated";
+  // While auth is resolving, `user` is null and indistinguishable from
+  // signed-out. Hold the sign-in prompts back until we actually know, rather
+  // than flashing "Sign in to play" at someone who is already signed in.
+  const authResolving = status === "loading";
 
   useEffect(() => {
     if (!user || user.isAnonymous) return;
@@ -133,7 +137,7 @@ function MatchmakingPageInner() {
   };
 
   // Guest sign-in is async and `user` here is a stale closure until
-  // AuthContext's onAuthStateChanged listener re-renders this component, so
+  // AuthContext's onIdTokenChanged listener re-renders this component, so
   // handleFindMatch can't just be called inline right after signInAsGuest —
   // this flag lets the effect below fire it once `user` actually reflects
   // the new anonymous session.
@@ -269,7 +273,7 @@ function MatchmakingPageInner() {
             )}
 
             <div className={styles.cardFooter}>
-              {!user && (
+              {!user && !authResolving && (
                 <div className={styles.statusBlock}>
                   <p className={styles.signInText}>Sign in to play, or jump in as a guest.</p>
                   <div className={styles.buttonRow}>
@@ -343,7 +347,7 @@ function MatchmakingPageInner() {
             )}
 
             <div className={styles.cardFooter}>
-              {!isSignedInNonGuest && (
+              {!isSignedInNonGuest && !authResolving && (
                 <div className={styles.statusBlock}>
                   <p className={styles.signInText}>Sign in to play.</p>
                   <button className={styles.primaryBtn} onClick={() => router.push("/login")}>
@@ -435,7 +439,7 @@ function MatchmakingPageInner() {
             )}
 
             <div className={styles.cardFooter}>
-              {!isSignedInNonGuest && (
+              {!isSignedInNonGuest && !authResolving && (
                 <div className={styles.statusBlock}>
                   <p className={styles.signInText}>Sign in to play.</p>
                   <button className={styles.primaryBtn} onClick={() => router.push("/login")}>

@@ -1,6 +1,6 @@
 import { signInAnonymously } from "firebase/auth";
 import { auth } from "@/lib/firebase";
-import { postJSON } from "@/lib/api";
+import { establishSession } from "@/lib/session";
 
 /**
  * Signs the visitor in as an ephemeral Firebase Auth user and establishes the
@@ -10,8 +10,7 @@ import { postJSON } from "@/lib/api";
  */
 export async function signInAsGuest(): Promise<string> {
   const { user } = await signInAnonymously(auth);
-  const idToken = await user.getIdToken();
-  await postJSON("/api/login", { idToken });
+  await establishSession(user, { force: true });
   return user.uid;
 }
 

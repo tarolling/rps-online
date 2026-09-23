@@ -10,6 +10,8 @@ import OAuthSignInButtons from "@/components/OAuthSignInButtons";
 import styles from "./RegisterPage.module.css";
 import { EyeIcon, EyeOffIcon } from "@/components/icons";
 import { postJSON } from "@/lib/api";
+import { establishSession, signOutEverywhere } from "@/lib/session";
+import { authErrorMessage } from "@/lib/authErrors";
 
 // Username: 3–20 chars, letters/numbers/underscores only
 const USERNAME_REGEX = /^[a-zA-Z0-9_]{3,20}$/;
@@ -37,16 +39,16 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const [authReady, setAuthReady] = useState(false);
   const router = useRouter();
-  const { user } = useAuth();
+  const { status } = useAuth();
 
-  // Wait for AuthContext's onAuthStateChanged to pick up the new session
-  // before navigating, so the dashboard doesn't mount while it still looks
-  // logged out.
+  // Wait for AuthContext to reconcile the new session (Firebase identity plus
+  // server cookie) before navigating, so the dashboard doesn't mount while it
+  // still looks logged out.
   useEffect(() => {
-    if (authReady && user) {
-      router.push("/dashboard");
+    if (authReady && status === "authenticated") {
+      router.replace("/dashboard");
     }
-  }, [authReady, user, router]);
+  }, [authReady, status, router]);
 
   const strength = getPasswordStrength(password);
   const usernameError = username && !USERNAME_REGEX.test(username)
@@ -71,14 +73,20 @@ export default function RegisterPage() {
       const userInfo = await createUserWithEmailAndPassword(auth, email, password);
       await sendEmailVerification(userInfo.user);
 
-      // establish the session cookie first so subsequent authenticated calls succeed
-      const idToken = await userInfo.user.getIdToken();
-      await postJSON("/api/login", { idToken });
+      // Establish the session cookie first so initPlayer's auth check passes.
+      await establishSession(userInfo.user, { force: true });
       await postJSON("/api/initPlayer", { uid: userInfo.user.uid, username });
+
+      // Sign back out so the app state matches what we're about to tell them.
+      // Creating an account signs you in client-side, and leaving it that way
+      // contradicts both this message and the login page's rule that an
+      // unverified account can't hold a session. Order matters: initPlayer
+      // above needs the cookie.
+      await signOutEverywhere();
 
       setMessage("Account created! Check your email to verify before logging in.");
     } catch (e: unknown) {
-      setError((e as Error).message);
+      setError(authErrorMessage(e));
     } finally {
       setLoading(false);
     }

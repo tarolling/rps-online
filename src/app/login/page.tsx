@@ -1,35 +1,41 @@
 "use client";
 
 import { sendEmailVerification, sendPasswordResetEmail, signInWithEmailAndPassword } from "firebase/auth";
-import React, { useEffect, useState } from "react";
+import React, { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { auth } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
 import OAuthSignInButtons from "@/components/OAuthSignInButtons";
 import styles from "./LoginPage.module.css";
 import { EyeIcon, EyeOffIcon } from "@/components/icons";
 import { postJSON } from "@/lib/api";
+import { establishSession, signOutEverywhere } from "@/lib/session";
+import { authErrorMessage } from "@/lib/authErrors";
+import { sanitizeNextPath } from "@/lib/redirect";
 
-export default function LoginPage() {
+function LoginPageInner() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
-  const [authReady, setAuthReady] = useState(false);
   const router = useRouter();
-  const { user } = useAuth();
+  const searchParams = useSearchParams();
+  const { status } = useAuth();
 
-  // Wait for AuthContext's onAuthStateChanged to pick up the new session
-  // before navigating, so the dashboard doesn't mount while it still looks
-  // logged out.
+  const nextPath = sanitizeNextPath(searchParams.get("next")) ?? "/dashboard";
+
+  // Already signed in? Don't make them type a password again. This matters
+  // for the returning-after-a-break case: the proxy bounces a missing cookie
+  // here, AuthContext re-mints it from the live Firebase session a moment
+  // later, and this sends them straight back where they were headed.
+  // Guests are deliberately not redirected, so they can upgrade to a real
+  // account from here.
   useEffect(() => {
-    if (authReady && user) {
-      router.push("/dashboard");
-    }
-  }, [authReady, user, router]);
+    if (status === "authenticated") router.replace(nextPath);
+  }, [status, nextPath, router]);
 
   const handleLogin = async (e: React.SubmitEvent) => {
     e.preventDefault();
@@ -37,23 +43,35 @@ export default function LoginPage() {
     setMessage("");
     setLoading(true);
     try {
-      const userInfo = await signInWithEmailAndPassword(auth, email, password);
+      const { user: signedIn } = await signInWithEmailAndPassword(auth, email, password);
 
-      if (!userInfo.user.emailVerified) {
-        await sendEmailVerification(userInfo.user);
+      if (!signedIn.emailVerified) {
+        await sendEmailVerification(signedIn)
+          .catch((err) => console.warn("Could not resend the verification email:", err));
+        // The sign-in itself already succeeded, so without this the visitor is
+        // left client-authed and server-anonymous, with logged-in chrome.
+        await signOutEverywhere();
         setError("Email not verified. We've resent the verification link; please check your inbox.");
+        setLoading(false);
         return;
       }
 
-      // establish the session cookie first so subsequent authenticated calls succeed
-      const idToken = await userInfo.user.getIdToken();
-      await postJSON("/api/login", { idToken });
-      await postJSON("/api/initPlayer", { uid: userInfo.user.uid });
+      await establishSession(signedIn, { force: true });
 
-      setAuthReady(true);
+      // Safety net only, back-filling a Player row for older accounts. At this
+      // point the visitor is fully logged in, so a transient Neo4j blip must
+      // not strand them on the login form.
+      try {
+        await postJSON("/api/initPlayer", { uid: signedIn.uid });
+      } catch (err) {
+        console.warn("initPlayer failed during login; continuing:", err);
+      }
+
+      // No setLoading(false) here: the button stays disabled until navigation
+      // unmounts the form, so a slow redirect can't be double-submitted.
+      router.replace(nextPath);
     } catch (e: unknown) {
-      setError((e as Error).message);
-    } finally {
+      setError(authErrorMessage(e));
       setLoading(false);
     }
   };
@@ -68,13 +86,25 @@ export default function LoginPage() {
       await sendPasswordResetEmail(auth, email);
       setMessage("Password reset email sent! Check your inbox.");
     } catch (e: unknown) {
-      setError((e as Error).message);
+      setError(authErrorMessage(e));
     }
   };
 
   const handleOAuthSuccess = () => {
-    setAuthReady(true);
+    router.replace(nextPath);
   };
+
+  if (status === "loading" || status === "authenticated") {
+    return (
+      <div className="app">
+        <main className={styles.main}>
+          <div className="card">
+            <span className={styles.spinner} />
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="app">
@@ -143,5 +173,14 @@ export default function LoginPage() {
         </div>
       </main>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  // useSearchParams needs a Suspense boundary to prerender.
+  return (
+    <Suspense fallback={null}>
+      <LoginPageInner />
+    </Suspense>
   );
 }
