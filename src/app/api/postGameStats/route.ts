@@ -8,6 +8,8 @@ import { calculateGameStats } from "@/lib/gameLogic";
 import calculateRating from "@/lib/calculateRating";
 import { GAME_MODES, isValidPlayMode } from "@/lib/gameModes";
 import { checkAndAwardMatchTitles } from "@/lib/titles.server";
+import { getRankTier, getRankTierIndex } from "@/lib/ranks";
+import { postDiscordEvent } from "@/lib/discord";
 import { MatchStatus } from "@/types/neo4j";
 import type { Game, RoundData } from "@/types";
 import config from "@/config/settings.json";
@@ -84,6 +86,8 @@ export const POST = withErrorHandling("postGameStats", async (req: NextRequest) 
     // by locking each other's node first.
     const [firstId, secondId] = [player1.id, player2.id].sort();
 
+    let playerOneRating = 0;
+    let playerTwoRating = 0;
     let playerOneNewRating = 0;
     let playerTwoNewRating = 0;
 
@@ -114,8 +118,8 @@ export const POST = withErrorHandling("postGameStats", async (req: NextRequest) 
         [firstId, neo4j.integer.toNumber(firstRating)],
         [secondId, neo4j.integer.toNumber(secondRating)],
       ]);
-      const playerOneRating = liveRatingByUid.get(player1.id)!;
-      const playerTwoRating = liveRatingByUid.get(player2.id)!;
+      playerOneRating = liveRatingByUid.get(player1.id)!;
+      playerTwoRating = liveRatingByUid.get(player2.id)!;
       playerOneNewRating = calculateRating(playerOneRating, playerTwoRating, game.winner === player1.id);
       playerTwoNewRating = calculateRating(playerTwoRating, playerOneRating, game.winner === player2.id);
 
@@ -210,6 +214,23 @@ export const POST = withErrorHandling("postGameStats", async (req: NextRequest) 
       checkAndAwardMatchTitles(player1.id, playerOneNewRating),
       checkAndAwardMatchTitles(player2.id, playerTwoNewRating),
     ]);
+
+    // "Notable" filter for the Discord feed: only post on an actual rank-tier
+    // change, not every single game, or the channel would be spammed.
+    const notifyIfRankedUp = (username: string, before: number, after: number) => {
+      if (getRankTierIndex(after) !== getRankTierIndex(before)) {
+        void postDiscordEvent({
+          kind: "rankUp",
+          username,
+          mode,
+          matchId,
+          fromTier: getRankTier(before),
+          toTier: getRankTier(after),
+        });
+      }
+    };
+    notifyIfRankedUp(player1.username, playerOneRating, playerOneNewRating);
+    notifyIfRankedUp(player2.username, playerTwoRating, playerTwoNewRating);
 
     return NextResponse.json({ success: true });
   } finally {
