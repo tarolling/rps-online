@@ -69,3 +69,14 @@ export function getDivisionLabel(division: 1 | 2 | 3 | null): string {
   if (division === null) return "";
   return ["I", "II", "III"][division - 1];
 }
+
+/**
+ * Flat fallback for `RankTier.color === "rainbow"` (the Infinity rank).
+ * Satori (what `next/og`'s `ImageResponse` renders with) and Discord embed
+ * `color` fields can't render a literal CSS gradient the way
+ * `src/components/RankBadge.tsx`'s SVG `linearGradient` does, so both the OG
+ * images and Discord embeds fall back to this flat gold instead.
+ */
+export function getRankColorHex(tier: RankTier): string {
+  return tier.color === "rainbow" ? "#f1c40f" : tier.color;
+}

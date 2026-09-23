@@ -3,6 +3,7 @@ import { adminDb } from "./firebaseAdmin";
 import { createGame } from "./matchmaking.server";
 import { TournamentMatchStatus, TournamentStatus, type TournamentPlayerCap } from "@/types/neo4j";
 import { generateBracket, getCurrentMatch, seedParticipants } from "./tournamentBracket";
+import { postDiscordEvent } from "./discord";
 
 export { getCurrentMatch };
 
@@ -48,7 +49,18 @@ export async function startScheduledTournaments() {
         Object.keys(t.participants ?? {}).length >= 2,
   );
 
-  await Promise.all(toStart.map(([id]) => startTournament(id)));
+  await Promise.all(toStart.map(async ([id, t]) => {
+    const bracket = await startTournament(id);
+    // startTournament returns null if a concurrent cron invocation already
+    // claimed/started it — only the call that actually started it announces.
+    if (bracket) {
+      void postDiscordEvent({
+        kind: "tournamentStart",
+        name: t.name,
+        participantCount: Object.keys(t.participants ?? {}).length,
+      });
+    }
+  }));
 }
 
 /**

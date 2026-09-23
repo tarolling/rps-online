@@ -67,10 +67,24 @@ export async function checkAndAwardMatchTitles(uid: string, newRating: number): 
   }
 }
 
-export async function awardTournamentChampionTitle(uid: string): Promise<void> {
+/**
+ * Awards the Tournament Champion title, idempotently. Returns whether this
+ * call is the one that newly awarded it (as opposed to the player already
+ * having it) — the caller uses this to avoid posting a duplicate Discord
+ * announcement when multiple finalists' clients race to call this route.
+ */
+export async function awardTournamentChampionTitle(uid: string): Promise<boolean> {
   try {
+    const existing = await runQuery(`
+      MATCH (:Player {uid: $uid})-[e:EARNED_TITLE]->(:Title {id: $id})
+      RETURN e LIMIT 1
+      `, { uid, id: TOURNAMENT_CHAMPION_TITLE.id });
+    const alreadyHad = existing.records.length > 0;
+
     await awardTitle(uid, TOURNAMENT_CHAMPION_TITLE);
+    return !alreadyHad;
   } catch (err) {
     console.error("awardTournamentChampionTitle error:", err);
+    return false;
   }
 }

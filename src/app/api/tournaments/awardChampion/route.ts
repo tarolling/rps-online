@@ -3,6 +3,7 @@ import { adminDb } from "@/lib/firebaseAdmin";
 import { getAuthedUid } from "@/lib/auth";
 import { withErrorHandling } from "@/lib/apiHandler";
 import { awardTournamentChampionTitle } from "@/lib/titles.server";
+import { postDiscordEvent } from "@/lib/discord";
 import { TournamentStatus } from "@/types/neo4j";
 import type { Tournament } from "@/types";
 
@@ -33,7 +34,18 @@ export const POST = withErrorHandling("tournaments/awardChampion", async (req: N
     return NextResponse.json({ error: "Tournament is not completed." }, { status: 400 });
   }
 
-  await awardTournamentChampionTitle(tournament.winner.id);
+  const newlyAwarded = await awardTournamentChampionTitle(tournament.winner.id);
+  // Every finalist's client calls this route once it observes the tournament
+  // as completed — without this check the feed would post the announcement
+  // once per finalist instead of once per tournament.
+  if (newlyAwarded) {
+    void postDiscordEvent({
+      kind: "tournamentChampion",
+      name: tournament.name,
+      championUid: tournament.winner.id,
+      championUsername: tournament.winner.username,
+    });
+  }
 
   return NextResponse.json({ success: true });
 });

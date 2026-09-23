@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Link from "next/link";
@@ -9,11 +10,28 @@ import { getAvatarUrl } from "@/lib/avatar";
 import Avatar from "@/components/Avatar";
 import RankBadge from "@/components/RankBadge";
 import { CHOICE_EMOJI } from "@/types";
-import { toPlayMode } from "@/lib/gameModes";
+import { GAME_MODES, toPlayMode } from "@/lib/gameModes";
 import LocalTime from "@/components/LocalTime";
 
 function formatMoveText(move: Choice): string {
   return (move as string) === "none" ? "No Pick" : move;
+}
+
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const { id } = await params;
+  const match = await getMatchDetail(id);
+  if (!match) {
+    return { title: "Match — Ranked RPS Online", description: "View match results in Ranked RPS Online." };
+  }
+
+  const winner = match.match.winnerId === match.player1.uid ? match.player1 : match.player2;
+  const loser = match.match.winnerId === match.player1.uid ? match.player2 : match.player1;
+  const modeLabel = GAME_MODES[toPlayMode(match.match.mode)].label;
+
+  return {
+    title: `${winner.username} won ${winner.score}-${loser.score} vs ${loser.username} — Ranked RPS Online`,
+    description: `A ${modeLabel} match in Ranked RPS Online, the competitive rock paper scissors ladder.`,
+  };
 }
 
 async function getGameDetail(id: string) {
