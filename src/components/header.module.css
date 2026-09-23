@@ -71,6 +71,14 @@
 }
 
 /* Wraps the Avatar component — keeps the circular border */
+/* Holds the avatar's footprint while auth resolves, so the header doesn't
+   shift when the real profile picture appears. */
+.authPlaceholder {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+}
+
 .profilePic {
     border-radius: 50%;
     border: 2px solid var(--color-text);

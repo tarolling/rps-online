@@ -14,6 +14,8 @@ import {
 import React, { useEffect, useState } from "react";
 import { auth } from "@/lib/firebase";
 import { postJSON } from "@/lib/api";
+import { establishSession } from "@/lib/session";
+import { authErrorMessage, isUserCanceled } from "@/lib/authErrors";
 import { AppleIcon, GoogleIcon } from "@/components/icons";
 import styles from "./OAuthSignInButtons.module.css";
 
@@ -47,8 +49,7 @@ export default function OAuthSignInButtons({ onSuccess }: Props) {
   const [username, setUsername] = useState("");
 
   const finishSignIn = async (result: UserCredential) => {
-    const idToken = await result.user.getIdToken();
-    await postJSON("/api/login", { idToken });
+    await establishSession(result.user, { force: true });
 
     if (getAdditionalUserInfo(result)?.isNewUser) {
       setPendingUid(result.user.uid);
@@ -87,7 +88,7 @@ export default function OAuthSignInButtons({ onSuccess }: Props) {
         setPending(providerId === "apple.com" ? "apple" : "google");
         return finishSignIn(result);
       })
-      .catch((e: unknown) => setError((e as Error).message))
+      .catch((e: unknown) => setError(authErrorMessage(e)))
       .finally(() => {
         sessionStorage.removeItem(OAUTH_PENDING_KEY);
         setPending(null);
@@ -108,10 +109,7 @@ export default function OAuthSignInButtons({ onSuccess }: Props) {
       await finishSignIn(result);
       setPending(null);
     } catch (e: unknown) {
-      const code = (e as { code?: string }).code;
-      if (code !== "auth/popup-closed-by-user" && code !== "auth/cancelled-popup-request") {
-        setError((e as Error).message);
-      }
+      if (!isUserCanceled(e)) setError(authErrorMessage(e));
       setPending(null);
     }
   };
@@ -137,7 +135,7 @@ export default function OAuthSignInButtons({ onSuccess }: Props) {
       await postJSON("/api/initPlayer", { uid: pendingUid, username });
       onSuccess();
     } catch (e: unknown) {
-      setError((e as Error).message);
+      setError(authErrorMessage(e));
       setSubmitting(false);
     }
   };

@@ -9,6 +9,7 @@ import Header from "@/components/Header";
 import { formatRelativeTime } from "@/lib/time";
 import styles from "./ProfilePage.module.css";
 import { getJSON, postJSON } from "@/lib/api";
+import { signOutEverywhere } from "@/lib/session";
 import { PlayerMatch } from "@/types/common";
 import { getDivisionLabel, getRankTier } from "@/lib/ranks";
 import Avatar from "@/components/Avatar";
@@ -200,8 +201,14 @@ function ProfilePage() {
   const handleDeleteAccount = async () => {
     if (!window.confirm("Are you sure you want to delete your account? This cannot be undone.")) return;
     try {
-      await user!.delete();
+      // Server first. /api/deleteAccount authenticates via getAuthedUid,
+      // which verifies with checkRevoked: true and therefore looks the user
+      // up in Firebase. Deleting the Firebase user first makes that lookup
+      // throw, so the call 401s and the Neo4j Player node and any Stripe
+      // subscription are silently left behind.
       await postJSON("/api/deleteAccount", { uid: userId });
+      await user!.delete();
+      await signOutEverywhere();
       router.replace("/");
     } catch (err: unknown) {
       setError((err as Error).message);
